@@ -42,7 +42,7 @@ router.get('/', asyncHandler(async (req, res) => {
       { model: Category, as: 'category' },
       { model: User, as: 'author', attributes: ['id', 'name', 'avatar'] },
       { model: Image, as: 'images' },
-      { model: Vote, as: 'votes', attributes: [] },
+      { model: Vote, as: 'voteRecords', attributes: [] },
     ],
     offset,
     limit: parseInt(limit),
@@ -93,7 +93,7 @@ router.get('/:id', asyncHandler(async (req, res) => {
       { model: Category, as: 'category' },
       { model: User, as: 'author', attributes: ['id', 'name', 'avatar'] },
       { model: Image, as: 'images' },
-      { model: Vote, as: 'votes' },
+      { model: Vote, as: 'voteRecords' },
     ],
   });
 

@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
@@ -8,6 +8,7 @@ import 'leaflet/dist/leaflet.css';
 import { useAuthStore } from './store';
 
 // Pages
+import LandingPage from './pages/LandingPage';
 import HomePage from './pages/HomePage';
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
@@ -25,27 +26,30 @@ function App() {
 
   return (
     <Router>
-      <div className="min-h-screen bg-gray-50">
-        <Header />
+      <div>
         <Routes>
-          {/* Rotas públicas */}
-          <Route path="/" element={<HomePage />} />
-          <Route path="/login" element={user ? <Navigate to="/" /> : <LoginPage />} />
-          <Route path="/register" element={user ? <Navigate to="/" /> : <RegisterPage />} />
-          <Route path="/problem/:id" element={<ProblemDetailPage />} />
+          {/* Landing page - sem header customizado, ela tem seu próprio */}
+          <Route path="/" element={<LandingPage />} />
 
-          {/* Rotas protegidas */}
+          {/* Outras rotas com header */}
           <Route
-            path="/report"
-            element={<ProtectedRoute component={ReportProblemPage} />}
-          />
-          <Route
-            path="/profile"
-            element={<ProtectedRoute component={ProfilePage} />}
-          />
-          <Route
-            path="/admin"
-            element={<ProtectedRoute component={AdminDashboard} roles={['admin']} />}
+            path="/*"
+            element={
+              <div className="min-h-screen bg-gray-50">
+                <Header />
+                <Routes>
+                  <Route path="/map" element={<HomePage />} />
+                  <Route path="/login" element={user ? <Navigate to="/" /> : <LoginPage />} />
+                  <Route path="/register" element={user ? <Navigate to="/" /> : <RegisterPage />} />
+                  <Route path="/problem/:id" element={<ProblemDetailPage />} />
+
+                  {/* Rotas protegidas */}
+                  <Route path="/report" element={<ProtectedRoute component={ReportProblemPage} />} />
+                  <Route path="/profile" element={<ProtectedRoute component={ProfilePage} />} />
+                  <Route path="/admin" element={<ProtectedRoute component={AdminDashboard} roles={['admin']} />} />
+                </Routes>
+              </div>
+            }
           />
         </Routes>
       </div>

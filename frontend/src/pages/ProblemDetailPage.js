@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { problemsAPI, votesAPI } from '../services/api';
 import { toast } from 'react-toastify';
-import { FiThumbsUp, FiMapPin, FiCalendar, FiUser, FiImage } from 'react-icons/fi';
+import { FiThumbsUp, FiMapPin, FiCalendar, FiUser } from 'react-icons/fi';
 import { formatDistanceToNow } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { useAuthStore } from '../store';
@@ -149,7 +149,7 @@ const ProblemDetailPage = () => {
                 <button
                   onClick={() => handleVote('up')}
                   disabled={votingLoading || !user}
-                  className="flex items-center gap-2 bg-green-500 text-white px-6 py-3 rounded-lg hover:bg-green-600 disabled:bg-gray-400"
+                  className="flex items-center gap-2 bg-violet-600 text-white px-6 py-3 rounded-lg hover:bg-violet-700 disabled:bg-gray-400"
                 >
                   <FiThumbsUp /> Apoiar ({problem.votes})
                 </button>

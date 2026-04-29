@@ -48,7 +48,7 @@ Vote.belongsTo(User, {
 
 Problem.hasMany(Vote, {
   foreignKey: 'problemId',
-  as: 'votes',
+  as: 'voteRecords',
   onDelete: 'CASCADE',
 });
 

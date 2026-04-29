@@ -13,60 +13,54 @@ const Header = () => {
   };
 
   return (
-    <header className="bg-white shadow-md sticky top-0 z-50">
-      <div className="container mx-auto px-4 py-3">
+    <header className="bg-white shadow-sm sticky top-0 z-50">
+      <div className="container mx-auto px-4 py-4">
         <div className="flex justify-between items-center">
-          <Link to="/" className="flex items-center gap-2">
-            <div className="w-8 h-8 bg-purple-600 rounded-full flex items-center justify-center">
-              <span className="text-white font-bold">V</span>
+          <Link to="/" className="flex items-center gap-3">
+            <div className="w-10 h-10 brand-gradient rounded-full flex items-center justify-center">
+              <span className="text-white font-extrabold">V</span>
             </div>
-            <span className="font-bold text-lg">VOZ URBANA</span>
+            <div>
+              <div className="font-bold text-lg text-neutral">VOZ URBANA</div>
+              <div className="text-xs text-gray-500">Sua voz melhora a cidade</div>
+            </div>
           </Link>
 
-          <nav className="hidden md:flex gap-6">
-            <Link to="/" className="text-gray-700 hover:text-purple-600">
-              Home
+          <nav className="hidden md:flex gap-6 items-center">
+            <Link to="/" className="text-gray-700 hover:text-primary-600">
+              Início
             </Link>
-            {user && (
-              <Link to="/" className="text-gray-700 hover:text-purple-600">
-                Meu Mapa
-              </Link>
-            )}
-            {user?.role === 'admin' && (
-              <Link to="/admin" className="text-gray-700 hover:text-purple-600">
-                Admin
-              </Link>
-            )}
+            <Link to="/map" className="text-gray-700 hover:text-primary-600">
+              Mapa
+            </Link>
+            <Link to="/about" className="text-gray-700 hover:text-primary-600">
+              Sobre
+            </Link>
           </nav>
 
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-3">
+            <Link
+              to="/report"
+              className="hidden md:inline-flex items-center gap-2 bg-gradient-to-r from-primary to-primary-600 text-white px-4 py-2 rounded-full shadow-sm"
+            >
+              <FiPlus /> Identificar problema
+            </Link>
+
             {user ? (
               <>
-                <Link
-                  to="/report"
-                  className="flex items-center gap-2 bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700"
-                >
-                  <FiPlus /> Reportar
-                </Link>
-                <Link to="/profile" className="text-gray-700 hover:text-purple-600">
+                <Link to="/profile" className="text-gray-700 hover:text-primary-600">
                   <FiUser size={20} />
                 </Link>
-                <button
-                  onClick={handleLogout}
-                  className="text-gray-700 hover:text-purple-600"
-                >
+                <button onClick={handleLogout} className="text-gray-700 hover:text-primary-600">
                   <FiLogOut size={20} />
                 </button>
               </>
             ) : (
               <>
-                <Link to="/login" className="text-gray-700 hover:text-purple-600">
-                  Login
+                <Link to="/login" className="text-gray-700 hover:text-primary-600">
+                  Entrar
                 </Link>
-                <Link
-                  to="/register"
-                  className="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700"
-                >
+                <Link to="/register" className="hidden md:inline-flex items-center bg-white border border-primary px-4 py-2 rounded-full text-primary hover:bg-primary hover:text-white transition">
                   Cadastre-se
                 </Link>
               </>

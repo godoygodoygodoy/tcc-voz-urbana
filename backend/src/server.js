@@ -4,6 +4,10 @@ const helmet = require('helmet');
 require('express-async-errors');
 require('dotenv').config();
 
+// Importar banco de dados
+const sequelize = require('./config/database');
+require('./models');
+
 // Importar rotas
 const authRoutes = require('./routes/auth');
 const problemRoutes = require('./routes/problems');
@@ -54,9 +58,21 @@ app.use((req, res) => {
 app.use(errorHandler);
 
 const PORT = process.env.PORT || 5000;
-const server = app.listen(PORT, () => {
-  console.log(`🚀 Servidor rodando em http://localhost:${PORT}`);
-  console.log(`Ambiente: ${process.env.NODE_ENV}`);
-});
 
-module.exports = server;
+// Sincronizar banco e iniciar servidor
+(async () => {
+  try {
+    await sequelize.sync({ alter: true });
+    console.log('✅ Banco de dados sincronizado');
+    
+    app.listen(PORT, () => {
+      console.log(`🚀 Servidor rodando em http://localhost:${PORT}`);
+      console.log(`Ambiente: ${process.env.NODE_ENV}`);
+    });
+  } catch (error) {
+    console.error('❌ Erro ao conectar ao banco:', error);
+    process.exit(1);
+  }
+})();
+
+module.exports = app;
