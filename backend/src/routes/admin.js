@@ -1,81 +1,140 @@
-const express = require('express');
-const { adminMiddleware } = require('../middlewares/auth');
-const { Problem, Category, User } = require('../models');
-const { asyncHandler } = require('../middlewares/errorHandler');
+import express from "express";
+import { adminMiddleware } from "../middlewares/auth.js";
+import { prisma } from "../config/prisma.js";
+import { asyncHandler } from "../middlewares/errorHandler.js";
 
 const router = express.Router();
 
 // Criar categoria
-router.post('/categories', asyncHandler(async (req, res) => {
-  const { name, description, color, icon } = req.body;
+router.post(
+  "/categories",
+  asyncHandler(async (req, res) => {
+    const { name, description, color, icon } = req.body;
 
-  const category = await Category.create({
-    name,
-    description,
-    color,
-    icon,
-  });
+    const category = await prisma.categoria.create({
+      data: {
+        nome: name,
+        descricao: description,
+        cor: color,
+        icone: icon
+      }
+    });
 
-  res.status(201).json(category);
-}));
+    res.status(201).json(category);
+  })
+);
 
 // Atualizar problema (status, prioridade)
-router.put('/problems/:id', asyncHandler(async (req, res) => {
-  const { status, priority, isVerified, verifiedBy } = req.body;
-  const problem = await Problem.findByPk(req.params.id);
+router.put(
+  "/problems/:id",
+  asyncHandler(async (req, res) => {
+    const { status, priority, isVerified, verifiedBy } = req.body;
 
-  if (!problem) {
-    return res.status(404).json({ error: 'Problema não encontrado' });
-  }
+    const problem = await prisma.problema.findUnique({
+      where: { id: req.params.id }
+    });
 
-  await problem.update({
-    status: status || problem.status,
-    priority: priority || problem.priority,
-    isVerified: isVerified !== undefined ? isVerified : problem.isVerified,
-    verifiedBy: verifiedBy || problem.verifiedBy,
-  });
+    if (!problem) {
+      return res.status(404).json({ error: "Problema não encontrado" });
+    }
 
-  res.json(problem);
-}));
+    const updateData = {};
+    if (status) updateData.status = status;
+    if (priority) updateData.prioridade = priority;
+    if (isVerified !== undefined) updateData.verificado = isVerified;
+    if (verifiedBy) updateData.verificadoPorId = verifiedBy;
+
+    const updatedProblem = await prisma.problema.update({
+      where: { id: req.params.id },
+      data: updateData
+    });
+
+    res.json(updatedProblem);
+  })
+);
 
 // Listar usuários
-router.get('/users', asyncHandler(async (req, res) => {
-  const users = await User.findAll({
-    attributes: { exclude: ['password'] },
-    order: [['createdAt', 'DESC']],
-  });
+router.get(
+  "/users",
+  asyncHandler(async (req, res) => {
+    const users = await prisma.usuario.findMany({
+      select: {
+        id: true,
+        nome: true,
+        email: true,
+        telefone: true,
+        role: true,
+        fotoPerfil: true,
+        bio: true,
+        ativo: true,
+        ultimoLogin: true,
+        dataCriacao: true,
+        dataAtualizacao: true
+      },
+      orderBy: { dataCriacao: "desc" }
+    });
 
-  res.json(users);
-}));
+    res.json(users);
+  })
+);
 
 // Atualizar role de usuário
-router.put('/users/:id/role', asyncHandler(async (req, res) => {
-  const { role } = req.body;
-  const user = await User.findByPk(req.params.id);
+router.put(
+  "/users/:id/role",
+  asyncHandler(async (req, res) => {
+    const { role } = req.body;
 
-  if (!user) {
-    return res.status(404).json({ error: 'Usuário não encontrado' });
-  }
+    const user = await prisma.usuario.findUnique({
+      where: { id: req.params.id }
+    });
 
-  await user.update({ role });
-  res.json(user.toJSON());
-}));
+    if (!user) {
+      return res.status(404).json({ error: "Usuário não encontrado" });
+    }
+
+    const updatedUser = await prisma.usuario.update({
+      where: { id: req.params.id },
+      data: { role },
+      select: {
+        id: true,
+        nome: true,
+        email: true,
+        role: true,
+        fotoPerfil: true,
+        dataCriacao: true
+      }
+    });
+
+    res.json(updatedUser);
+  })
+);
 
 // Obter estatísticas
-router.get('/stats', asyncHandler(async (req, res) => {
-  const totalProblems = await Problem.count();
-  const openProblems = await Problem.count({ where: { status: 'open' } });
-  const resolvedProblems = await Problem.count({ where: { status: 'resolved' } });
-  const totalUsers = await User.count();
-  const totalCategories = await Category.count();
+router.get(
+  "/stats",
+  asyncHandler(async (req, res) => {
+    const [
+      totalProblems,
+      openProblems,
+      resolvedProblems,
+      totalUsers,
+      totalCategories
+    ] = await Promise.all([
+      prisma.problema.count(),
+      prisma.problema.count({ where: { status: "ABERTO" } }),
+      prisma.problema.count({ where: { status: "RESOLVIDO" } }),
+      prisma.usuario.count(),
+      prisma.categoria.count()
+    ]);
 
-  res.json({
-    totalProblems,
-    openProblems,
-    resolvedProblems,
-    totalUsers,
-    totalCategories,
-  });
-}));
+    res.json({
+      totalProblems,
+      openProblems,
+      resolvedProblems,
+      totalUsers,
+      totalCategories
+    });
+  })
+);
 
-module.exports = router;
+export default router;

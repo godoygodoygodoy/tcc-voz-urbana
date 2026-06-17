@@ -1,8 +1,9 @@
-const express = require('express');
-const jwt = require('jsonwebtoken');
-const Joi = require('joi');
-const { User } = require('../models');
-const { errorHandler, asyncHandler } = require('../middlewares/errorHandler');
+import express from "express";
+import jwt from "jsonwebtoken";
+import Joi from "joi";
+import { prisma } from "../config/prisma.js";
+import { hashPassword, comparePassword } from "../utils/password.js";
+import { asyncHandler } from "../middlewares/errorHandler.js";
 
 const router = express.Router();
 
@@ -10,75 +11,108 @@ const router = express.Router();
 const registerSchema = Joi.object({
   name: Joi.string().required(),
   email: Joi.string().email().required(),
-  password: Joi.string().min(6).required(),
+  password: Joi.string().min(6).required()
 });
 
 const loginSchema = Joi.object({
   email: Joi.string().email().required(),
-  password: Joi.string().required(),
+  password: Joi.string().required()
 });
 
 // Register
-router.post('/register', asyncHandler(async (req, res) => {
-  const { error, value } = registerSchema.validate(req.body);
-  if (error) {
-    return res.status(400).json({ error: error.details[0].message });
-  }
+router.post(
+  "/register",
+  asyncHandler(async (req, res) => {
+    const { error, value } = registerSchema.validate(req.body);
+    if (error) {
+      return res.status(400).json({ error: error.details[0].message });
+    }
 
-  const { name, email, password } = value;
+    const { name, email, password } = value;
 
-  const existingUser = await User.findOne({ where: { email } });
-  if (existingUser) {
-    return res.status(409).json({ error: 'Email já cadastrado' });
-  }
+    const existingUser = await prisma.usuario.findUnique({
+      where: { email }
+    });
 
-  const user = await User.create({ name, email, password });
+    if (existingUser) {
+      return res.status(409).json({ error: "Email já cadastrado" });
+    }
 
-  const token = jwt.sign(
-    { id: user.id, email: user.email, role: user.role },
-    process.env.JWT_SECRET,
-    { expiresIn: process.env.JWT_EXPIRE || '7d' }
-  );
+    const senhaHash = await hashPassword(password);
 
-  res.status(201).json({
-    message: 'Usuário registrado com sucesso',
-    user: user.toJSON(),
-    token,
-  });
-}));
+    const user = await prisma.usuario.create({
+      data: {
+        nome: name,
+        email,
+        senhaHash
+      },
+      select: {
+        id: true,
+        nome: true,
+        email: true,
+        role: true,
+        fotoPerfil: true,
+        dataCriacao: true
+      }
+    });
+
+    const token = jwt.sign(
+      { id: user.id, email: user.email, role: user.role },
+      process.env.JWT_SECRET,
+      { expiresIn: process.env.JWT_EXPIRE || "7d" }
+    );
+
+    res.status(201).json({
+      message: "Usuário registrado com sucesso",
+      user,
+      token
+    });
+  })
+);
 
 // Login
-router.post('/login', asyncHandler(async (req, res) => {
-  const { error, value } = loginSchema.validate(req.body);
-  if (error) {
-    return res.status(400).json({ error: error.details[0].message });
-  }
+router.post(
+  "/login",
+  asyncHandler(async (req, res) => {
+    const { error, value } = loginSchema.validate(req.body);
+    if (error) {
+      return res.status(400).json({ error: error.details[0].message });
+    }
 
-  const { email, password } = value;
+    const { email, password } = value;
 
-  const user = await User.findOne({ where: { email } });
-  if (!user) {
-    return res.status(401).json({ error: 'Credenciais inválidas' });
-  }
+    const user = await prisma.usuario.findUnique({
+      where: { email }
+    });
 
-  const isValid = await user.comparePassword(password);
-  if (!isValid) {
-    return res.status(401).json({ error: 'Credenciais inválidas' });
-  }
+    if (!user) {
+      return res.status(401).json({ error: "Credenciais inválidas" });
+    }
 
-  await user.update({ lastLogin: new Date() });
+    const isValid = await comparePassword(password, user.senhaHash);
+    if (!isValid) {
+      return res.status(401).json({ error: "Credenciais inválidas" });
+    }
 
-  const token = jwt.sign(
-    { id: user.id, email: user.email, role: user.role },
-    process.env.JWT_SECRET,
-    { expiresIn: process.env.JWT_EXPIRE || '7d' }
-  );
+    await prisma.usuario.update({
+      where: { id: user.id },
+      data: { ultimoLogin: new Date() }
+    });
 
-  res.json({
-    message: 'Login bem-sucedido',
-    user: user.toJSON(),
-    token,
-  });
-}));
+    const token = jwt.sign(
+      { id: user.id, email: user.email, role: user.role },
+      process.env.JWT_SECRET,
+      { expiresIn: process.env.JWT_EXPIRE || "7d" }
+    );
 
-module.exports = router;
+    const { senhaHash, ...userWithoutPassword } = user;
+
+    res.json({
+      message: "Login bem-sucedido",
+      user: userWithoutPassword,
+      token
+    });
+  })
+);
+
+export default router;

@@ -1,28 +1,36 @@
-const express = require('express');
-const { Category } = require('../models');
-const { asyncHandler } = require('../middlewares/errorHandler');
+import express from "express";
+import { prisma } from "../config/prisma.js";
+import { asyncHandler } from "../middlewares/errorHandler.js";
 
 const router = express.Router();
 
 // Listar categorias
-router.get('/', asyncHandler(async (req, res) => {
-  const categories = await Category.findAll({
-    where: { isActive: true },
-    order: [['name', 'ASC']],
-  });
+router.get(
+  "/",
+  asyncHandler(async (req, res) => {
+    const categories = await prisma.categoria.findMany({
+      where: { ativo: true },
+      orderBy: { nome: "asc" }
+    });
 
-  res.json(categories);
-}));
+    res.json(categories);
+  })
+);
 
 // Obter categoria por ID
-router.get('/:id', asyncHandler(async (req, res) => {
-  const category = await Category.findByPk(req.params.id);
+router.get(
+  "/:id",
+  asyncHandler(async (req, res) => {
+    const category = await prisma.categoria.findUnique({
+      where: { id: req.params.id }
+    });
 
-  if (!category) {
-    return res.status(404).json({ error: 'Categoria não encontrada' });
-  }
+    if (!category) {
+      return res.status(404).json({ error: "Categoria não encontrada" });
+    }
 
-  res.json(category);
-}));
+    res.json(category);
+  })
+);
 
-module.exports = router;
+export default router;
