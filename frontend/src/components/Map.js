@@ -3,6 +3,7 @@ import { CircleMarker, MapContainer, Marker, Popup, Polygon, Polyline, TileLayer
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { getPurpleTone } from '../utils/theme';
+import MapGoogle from './MapGoogle';
 
 // Corrigir ícone do Leaflet
 delete L.Icon.Default.prototype._getIconUrl;
@@ -53,12 +54,22 @@ const FitBounds = ({ problems }) => {
       return;
     }
 
-    if (points.length === 1) {
-      map.setView(points[0], 15, { animate: true });
-      return;
-    }
+    const timer = window.setTimeout(() => {
+      if (!map || !map._container || !document.body.contains(map._container)) {
+        return;
+      }
 
-    map.fitBounds(points, { padding: [40, 40], maxZoom: 16, animate: true });
+      map.invalidateSize();
+
+      if (points.length === 1) {
+        map.setView(points[0], 15, { animate: false });
+        return;
+      }
+
+      map.fitBounds(points, { padding: [40, 40], maxZoom: 16, animate: false });
+    }, 0);
+
+    return () => window.clearTimeout(timer);
   }, [map, problems]);
 
   return null;
@@ -186,6 +197,18 @@ const Map = ({
   onAreaComplete,
   onAreaDrawingToggle,
 }) => {
+  const useGoogle = Boolean(process.env.REACT_APP_GOOGLE_MAPS_KEY);
+
+  if (useGoogle) {
+    return (
+      <MapGoogle
+        problems={problems}
+        onMarkerClick={onMarkerClick}
+        height={height}
+        className={className}
+      />
+    );
+  }
   const validProblems = problems.filter((problem) => toPoint(problem));
 
   return (

@@ -25,6 +25,7 @@ import ProblemCard from '../components/ProblemCard';
 import { categoriesAPI, problemsAPI } from '../services/api';
 import ThreeCityBackdrop from '../components/ThreeCityBackdrop';
 import { getPurpleTone } from '../utils/theme';
+import { useAuthStore } from '../store';
 
 const fallbackCategories = [
   { id: 'asfalto', name: 'Asfalto' },
@@ -97,6 +98,7 @@ const stagger = {
 };
 
 export default function LandingPage() {
+  const { user, logout } = useAuthStore();
   const [recentProblems, setRecentProblems] = useState([]);
   const [categories, setCategories] = useState([]);
   const [loadingFeed, setLoadingFeed] = useState(true);
@@ -257,11 +259,28 @@ export default function LandingPage() {
             <a href="#contato" className="transition-colors hover:text-white">Contato</a>
           </nav>
 
-          <Link to="/login">
-            <Button className="rounded-full bg-white px-5 py-3 text-sm font-black text-zinc-950 hover:bg-white/90">
-              Entrar
-            </Button>
-          </Link>
+          {user ? (
+            <div className="flex items-center gap-3">
+              <Link to="/profile">
+                <Button className="rounded-full bg-white px-5 py-3 text-sm font-black text-zinc-950 hover:bg-white/90">
+                  Minha conta
+                </Button>
+              </Link>
+              <button
+                type="button"
+                onClick={logout}
+                className="rounded-full border border-white/15 bg-white/6 px-4 py-3 text-sm font-black text-white hover:bg-white/12"
+              >
+                Sair
+              </button>
+            </div>
+          ) : (
+            <Link to="/login">
+              <Button className="rounded-full bg-white px-5 py-3 text-sm font-black text-zinc-950 hover:bg-white/90">
+                Entrar
+              </Button>
+            </Link>
+          )}
         </div>
       </header>
 
@@ -308,11 +327,19 @@ export default function LandingPage() {
             </motion.p>
 
             <motion.div data-hero-actions className="mt-10 flex flex-wrap items-center gap-4">
-              <Link to="/login">
-                <Button className="rounded-full bg-white px-8 py-4 text-base font-black text-zinc-950 hover:bg-violet-50">
-                  Entrar
-                </Button>
-              </Link>
+              {user ? (
+                <Link to="/map">
+                  <Button className="rounded-full bg-white px-8 py-4 text-base font-black text-zinc-950 hover:bg-violet-50">
+                    Abrir mapa
+                  </Button>
+                </Link>
+              ) : (
+                <Link to="/login">
+                  <Button className="rounded-full bg-white px-8 py-4 text-base font-black text-zinc-950 hover:bg-violet-50">
+                    Entrar
+                  </Button>
+                </Link>
+              )}
               <Link to="/map">
                 <Button variant="outline" className="rounded-full border-white/18 bg-white/6 px-8 py-4 text-base font-bold text-white hover:bg-white/12">
                   Explorar mapa

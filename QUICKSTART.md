@@ -1,6 +1,5 @@
 # 🚀 VOZ URBANA - Guia de Início Rápido
 
-Parabéns! Seu projeto **VOZ URBANA** foi criado com sucesso! Aqui está tudo o que você precisa saber para começar.
 
 ## ⚡ Início Rápido (5 minutos)
 

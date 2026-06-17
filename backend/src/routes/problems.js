@@ -1,7 +1,30 @@
 const express = require('express');
+const fs = require('fs');
+const path = require('path');
+const multer = require('multer');
 const { Problem, Category, User, Image, Vote } = require('../models');
 const { asyncHandler } = require('../middlewares/errorHandler');
+const { authMiddleware } = require('../middlewares/auth');
 const { Op } = require('sequelize');
+
+// Preparar pasta de uploads
+const UPLOAD_DIR = path.resolve(process.cwd(), 'uploads', 'problems');
+if (!fs.existsSync(UPLOAD_DIR)) {
+  fs.mkdirSync(UPLOAD_DIR, { recursive: true });
+}
+
+const storage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    cb(null, UPLOAD_DIR);
+  },
+  filename: function (req, file, cb) {
+    const ext = path.extname(file.originalname);
+    const name = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}${ext}`;
+    cb(null, name);
+  }
+});
+
+const upload = multer({ storage, limits: { fileSize: 10 * 1024 * 1024 } });
 
 const router = express.Router();
 
@@ -57,12 +80,12 @@ router.get('/', asyncHandler(async (req, res) => {
   });
 }));
 
-// Criar problema
-router.post('/', asyncHandler(async (req, res) => {
+// Criar problema com imagens (autenticado)
+router.post('/', authMiddleware, upload.array('images', 6), asyncHandler(async (req, res) => {
   const { title, description, latitude, longitude, address, categoryId } = req.body;
   const userId = req.userId;
 
-  if (!req.userId) {
+  if (!userId) {
     return res.status(401).json({ error: 'Autenticação necessária' });
   }
 
@@ -76,10 +99,24 @@ router.post('/', asyncHandler(async (req, res) => {
     userId,
   });
 
+  // Salvar registros de imagens associadas
+  if (req.files && req.files.length > 0) {
+    const imagesToCreate = req.files.map((file) => ({
+      url: `/uploads/problems/${file.filename}`,
+      filename: file.originalname,
+      mimetype: file.mimetype,
+      size: file.size,
+      problemId: problem.id,
+    }));
+
+    await Image.bulkCreate(imagesToCreate);
+  }
+
   const fullProblem = await Problem.findByPk(problem.id, {
     include: [
       { model: Category, as: 'category' },
       { model: User, as: 'author', attributes: ['id', 'name', 'avatar'] },
+      { model: Image, as: 'images' },
     ],
   });
 

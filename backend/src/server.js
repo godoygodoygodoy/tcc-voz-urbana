@@ -4,7 +4,6 @@ const helmet = require('helmet');
 require('express-async-errors');
 require('dotenv').config();
 
-// Importar banco de dados
 const sequelize = require('./config/database');
 require('./models');
 
@@ -59,11 +58,12 @@ app.use(errorHandler);
 
 const PORT = process.env.PORT || 5000;
 
-// Sincronizar banco e iniciar servidor
+// Conectar ao banco e iniciar servidor
 (async () => {
   try {
-    await sequelize.sync({ alter: true });
-    console.log('✅ Banco de dados sincronizado');
+    await sequelize.authenticate();
+    await sequelize.sync();
+    console.log('✅ Banco de dados conectado e sincronizado com sucesso');
     
     app.listen(PORT, () => {
       console.log(`🚀 Servidor rodando em http://localhost:${PORT}`);

@@ -1,0 +1,134 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(cuid())
+  name      String
+  email     String   @unique
+  password  String
+  phone     String?
+  role      Role     @default(user)
+  avatar    String?
+  bio       String?
+  isActive  Boolean  @default(true)
+  lastLogin DateTime?
+
+  problems      Problem[]
+  votes         Vote[]
+  verifiedProblems Problem[] @relation("verifiedBy")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+enum Role {
+  user
+  moderator
+  admin
+}
+
+model Category {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  description String?
+  color     String   @default("#7C3AED")
+  icon      String?
+  isActive  Boolean  @default(true)
+  
+  problems  Problem[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Problem {
+  id          String   @id @default(cuid())
+  title       String
+  description String
+  latitude    Float
+  longitude   Float
+  address     String?
+  status      Status   @default(open)
+  priority    Priority @default(medium)
+  votes       Int      @default(0)
+  views       Int      @default(0)
+  isVerified  Boolean  @default(false)
+
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  categoryId  String
+  category    Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+
+  verifiedById String?
+  verifiedBy  User?    @relation("verifiedBy", fields: [verifiedById], references: [id], onDelete: SetNull)
+
+  images      Image[]
+  voteRecords Vote[] @relation("voteRecords")
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([latitude, longitude])
+  @@index([status])
+  @@index([userId])
+  @@index([categoryId])
+}
+
+enum Status {
+  open
+  in_progress
+  resolved
+  closed
+}
+
+enum Priority {
+  low
+  medium
+  high
+  critical
+}
+
+model Image {
+  id        String   @id @default(cuid())
+  url       String
+  filename  String
+  mimetype  String?
+  size      Int?
+
+  problemId String
+  problem   Problem  @relation(fields: [problemId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Vote {
+  id        String   @id @default(cuid())
+  type      VoteType @default(up)
+
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  problemId String
+  problem   Problem  @relation("voteRecords", fields: [problemId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId, problemId])
+}
+
+enum VoteType {
+  up
+  down
+}

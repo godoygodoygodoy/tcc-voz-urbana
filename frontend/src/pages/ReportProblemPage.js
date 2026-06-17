@@ -16,6 +16,8 @@ const ReportProblemPage = () => {
   });
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [images, setImages] = useState([]);
+  const [previews, setPreviews] = useState([]);
   const [loadingCategories, setLoadingCategories] = useState(true);
   const { user } = useAuthStore();
   const navigate = useNavigate();
@@ -54,6 +56,21 @@ const ReportProblemPage = () => {
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
+  const handleFilesChange = (e) => {
+    const files = Array.from(e.target.files || []);
+    setImages(files);
+
+    const nextPreviews = files.map((file) => URL.createObjectURL(file));
+    setPreviews(nextPreviews);
+  };
+
+  const removeImage = (index) => {
+    const nextImages = images.filter((_, i) => i !== index);
+    setImages(nextImages);
+    const nextPreviews = nextImages.map((f) => URL.createObjectURL(f));
+    setPreviews(nextPreviews);
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
 
@@ -65,11 +82,17 @@ const ReportProblemPage = () => {
     setLoading(true);
 
     try {
-      await problemsAPI.create({
-        ...formData,
-        latitude: parseFloat(formData.latitude),
-        longitude: parseFloat(formData.longitude),
-      });
+      const payload = new FormData();
+      payload.append('title', formData.title);
+      payload.append('description', formData.description);
+      if (formData.address) payload.append('address', formData.address);
+      payload.append('latitude', parseFloat(formData.latitude));
+      payload.append('longitude', parseFloat(formData.longitude));
+      payload.append('categoryId', formData.categoryId);
+
+      images.forEach((file) => payload.append('images', file));
+
+      await problemsAPI.create(payload);
       toast.success('Problema reportado com sucesso!');
       navigate('/');
     } catch (error) {
@@ -145,6 +168,34 @@ const ReportProblemPage = () => {
                 className="w-full border rounded-lg p-3"
                 placeholder="Rua, número, bairro..."
               />
+            </div>
+
+            <div>
+              <label className="block text-sm font-semibold mb-2">Imagens (opcional)</label>
+              <input
+                type="file"
+                accept="image/*"
+                multiple
+                onChange={handleFilesChange}
+                className="w-full"
+              />
+
+              {previews.length > 0 && (
+                <div className="mt-3 grid grid-cols-3 gap-2">
+                  {previews.map((src, idx) => (
+                    <div key={src} className="relative">
+                      <img src={src} alt={`preview-${idx}`} className="w-full h-24 object-cover rounded-md" />
+                      <button
+                        type="button"
+                        onClick={() => removeImage(idx)}
+                        className="absolute top-1 right-1 bg-white/80 rounded-full p-1 text-sm"
+                      >
+                        ✕
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

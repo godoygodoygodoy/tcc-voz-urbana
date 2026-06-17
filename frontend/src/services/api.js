@@ -40,7 +40,12 @@ export const authAPI = {
 // Problems
 export const problemsAPI = {
   list: (params) => api.get('/problems', { params }),
-  create: (data) => api.post('/problems', data),
+  create: (data) => {
+    if (data instanceof FormData) {
+      return api.post('/problems', data, { headers: { 'Content-Type': 'multipart/form-data' } });
+    }
+    return api.post('/problems', data);
+  },
   get: (id) => api.get(`/problems/${id}`),
 };
 
