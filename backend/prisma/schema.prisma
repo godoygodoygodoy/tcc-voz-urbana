@@ -1,6 +1,7 @@
 // This is your Prisma schema file,
 // learn more about it in the docs: https://pris.ly/d/prisma-schema
 
+<<<<<<< HEAD
 generator client {
   provider = "prisma-client-js"
 }
@@ -132,3 +133,145 @@ enum VoteType {
   up
   down
 }
+=======
+// Get a free hosted Postgres database in seconds: `npx create-db`
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "mysql"
+}
+
+// ─────────────────────────────────────────
+// Enums
+// ─────────────────────────────────────────
+
+enum StatusProblema {
+  ABERTO
+  EM_ANDAMENTO
+  RESOLVIDO
+  REJEITADO
+}
+
+enum NivelAdmin {
+  MODERADOR
+  ADMIN
+  SUPER_ADMIN
+}
+
+enum TipoVoto {
+  CONFIRMAR   // "Eu vi esse problema também"
+  RESOLVER    // "Esse problema foi resolvido"
+}
+
+// ─────────────────────────────────────────
+// Modelos principais
+// ─────────────────────────────────────────
+
+model Usuario {
+  id           String    @id @default(uuid()) @db.Char(36)
+  nome         String    @db.VarChar(100)
+  email        String    @unique @db.VarChar(150)
+  senhaHash    String    @map("senha_hash") @db.VarChar(255)
+  fotoPerfil   String?   @map("foto_perfil") @db.VarChar(500)
+  dataCriacao  DateTime  @default(now()) @map("data_criacao")
+
+  // Relacionamentos
+  problemas    Problema[]
+  votos        Voto[]
+  admin        Admin?
+  logs         Log[]
+
+  @@map("usuarios")
+}
+
+model Categoria {
+  id        String     @id @default(uuid()) @db.Char(36)
+  nome      String     @unique @db.VarChar(80)
+
+  problemas Problema[]
+
+  @@map("categorias")
+}
+
+model Problema {
+  id          String         @id @default(uuid()) @db.Char(36)
+  titulo      String         @db.VarChar(150)
+  descricao   String         @db.Text
+  latitude    Decimal        @db.Decimal(10, 7)
+  longitude   Decimal        @db.Decimal(10, 7)
+  endereco    String?        @db.VarChar(300)  // endereço legível retornado pela Google Places API
+  status      StatusProblema @default(ABERTO)
+  dataCriacao DateTime       @default(now()) @map("data_criacao")
+
+  // Chaves estrangeiras
+  usuarioId   String @map("usuario_id") @db.Char(36)
+  categoriaId String @map("categoria_id") @db.Char(36)
+
+  // Relacionamentos
+  usuario     Usuario   @relation(fields: [usuarioId], references: [id])
+  categoria   Categoria @relation(fields: [categoriaId], references: [id])
+  imagens     Imagem[]
+  votos       Voto[]
+
+  // Índice espacial para o mapa interativo (pós-MVP)
+  @@index([latitude, longitude])
+  @@index([status])
+  @@index([categoriaId])
+  @@map("problemas")
+}
+
+model Imagem {
+  id         String  @id @default(uuid()) @db.Char(36)
+  url        String  @db.VarChar(500)
+  problemaId String  @map("problema_id") @db.Char(36)
+
+  problema   Problema @relation(fields: [problemaId], references: [id], onDelete: Cascade)
+
+  @@map("imagens")
+}
+
+model Voto {
+  id         String   @id @default(uuid()) @db.Char(36)
+  tipo       TipoVoto @default(CONFIRMAR)
+  usuarioId  String   @map("usuario_id") @db.Char(36)
+  problemaId String   @map("problema_id") @db.Char(36)
+
+  usuario    Usuario  @relation(fields: [usuarioId], references: [id])
+  problema   Problema @relation(fields: [problemaId], references: [id], onDelete: Cascade)
+
+  // Um usuário pode votar apenas uma vez por problema
+  @@unique([usuarioId, problemaId])
+  @@map("votos")
+}
+
+// ─────────────────────────────────────────
+// Modelos opcionais
+// ─────────────────────────────────────────
+
+model Admin {
+  id        String     @id @default(uuid()) @db.Char(36)
+  nivel     NivelAdmin @default(MODERADOR)
+  usuarioId String     @unique @map("usuario_id") @db.Char(36)
+
+  usuario   Usuario @relation(fields: [usuarioId], references: [id])
+
+  @@map("admins")
+}
+
+model Log {
+  id        String   @id @default(uuid()) @db.Char(36)
+  acao      String   @db.VarChar(200)
+  data      DateTime @default(now())
+  usuarioId String   @map("usuario_id") @db.Char(36)
+
+  usuario   Usuario @relation(fields: [usuarioId], references: [id])
+
+  @@index([usuarioId])
+  @@map("logs")
+}
+
+>>>>>>> 37770fa3ef31f035f4517cb371066a8425473d5e

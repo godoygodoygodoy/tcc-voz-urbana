@@ -1,29 +1,62 @@
-const express = require('express');
-const { User } = require('../models');
-const { authMiddleware } = require('../middlewares/auth');
-const { asyncHandler } = require('../middlewares/errorHandler');
+import express from "express";
+import { prisma } from "../config/prisma.js";
+import { authMiddleware } from "../middlewares/auth.js";
+import { asyncHandler } from "../middlewares/errorHandler.js";
 
 const router = express.Router();
 
 // Perfil do usuário
-router.get('/me', asyncHandler(async (req, res) => {
-  const user = await User.findByPk(req.userId);
-  res.json(user.toJSON());
-}));
+router.get(
+  "/me",
+  asyncHandler(async (req, res) => {
+    const user = await prisma.usuario.findUnique({
+      where: { id: req.userId },
+      select: {
+        id: true,
+        nome: true,
+        email: true,
+        telefone: true,
+        role: true,
+        fotoPerfil: true,
+        bio: true,
+        ativo: true,
+        ultimoLogin: true,
+        dataCriacao: true
+      }
+    });
+    res.json(user);
+  })
+);
 
 // Atualizar perfil
-router.put('/me', asyncHandler(async (req, res) => {
-  const { name, phone, bio, avatar } = req.body;
-  const user = await User.findByPk(req.userId);
+router.put(
+  "/me",
+  asyncHandler(async (req, res) => {
+    const { name, phone, bio, avatar } = req.body;
 
-  await user.update({
-    name: name || user.name,
-    phone: phone || user.phone,
-    bio: bio || user.bio,
-    avatar: avatar || user.avatar,
-  });
+    const user = await prisma.usuario.update({
+      where: { id: req.userId },
+      data: {
+        nome: name,
+        telefone: phone,
+        bio: bio,
+        fotoPerfil: avatar
+      },
+      select: {
+        id: true,
+        nome: true,
+        email: true,
+        telefone: true,
+        role: true,
+        fotoPerfil: true,
+        bio: true,
+        ativo: true,
+        dataCriacao: true
+      }
+    });
 
-  res.json(user.toJSON());
-}));
+    res.json(user);
+  })
+);
 
-module.exports = router;
+export default router;
