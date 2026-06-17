@@ -15,12 +15,7 @@ router.get(
         id: true,
         nome: true,
         email: true,
-        telefone: true,
-        role: true,
         fotoPerfil: true,
-        bio: true,
-        ativo: true,
-        ultimoLogin: true,
         dataCriacao: true
       }
     });
@@ -32,25 +27,19 @@ router.get(
 router.put(
   "/me",
   asyncHandler(async (req, res) => {
-    const { name, phone, bio, avatar } = req.body;
+    const { name, avatar } = req.body;
 
     const user = await prisma.usuario.update({
       where: { id: req.userId },
       data: {
-        nome: name,
-        telefone: phone,
-        bio: bio,
-        fotoPerfil: avatar
+        ...(name && { nome: name }),
+        ...(avatar && { fotoPerfil: avatar })
       },
       select: {
         id: true,
         nome: true,
         email: true,
-        telefone: true,
-        role: true,
         fotoPerfil: true,
-        bio: true,
-        ativo: true,
         dataCriacao: true
       }
     });

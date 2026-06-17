@@ -50,14 +50,13 @@ router.post(
         id: true,
         nome: true,
         email: true,
-        role: true,
         fotoPerfil: true,
         dataCriacao: true
       }
     });
 
     const token = jwt.sign(
-      { id: user.id, email: user.email, role: user.role },
+      { id: user.id, email: user.email },
       process.env.JWT_SECRET,
       { expiresIn: process.env.JWT_EXPIRE || "7d" }
     );
@@ -94,13 +93,8 @@ router.post(
       return res.status(401).json({ error: "Credenciais inválidas" });
     }
 
-    await prisma.usuario.update({
-      where: { id: user.id },
-      data: { ultimoLogin: new Date() }
-    });
-
     const token = jwt.sign(
-      { id: user.id, email: user.email, role: user.role },
+      { id: user.id, email: user.email },
       process.env.JWT_SECRET,
       { expiresIn: process.env.JWT_EXPIRE || "7d" }
     );

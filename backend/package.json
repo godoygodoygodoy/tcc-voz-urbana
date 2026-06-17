@@ -7,7 +7,10 @@
   "scripts": {
     "start": "node src/server.js",
     "dev": "nodemon src/server.js",
-    "test": "jest --watchAll=false"
+    "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js --watchAll=false",
+    "test:watch": "node --experimental-vm-modules node_modules/jest/bin/jest.js --watch",
+    "test:coverage": "node --experimental-vm-modules node_modules/jest/bin/jest.js --coverage --watchAll=false",
+    "test:verbose": "node --experimental-vm-modules node_modules/jest/bin/jest.js --verbose --watchAll=false"
   },
   "keywords": [
     "urbano",

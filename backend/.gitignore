@@ -1,15 +1,19 @@
 node_modules
-<<<<<<< HEAD
-# Keep environment variables out of version control
-.env
+generated
+/src/generated/prisma
+/generated/prisma
 
+# Environment variables
+.env
+.env.local
+
+# Database
 *.db
 
-/src/generated/prisma
-=======
-generated
-# Keep environment variables out of version control
-.env
+# Test coverage
+coverage/
+*.lcov
 
-/generated/prisma
->>>>>>> 37770fa3ef31f035f4517cb371066a8425473d5e
+# Uploads (desenvolvimento)
+uploads/
+
