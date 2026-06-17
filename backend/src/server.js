@@ -4,13 +4,8 @@ import helmet from "helmet";
 import "express-async-errors";
 import "dotenv/config";
 
-<<<<<<< HEAD
-const sequelize = require('./config/database');
-require('./models');
-=======
 // Importar banco de dados
 import { prisma } from "./config/prisma.js";
->>>>>>> 37770fa3ef31f035f4517cb371066a8425473d5e
 
 // Importar rotas
 import authRoutes from "./routes/auth.js";
@@ -68,16 +63,9 @@ const PORT = process.env.PORT || 5000;
 // Conectar ao banco e iniciar servidor
 (async () => {
   try {
-<<<<<<< HEAD
-    await sequelize.authenticate();
-    await sequelize.sync();
-    console.log('✅ Banco de dados conectado e sincronizado com sucesso');
-    
-=======
     await prisma.$connect();
     console.log("✅ Conectado ao banco de dados MySQL via Prisma");
 
->>>>>>> 37770fa3ef31f035f4517cb371066a8425473d5e
     app.listen(PORT, () => {
       console.log(`🚀 Servidor rodando em http://localhost:${PORT}`);
       console.log(`Ambiente: ${process.env.NODE_ENV}`);

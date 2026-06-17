@@ -1,20 +1,9 @@
-<<<<<<< HEAD
-const express = require('express');
-const fs = require('fs');
-const path = require('path');
-const multer = require('multer');
-const { Problem, Category, User, Image, Vote } = require('../models');
-const { asyncHandler } = require('../middlewares/errorHandler');
-const { authMiddleware } = require('../middlewares/auth');
-const { Op } = require('sequelize');
-=======
 import express from "express";
 import { prisma } from "../config/prisma.js";
 import { asyncHandler } from "../middlewares/errorHandler.js";
->>>>>>> 37770fa3ef31f035f4517cb371066a8425473d5e
 
 // Preparar pasta de uploads
-const UPLOAD_DIR = path.resolve(process.cwd(), 'uploads', 'problems');
+const UPLOAD_DIR = path.resolve(process.cwd(), "uploads", "problems");
 if (!fs.existsSync(UPLOAD_DIR)) {
   fs.mkdirSync(UPLOAD_DIR, { recursive: true });
 }
@@ -106,16 +95,6 @@ router.get(
   })
 );
 
-<<<<<<< HEAD
-// Criar problema com imagens (autenticado)
-router.post('/', authMiddleware, upload.array('images', 6), asyncHandler(async (req, res) => {
-  const { title, description, latitude, longitude, address, categoryId } = req.body;
-  const userId = req.userId;
-
-  if (!userId) {
-    return res.status(401).json({ error: 'Autenticação necessária' });
-  }
-=======
 // Criar problema
 router.post(
   "/",
@@ -127,7 +106,6 @@ router.post(
     if (!req.userId) {
       return res.status(401).json({ error: "Autenticação necessária" });
     }
->>>>>>> 37770fa3ef31f035f4517cb371066a8425473d5e
 
     const problem = await prisma.problema.create({
       data: {
@@ -151,35 +129,9 @@ router.post(
       }
     });
 
-<<<<<<< HEAD
-  // Salvar registros de imagens associadas
-  if (req.files && req.files.length > 0) {
-    const imagesToCreate = req.files.map((file) => ({
-      url: `/uploads/problems/${file.filename}`,
-      filename: file.originalname,
-      mimetype: file.mimetype,
-      size: file.size,
-      problemId: problem.id,
-    }));
-
-    await Image.bulkCreate(imagesToCreate);
-  }
-
-  const fullProblem = await Problem.findByPk(problem.id, {
-    include: [
-      { model: Category, as: 'category' },
-      { model: User, as: 'author', attributes: ['id', 'name', 'avatar'] },
-      { model: Image, as: 'images' },
-    ],
-  });
-
-  res.status(201).json(fullProblem);
-}));
-=======
     res.status(201).json(problem);
   })
 );
->>>>>>> 37770fa3ef31f035f4517cb371066a8425473d5e
 
 // Obter problema por ID
 router.get(
