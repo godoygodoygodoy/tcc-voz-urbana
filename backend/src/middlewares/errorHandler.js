@@ -9,18 +9,24 @@ const errorHandler = (err, req, res, next) => {
     });
   }
 
-  // Erros de sequelize
-  if (err.name === 'SequelizeValidationError') {
+  // Erros do Prisma
+  if (err.name === 'PrismaClientValidationError') {
     return res.status(400).json({
       error: 'Erro de validação',
-      details: err.errors.map(e => e.message)
+      details: [err.message]
     });
   }
 
-  if (err.name === 'SequelizeUniqueConstraintError') {
+  if (err.code === 'P2002') {
     return res.status(409).json({
       error: 'Campo duplicado',
-      field: err.errors[0].path
+      field: Array.isArray(err.meta?.target) ? err.meta.target.join(', ') : err.meta?.target
+    });
+  }
+
+  if (err.code === 'P2025') {
+    return res.status(404).json({
+      error: 'Registro não encontrado'
     });
   }
 

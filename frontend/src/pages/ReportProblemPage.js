@@ -2,8 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { problemsAPI, categoriesAPI } from '../services/api';
 import { toast } from 'react-toastify';
-import { useAuthStore } from '../store';
-import { FiMapPin, FiType } from 'react-icons/fi';
 
 const ReportProblemPage = () => {
   const [formData, setFormData] = useState({
@@ -17,7 +15,6 @@ const ReportProblemPage = () => {
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(false);
   const [loadingCategories, setLoadingCategories] = useState(true);
-  const { user } = useAuthStore();
   const navigate = useNavigate();
 
   useEffect(() => {

@@ -145,14 +145,6 @@ export default function LandingPage() {
         ease: 'power2.out',
       });
 
-      gsap.from('[data-hero-panel]', {
-        x: 36,
-        opacity: 0,
-        duration: 1.1,
-        delay: 0.25,
-        ease: 'power3.out',
-      });
-
       gsap.to('[data-hero-orb]', {
         y: 18,
         duration: 4.5,
@@ -338,7 +330,7 @@ export default function LandingPage() {
             initial={{ opacity: 0, x: 36 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.9, ease: 'easeOut', delay: 0.15 }}
-            className="relative"
+            className="relative z-20"
           >
             <div className="absolute -inset-4 rounded-[2.25rem] bg-[radial-gradient(circle_at_top,rgba(124,58,237,0.24),transparent_48%),radial-gradient(circle_at_bottom_right,rgba(168,85,247,0.14),transparent_35%)] blur-2xl" />
 

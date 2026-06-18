@@ -1,0 +1,100 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id         String    @id @default(uuid())
+  name       String
+  email      String    @unique
+  password   String
+  phone      String?
+  role       String    @default("user")
+  avatar     String?
+  avatarPositionX Float @default(50)
+  avatarPositionY Float @default(50)
+  bio        String?
+  isActive   Boolean   @default(true)
+  emailVerified Boolean @default(false)
+  emailVerificationToken String?
+  emailVerificationExpires DateTime?
+  lastLogin  DateTime?
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+
+  problems   Problem[] @relation("UserProblems")
+  votes      Vote[]
+}
+
+model Category {
+  id          String    @id @default(uuid())
+  name        String    @unique
+  description String?
+  color       String    @default("#7C3AED")
+  icon        String?
+  isActive    Boolean   @default(true)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  problems    Problem[]
+}
+
+model Problem {
+  id           String    @id @default(uuid())
+  title        String
+  description  String
+  latitude     Float
+  longitude    Float
+  address      String?
+  status       String    @default("open")
+  priority     String    @default("medium")
+  votes        Int       @default(0)
+  views        Int       @default(0)
+  isVerified   Boolean   @default(false)
+  verifiedById String?
+  userId       String
+  categoryId   String
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  author       User      @relation("UserProblems", fields: [userId], references: [id], onDelete: Cascade)
+  category     Category  @relation(fields: [categoryId], references: [id])
+  images       Image[]
+  voteRecords  Vote[]
+
+  @@index([latitude, longitude])
+  @@index([status])
+  @@index([userId])
+  @@index([categoryId])
+}
+
+model Image {
+  id        String   @id @default(uuid())
+  url       String
+  filename  String
+  mimetype  String?
+  size      Int?
+  problemId String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  problem   Problem  @relation(fields: [problemId], references: [id], onDelete: Cascade)
+}
+
+model Vote {
+  id        String   @id @default(uuid())
+  type      String   @default("up")
+  userId    String
+  problemId String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  problem   Problem  @relation(fields: [problemId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, problemId])
+}

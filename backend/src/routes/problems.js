@@ -1,7 +1,6 @@
 const express = require('express');
-const { Problem, Category, User, Image, Vote } = require('../models');
+const prisma = require('../config/database');
 const { asyncHandler } = require('../middlewares/errorHandler');
-const { Op } = require('sequelize');
 
 const router = express.Router();
 
@@ -17,7 +16,9 @@ router.get('/', asyncHandler(async (req, res) => {
     radius = 5, // km
   } = req.query;
 
-  const offset = (page - 1) * limit;
+  const pageNumber = parseInt(page, 10);
+  const limitNumber = parseInt(limit, 10);
+  const offset = (pageNumber - 1) * limitNumber;
   const where = { status };
 
   // Filtro por categoria
@@ -32,27 +33,31 @@ router.get('/', asyncHandler(async (req, res) => {
     const latOffset = radius / 111; // 1 degree ~= 111 km
     const lngOffset = radius / (111 * Math.cos(latNum * Math.PI / 180));
 
-    where.latitude = { [Op.between]: [latNum - latOffset, latNum + latOffset] };
-    where.longitude = { [Op.between]: [lngNum - lngOffset, lngNum + lngOffset] };
+    where.latitude = { gte: latNum - latOffset, lte: latNum + latOffset };
+    where.longitude = { gte: lngNum - lngOffset, lte: lngNum + lngOffset };
   }
 
-  const { count, rows } = await Problem.findAndCountAll({
-    where,
-    include: [
-      { model: Category, as: 'category' },
-      { model: User, as: 'author', attributes: ['id', 'name', 'avatar'] },
-      { model: Image, as: 'images' },
-      { model: Vote, as: 'voteRecords', attributes: [] },
-    ],
-    offset,
-    limit: parseInt(limit),
-    order: [['createdAt', 'DESC']],
-  });
+  const [count, rows] = await Promise.all([
+    prisma.problem.count({ where }),
+    prisma.problem.findMany({
+      where,
+      include: {
+        category: true,
+        author: {
+          select: { id: true, name: true, avatar: true },
+        },
+        images: true,
+      },
+      skip: offset,
+      take: limitNumber,
+      orderBy: { createdAt: 'desc' },
+    }),
+  ]);
 
   res.json({
     total: count,
-    page: parseInt(page),
-    limit: parseInt(limit),
+    page: pageNumber,
+    limit: limitNumber,
     data: rows,
   });
 }));
@@ -66,21 +71,25 @@ router.post('/', asyncHandler(async (req, res) => {
     return res.status(401).json({ error: 'Autenticação necessária' });
   }
 
-  const problem = await Problem.create({
-    title,
-    description,
-    latitude: parseFloat(latitude),
-    longitude: parseFloat(longitude),
-    address,
-    categoryId,
-    userId,
+  const problem = await prisma.problem.create({
+    data: {
+      title,
+      description,
+      latitude: parseFloat(latitude),
+      longitude: parseFloat(longitude),
+      address,
+      categoryId,
+      userId,
+    },
   });
 
-  const fullProblem = await Problem.findByPk(problem.id, {
-    include: [
-      { model: Category, as: 'category' },
-      { model: User, as: 'author', attributes: ['id', 'name', 'avatar'] },
-    ],
+  const fullProblem = await prisma.problem.findUnique({
+    where: { id: problem.id },
+    include: {
+      category: true,
+      author: { select: { id: true, name: true, avatar: true } },
+      images: true,
+    },
   });
 
   res.status(201).json(fullProblem);
@@ -88,21 +97,30 @@ router.post('/', asyncHandler(async (req, res) => {
 
 // Obter problema por ID
 router.get('/:id', asyncHandler(async (req, res) => {
-  const problem = await Problem.findByPk(req.params.id, {
-    include: [
-      { model: Category, as: 'category' },
-      { model: User, as: 'author', attributes: ['id', 'name', 'avatar'] },
-      { model: Image, as: 'images' },
-      { model: Vote, as: 'voteRecords' },
-    ],
+  const problem = await prisma.problem.findUnique({
+    where: { id: req.params.id },
+    include: {
+      category: true,
+      author: { select: { id: true, name: true, avatar: true } },
+      images: true,
+    },
   });
 
   if (!problem) {
     return res.status(404).json({ error: 'Problema não encontrado' });
   }
 
-  await problem.increment('views');
-  res.json(problem);
+  const updatedProblem = await prisma.problem.update({
+    where: { id: req.params.id },
+    data: { views: { increment: 1 } },
+    include: {
+      category: true,
+      author: { select: { id: true, name: true, avatar: true } },
+      images: true,
+    },
+  });
+
+  res.json(updatedProblem);
 }));
 
 module.exports = router;

@@ -1,6 +1,5 @@
 const express = require('express');
-const { adminMiddleware } = require('../middlewares/auth');
-const { Problem, Category, User } = require('../models');
+const prisma = require('../config/database');
 const { asyncHandler } = require('../middlewares/errorHandler');
 
 const router = express.Router();
@@ -9,12 +8,7 @@ const router = express.Router();
 router.post('/categories', asyncHandler(async (req, res) => {
   const { name, description, color, icon } = req.body;
 
-  const category = await Category.create({
-    name,
-    description,
-    color,
-    icon,
-  });
+  const category = await prisma.category.create({ data: { name, description, color, icon } });
 
   res.status(201).json(category);
 }));
@@ -22,27 +16,42 @@ router.post('/categories', asyncHandler(async (req, res) => {
 // Atualizar problema (status, prioridade)
 router.put('/problems/:id', asyncHandler(async (req, res) => {
   const { status, priority, isVerified, verifiedBy } = req.body;
-  const problem = await Problem.findByPk(req.params.id);
+  const problem = await prisma.problem.findUnique({ where: { id: req.params.id } });
 
   if (!problem) {
     return res.status(404).json({ error: 'Problema não encontrado' });
   }
 
-  await problem.update({
-    status: status || problem.status,
-    priority: priority || problem.priority,
-    isVerified: isVerified !== undefined ? isVerified : problem.isVerified,
-    verifiedBy: verifiedBy || problem.verifiedBy,
+  const updatedProblem = await prisma.problem.update({
+    where: { id: req.params.id },
+    data: {
+      status: status || problem.status,
+      priority: priority || problem.priority,
+      isVerified: isVerified !== undefined ? isVerified : problem.isVerified,
+      verifiedById: verifiedBy || problem.verifiedById,
+    },
   });
 
-  res.json(problem);
+  res.json(updatedProblem);
 }));
 
 // Listar usuários
 router.get('/users', asyncHandler(async (req, res) => {
-  const users = await User.findAll({
-    attributes: { exclude: ['password'] },
-    order: [['createdAt', 'DESC']],
+  const users = await prisma.user.findMany({
+    orderBy: { createdAt: 'desc' },
+    select: {
+      id: true,
+      name: true,
+      email: true,
+      phone: true,
+      role: true,
+      avatar: true,
+      bio: true,
+      isActive: true,
+      lastLogin: true,
+      createdAt: true,
+      updatedAt: true,
+    },
   });
 
   res.json(users);
@@ -51,23 +60,30 @@ router.get('/users', asyncHandler(async (req, res) => {
 // Atualizar role de usuário
 router.put('/users/:id/role', asyncHandler(async (req, res) => {
   const { role } = req.body;
-  const user = await User.findByPk(req.params.id);
+  const user = await prisma.user.findUnique({ where: { id: req.params.id } });
 
   if (!user) {
     return res.status(404).json({ error: 'Usuário não encontrado' });
   }
 
-  await user.update({ role });
-  res.json(user.toJSON());
+  const updatedUser = await prisma.user.update({
+    where: { id: req.params.id },
+    data: { role },
+  });
+
+  const { password, ...safeUser } = updatedUser;
+  res.json(safeUser);
 }));
 
 // Obter estatísticas
 router.get('/stats', asyncHandler(async (req, res) => {
-  const totalProblems = await Problem.count();
-  const openProblems = await Problem.count({ where: { status: 'open' } });
-  const resolvedProblems = await Problem.count({ where: { status: 'resolved' } });
-  const totalUsers = await User.count();
-  const totalCategories = await Category.count();
+  const [totalProblems, openProblems, resolvedProblems, totalUsers, totalCategories] = await Promise.all([
+    prisma.problem.count(),
+    prisma.problem.count({ where: { status: 'open' } }),
+    prisma.problem.count({ where: { status: 'resolved' } }),
+    prisma.user.count(),
+    prisma.category.count(),
+  ]);
 
   res.json({
     totalProblems,

@@ -48,6 +48,18 @@ const Header = () => {
 
             {user ? (
               <>
+                {user.avatar ? (
+                  <Link to="/profile" className="hidden sm:block">
+                    <div className="h-10 w-10 overflow-hidden rounded-full border border-white/10 bg-white/10">
+                      <img
+                        src={user.avatar}
+                        alt={user.name || 'Avatar do usuário'}
+                        className="h-full w-full object-cover"
+                        style={{ objectPosition: `${user.avatarPositionX || 50}% ${user.avatarPositionY || 50}%` }}
+                      />
+                    </div>
+                  </Link>
+                ) : null}
                 <Link to="/profile" className="text-gray-700 hover:text-primary-600">
                   <FiUser size={20} />
                 </Link>

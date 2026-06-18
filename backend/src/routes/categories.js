@@ -1,14 +1,14 @@
 const express = require('express');
-const { Category } = require('../models');
+const prisma = require('../config/database');
 const { asyncHandler } = require('../middlewares/errorHandler');
 
 const router = express.Router();
 
 // Listar categorias
 router.get('/', asyncHandler(async (req, res) => {
-  const categories = await Category.findAll({
+  const categories = await prisma.category.findMany({
     where: { isActive: true },
-    order: [['name', 'ASC']],
+    orderBy: { name: 'asc' },
   });
 
   res.json(categories);
@@ -16,7 +16,9 @@ router.get('/', asyncHandler(async (req, res) => {
 
 // Obter categoria por ID
 router.get('/:id', asyncHandler(async (req, res) => {
-  const category = await Category.findByPk(req.params.id);
+  const category = await prisma.category.findUnique({
+    where: { id: req.params.id },
+  });
 
   if (!category) {
     return res.status(404).json({ error: 'Categoria não encontrada' });

@@ -12,6 +12,7 @@ import LandingPage from './pages/LandingPage';
 import HomePage from './pages/HomePage';
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
+import VerifyEmailPage from './pages/VerifyEmailPage';
 import ProblemDetailPage from './pages/ProblemDetailPage';
 import ReportProblemPage from './pages/ReportProblemPage';
 import AdminDashboard from './pages/AdminDashboard';
@@ -41,6 +42,7 @@ function App() {
                   <Route path="/map" element={<HomePage />} />
                   <Route path="/login" element={user ? <Navigate to="/" /> : <LoginPage />} />
                   <Route path="/register" element={user ? <Navigate to="/" /> : <RegisterPage />} />
+                  <Route path="/verify-email" element={<VerifyEmailPage />} />
                   <Route path="/problem/:id" element={<ProblemDetailPage />} />
 
                   {/* Rotas protegidas */}

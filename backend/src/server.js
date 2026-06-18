@@ -4,9 +4,7 @@ const helmet = require('helmet');
 require('express-async-errors');
 require('dotenv').config();
 
-// Importar banco de dados
-const sequelize = require('./config/database');
-require('./models');
+const prisma = require('./config/database');
 
 // Importar rotas
 const authRoutes = require('./routes/auth');
@@ -18,7 +16,7 @@ const adminRoutes = require('./routes/admin');
 
 // Importar middlewares
 const { errorHandler } = require('./middlewares/errorHandler');
-const { authMiddleware } = require('./middlewares/auth');
+const { authMiddleware, adminMiddleware } = require('./middlewares/auth');
 
 const app = express();
 
@@ -47,7 +45,7 @@ app.use('/api/problems', problemRoutes);
 // Rotas protegidas
 app.use('/api/users', authMiddleware, userRoutes);
 app.use('/api/votes', authMiddleware, voteRoutes);
-app.use('/api/admin', authMiddleware, adminRoutes);
+app.use('/api/admin', authMiddleware, adminMiddleware, adminRoutes);
 
 // 404 handler
 app.use((req, res) => {
@@ -59,11 +57,11 @@ app.use(errorHandler);
 
 const PORT = process.env.PORT || 5000;
 
-// Sincronizar banco e iniciar servidor
+// Conectar ao banco e iniciar servidor
 (async () => {
   try {
-    await sequelize.sync({ alter: true });
-    console.log('✅ Banco de dados sincronizado');
+    await prisma.$connect();
+    console.log('✅ Banco Prisma conectado');
     
     app.listen(PORT, () => {
       console.log(`🚀 Servidor rodando em http://localhost:${PORT}`);
