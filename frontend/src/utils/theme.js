@@ -1,12 +1,14 @@
-const purplePalette = ['#4C1D95', '#6D28D9', '#7C3AED', '#8B5CF6', '#A855F7', '#C084FC'];
+export const getPurpleTone = (category = '') => {
+  const colors = {
+    Asfalto: '#64008b',
+    Lixo: '#ff71b8',
+    Vegetação: '#2cce03',
+    Iluminação: '#e2006a',
+    Sinalização: '#12d0f1',
+    Saneamento: '#bb46ff',
+  };
 
-const hashString = (value = '') => String(value)
-  .split('')
-  .reduce((hash, char) => (hash * 31 + char.charCodeAt(0)) >>> 0, 0);
-
-export const getPurpleTone = (seed = 0) => {
-  const key = typeof seed === 'number' ? seed : hashString(seed);
-  return purplePalette[key % purplePalette.length];
+  return colors[category] || '#7C3AED';
 };
 
 export const getStatusTone = (status = '') => {
