@@ -724,19 +724,19 @@ export default function LandingPage() {
               <Card className="glass-panel rounded-[1.5rem] border-white/10 bg-white/6 text-white">
                 <CardContent className="flex items-center gap-4 p-6">
                   <Mail className="h-6 w-6 text-violet-300" />
-                  <span className="font-bold">WhatsApp</span>
+                  <span className="font-bold">WhatsApp: (19) 99851-3212</span>
                 </CardContent>
               </Card>
               <Card className="glass-panel rounded-[1.5rem] border-white/10 bg-white/6 text-white">
                 <CardContent className="flex items-center gap-4 p-6">
                   <Phone className="h-6 w-6 text-violet-300" />
-                  <span className="font-bold">Telefone</span>
+                  <span className="font-bold">Telefone: (19) 99851-3212</span>
                 </CardContent>
               </Card>
               <Card className="glass-panel rounded-[1.5rem] border-white/10 bg-white/6 text-white">
                 <CardContent className="flex items-center gap-4 p-6">
                   <AlertTriangle className="h-6 w-6 text-violet-300" />
-                  <span className="font-bold">E-mail</span>
+                  <span className="font-bold">E-mail: contato.vozurbana.org@gmail.com</span>
                 </CardContent>
               </Card>
             </div>
