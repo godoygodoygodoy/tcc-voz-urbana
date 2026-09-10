@@ -40,7 +40,7 @@ function App() {
                 <Header />
                 <Routes>
                   <Route path="/map" element={<HomePage />} />
-                  <Route path="/login" element={user ? <Navigate to="/" /> : <LoginPage />} />
+                  <Route path="/login" element={user ? <Navigate to="/map" /> : <LoginPage />} />
                   <Route path="/register" element={user ? <Navigate to="/" /> : <RegisterPage />} />
                   <Route path="/verify-email" element={<VerifyEmailPage />} />
                   <Route path="/problem/:id" element={<ProblemDetailPage />} />

@@ -28,7 +28,7 @@ const LoginPage = () => {
     try {
       await login({ email: formData.email, password: formData.password });
       toast.success('Login bem-sucedido!');
-      navigate('/');
+      navigate('/map');
     } catch (error) {
       toast.error(error.response?.data?.error || 'Erro ao fazer login');
     } finally {
