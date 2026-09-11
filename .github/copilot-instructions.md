@@ -6,16 +6,16 @@
 Sistema completo full-stack para reportar, mapear e acompanhar soluções de problemas urbanos, com autenticação, votação comunitária e painel administrativo.
 
 ## Stack Tecnológico
-- **Backend**: Node.js/Express + PostgreSQL + Sequelize
+- **Backend**: Node.js/Express + MySQL + Prisma
 - **Frontend**: React 18 + Leaflet (mapas) + Tailwind CSS + Zustand
-- **Database**: PostgreSQL 15
+- **Database**: MySQL 8
 - **Autenticação**: JWT
 
 ## Como Executar
 
 ### 1. Banco de Dados
 ```bash
-docker-compose up -d
+mysql -u root -p -e "CREATE DATABASE voz_urbana CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"
 ```
 
 ### 2. Backend
@@ -39,7 +39,7 @@ Veja [QUICKSTART.md](../QUICKSTART.md) para instruções detalhadas.
 ```
 backend/
 ├── src/
-│   ├── models/          # Sequelize models
+│   ├── prisma/          # Prisma schema e migrations
 │   ├── routes/          # API endpoints
 │   ├── middlewares/     # Auth, errors
 │   ├── config/          # Database config
@@ -85,11 +85,12 @@ frontend/
 
 **Backend (.env)**:
 ```
-DB_HOST=localhost
-DB_PORT=5432
-DB_NAME=voz_urbana
-DB_USER=postgres
-DB_PASSWORD=postgres
+DATABASE_URL=mysql://root:SUA_SENHA@localhost:3306/voz_urbana
+DATABASE_HOST=localhost
+DATABASE_PORT=3306
+DATABASE_NAME=voz_urbana
+DATABASE_USER=root
+DATABASE_PASSWORD=SUA_SENHA
 PORT=5000
 NODE_ENV=development
 JWT_SECRET=sua_chave_secreta

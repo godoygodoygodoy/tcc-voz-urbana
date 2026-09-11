@@ -5,6 +5,7 @@ import { formatDistanceToNow } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { motion } from 'framer-motion';
 import { getPurpleTone, getStatusTone } from '../utils/theme';
+import { mediaUrl } from '../services/api';
 
 const ProblemCard = ({ problem }) => {
   const navigate = useNavigate();
@@ -16,7 +17,7 @@ const ProblemCard = ({ problem }) => {
       role="button"
       tabIndex={0}
       aria-label={`Abrir problema ${problem.title}`}
-      className="group relative overflow-hidden rounded-[1.75rem] border border-white/10 bg-[#05060a] shadow-[0_18px_50px_rgba(0,0,0,0.32)] outline-none"
+      className="group relative overflow-hidden rounded-[1.75rem] border border-white/10 bg-[#17191b] shadow-[0_18px_50px_rgba(0,0,0,0.28)] outline-none"
       style={{ transformStyle: 'preserve-3d' }}
       onClick={() => navigate(`/problem/${problem.id}`)}
       onKeyDown={(event) => {
@@ -36,7 +37,7 @@ const ProblemCard = ({ problem }) => {
       {problem.images?.length > 0 && (
         <div className="relative h-44 overflow-hidden">
           <img
-            src={problem.images[0].url}
+            src={mediaUrl(problem.images[0].url)}
             alt={problem.title}
             className="h-full w-full object-cover transition duration-500 group-hover:scale-110"
           />

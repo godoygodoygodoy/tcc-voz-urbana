@@ -13,10 +13,7 @@ router.post(
 
     const category = await prisma.categoria.create({
       data: {
-        nome: name,
-        descricao: description,
-        cor: color,
-        icone: icon
+        nome: name
       }
     });
 
@@ -28,7 +25,7 @@ router.post(
 router.put(
   "/problems/:id",
   asyncHandler(async (req, res) => {
-    const { status, priority, isVerified, verifiedBy } = req.body;
+    const { status } = req.body;
 
     const problem = await prisma.problema.findUnique({
       where: { id: req.params.id }
@@ -40,9 +37,6 @@ router.put(
 
     const updateData = {};
     if (status) updateData.status = status;
-    if (priority) updateData.prioridade = priority;
-    if (isVerified !== undefined) updateData.verificado = isVerified;
-    if (verifiedBy) updateData.verificadoPorId = verifiedBy;
 
     const updatedProblem = await prisma.problema.update({
       where: { id: req.params.id },
@@ -62,14 +56,8 @@ router.get(
         id: true,
         nome: true,
         email: true,
-        telefone: true,
-        role: true,
         fotoPerfil: true,
-        bio: true,
-        ativo: true,
-        ultimoLogin: true,
-        dataCriacao: true,
-        dataAtualizacao: true
+        dataCriacao: true
       },
       orderBy: { dataCriacao: "desc" }
     });
@@ -82,8 +70,6 @@ router.get(
 router.put(
   "/users/:id/role",
   asyncHandler(async (req, res) => {
-    const { role } = req.body;
-
     const user = await prisma.usuario.findUnique({
       where: { id: req.params.id }
     });
@@ -92,20 +78,7 @@ router.put(
       return res.status(404).json({ error: "Usuário não encontrado" });
     }
 
-    const updatedUser = await prisma.usuario.update({
-      where: { id: req.params.id },
-      data: { role },
-      select: {
-        id: true,
-        nome: true,
-        email: true,
-        role: true,
-        fotoPerfil: true,
-        dataCriacao: true
-      }
-    });
-
-    res.json(updatedUser);
+    return res.status(400).json({ error: "Use a rota de administradores para alterar permissões" });
   })
 );
 
@@ -132,7 +105,8 @@ router.get(
       openProblems,
       resolvedProblems,
       totalUsers,
-      totalCategories
+      totalCategories,
+      inProgressProblems: await prisma.problema.count({ where: { status: "EM_ANDAMENTO" } })
     });
   })
 );

@@ -17,8 +17,8 @@ Plataforma colaborativa para reportar, mapear e acompanhar soluções de problem
 
 ### Backend
 - **Node.js + Express**: API REST
-- **PostgreSQL**: Banco de dados relacional
-- **Sequelize**: ORM para Node.js
+- **MySQL 8**: Banco de dados relacional
+- **Prisma 7**: ORM e migrations
 - **JWT**: Autenticação
 - **Bcryptjs**: Hash de senhas
 
@@ -33,20 +33,15 @@ Plataforma colaborativa para reportar, mapear e acompanhar soluções de problem
 ## 📋 Pré-requisitos
 
 - Node.js 16+
-- PostgreSQL 12+
-- Docker (opcional, para executar PostgreSQL)
+- MySQL 8+
+- Docker opcional
 - npm ou yarn
 
 ## 🚀 Como Executar
 
 ### 1. Configurar Banco de Dados
 
-Com Docker:
-```bash
-docker-compose up -d
-```
-
-Ou configure PostgreSQL manualmente na porta 5432.
+Instale o MySQL localmente, crie o banco `voz_urbana` e configure a senha no `backend/.env`.
 
 ### 2. Backend
 
@@ -58,6 +53,10 @@ npm install
 
 # Copiar e configurar variáveis de ambiente
 cp .env.example .env
+
+# Criar tabelas e dados iniciais
+npx prisma migrate deploy
+npm run prisma:seed
 
 # Iniciar servidor (modo desenvolvimento)
 npm run dev
@@ -113,16 +112,20 @@ tcc/
 
 ### Backend (.env)
 ```
-DB_HOST=localhost
-DB_PORT=5432
-DB_NAME=voz_urbana
-DB_USER=postgres
-DB_PASSWORD=postgres
+DATABASE_URL=mysql://root:SUA_SENHA@localhost:3306/voz_urbana
+DATABASE_HOST=localhost
+DATABASE_PORT=3306
+DATABASE_USER=root
+DATABASE_PASSWORD=SUA_SENHA
+DATABASE_NAME=voz_urbana
 PORT=5000
 NODE_ENV=development
 JWT_SECRET=your_secret_key
 JWT_EXPIRE=7d
 CORS_ORIGIN=http://localhost:3000
+ADMIN_EMAIL=admin@vozurbana.local
+ADMIN_PASSWORD=troque-esta-senha
+MAX_FILE_SIZE=5242880
 ```
 
 ### Frontend (.env)

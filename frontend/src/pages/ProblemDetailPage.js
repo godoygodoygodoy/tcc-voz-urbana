@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
-import { problemsAPI, votesAPI } from '../services/api';
+import { problemsAPI, votesAPI, mediaUrl } from '../services/api';
 import { toast } from 'react-toastify';
 import { FiThumbsUp, FiMapPin, FiCalendar, FiUser } from 'react-icons/fi';
 import { formatDistanceToNow } from 'date-fns';
@@ -83,7 +83,7 @@ const ProblemDetailPage = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-6 bg-gray-100">
               {problem.images.map((img) => (
                 <div key={img.id} className="bg-gray-200 rounded-lg overflow-hidden">
-                  <img src={img.url} alt="Problem" className="w-full h-64 object-cover" />
+                  <img src={mediaUrl(img.url)} alt="Problem" className="w-full h-64 object-cover" />
                 </div>
               ))}
             </div>

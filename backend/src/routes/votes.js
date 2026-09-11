@@ -35,7 +35,7 @@ router.post(
       }
     });
 
-    const tipoVoto = type === "up" ? "UP" : "DOWN";
+    const tipoVoto = type === "up" ? "CONFIRMAR" : "RESOLVER";
 
     if (existingVote) {
       if (existingVote.tipo === tipoVoto) {
@@ -43,20 +43,11 @@ router.post(
         await prisma.voto.delete({
           where: { id: existingVote.id }
         });
-        await prisma.problema.update({
-          where: { id: problemId },
-          data: { votos: { decrement: 1 } }
-        });
       } else {
         // Mudar voto
-        const diff = type === "up" ? 2 : -2;
         await prisma.voto.update({
           where: { id: existingVote.id },
           data: { tipo: tipoVoto }
-        });
-        await prisma.problema.update({
-          where: { id: problemId },
-          data: { votos: { increment: diff } }
         });
       }
     } else {
@@ -68,18 +59,14 @@ router.post(
           tipo: tipoVoto
         }
       });
-      const incrementValue = type === "up" ? 1 : -1;
-      await prisma.problema.update({
-        where: { id: problemId },
-        data: { votos: { increment: incrementValue } }
-      });
     }
 
     const updatedProblem = await prisma.problema.findUnique({
-      where: { id: problemId }
+      where: { id: problemId },
+      include: { _count: { select: { votos: true } } }
     });
 
-    res.json(updatedProblem);
+    res.json({ ...updatedProblem, votes: updatedProblem._count.votos });
   })
 );
 

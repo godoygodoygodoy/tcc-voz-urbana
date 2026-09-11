@@ -2,8 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { problemsAPI, categoriesAPI } from '../services/api';
 import { toast } from 'react-toastify';
-import { useAuthStore } from '../store';
-import { FiMapPin, FiType } from 'react-icons/fi';
+import Map from '../components/Map';
 
 const ReportProblemPage = () => {
   const [formData, setFormData] = useState({
@@ -19,7 +18,6 @@ const ReportProblemPage = () => {
   const [images, setImages] = useState([]);
   const [previews, setPreviews] = useState([]);
   const [loadingCategories, setLoadingCategories] = useState(true);
-  const { user } = useAuthStore();
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -69,6 +67,22 @@ const ReportProblemPage = () => {
     setImages(nextImages);
     const nextPreviews = nextImages.map((f) => URL.createObjectURL(f));
     setPreviews(nextPreviews);
+  };
+
+  const handleLocationChange = async ([latitude, longitude]) => {
+    setFormData((prev) => ({ ...prev, latitude: String(latitude), longitude: String(longitude) }));
+
+    try {
+      const response = await fetch(
+        `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${latitude}&lon=${longitude}`,
+        { headers: { Accept: 'application/json', 'User-Agent': 'VozUrbana/1.0' } }
+      );
+      if (!response.ok) return;
+      const data = await response.json();
+      setFormData((prev) => ({ ...prev, address: data.display_name || prev.address }));
+    } catch (error) {
+      console.warn('Não foi possível obter o endereço da localização', error);
+    }
   };
 
   const handleSubmit = async (e) => {
@@ -167,6 +181,19 @@ const ReportProblemPage = () => {
                 onChange={handleChange}
                 className="w-full border rounded-lg p-3"
                 placeholder="Rua, número, bairro..."
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-semibold mb-2">Localização no mapa</label>
+              <p className="mb-3 text-sm text-gray-600">Clique no mapa ou arraste o marcador para ajustar o local.</p>
+              <Map
+                problems={[]}
+                height="320px"
+                location={formData.latitude && formData.longitude
+                  ? [Number(formData.latitude), Number(formData.longitude)]
+                  : null}
+                onLocationChange={handleLocationChange}
               />
             </div>
 

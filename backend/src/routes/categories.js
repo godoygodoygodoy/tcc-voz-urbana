@@ -9,11 +9,10 @@ router.get(
   "/",
   asyncHandler(async (req, res) => {
     const categories = await prisma.categoria.findMany({
-      where: { ativo: true },
       orderBy: { nome: "asc" }
     });
 
-    res.json(categories);
+    res.json(categories.map(({ id, nome }) => ({ id, name: nome })));
   })
 );
 
@@ -29,7 +28,7 @@ router.get(
       return res.status(404).json({ error: "Categoria não encontrada" });
     }
 
-    res.json(category);
+    res.json({ id: category.id, name: category.nome });
   })
 );
 

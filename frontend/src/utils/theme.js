@@ -1,4 +1,4 @@
-const purplePalette = ['#4C1D95', '#6D28D9', '#7C3AED', '#8B5CF6', '#A855F7', '#C084FC'];
+const categoryPalette = ['#E4572E', '#168AAD', '#2A9D8F', '#E9C46A', '#7B2CBF', '#D7263D', '#3A86FF'];
 
 const hashString = (value = '') => String(value)
   .split('')
@@ -6,15 +6,15 @@ const hashString = (value = '') => String(value)
 
 export const getPurpleTone = (seed = 0) => {
   const key = typeof seed === 'number' ? seed : hashString(seed);
-  return purplePalette[key % purplePalette.length];
+  return categoryPalette[key % categoryPalette.length];
 };
 
 export const getStatusTone = (status = '') => {
   const tones = {
-    open: 'bg-violet-600 text-white',
-    in_progress: 'bg-violet-500 text-white',
-    resolved: 'bg-violet-300 text-zinc-950',
-    closed: 'bg-violet-950 text-white',
+    ABERTO: 'bg-red-600 text-white',
+    EM_ANDAMENTO: 'bg-amber-500 text-zinc-950',
+    RESOLVIDO: 'bg-emerald-600 text-white',
+    REJEITADO: 'bg-zinc-700 text-white',
   };
 
   return tones[status] || tones.open;

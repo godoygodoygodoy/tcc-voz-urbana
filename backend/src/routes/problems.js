@@ -4,6 +4,7 @@ import fs from "fs";
 import multer from "multer";
 import { prisma } from "../config/prisma.js";
 import { asyncHandler } from "../middlewares/errorHandler.js";
+import { authMiddleware } from "../middlewares/auth.js";
 
 // Preparar pasta de uploads
 const UPLOAD_DIR = path.resolve(process.cwd(), "uploads", "problems");
@@ -22,9 +23,27 @@ const storage = multer.diskStorage({
   }
 });
 
-const upload = multer({ storage, limits: { fileSize: 10 * 1024 * 1024 } });
+const upload = multer({
+  storage,
+  limits: { fileSize: Number(process.env.MAX_FILE_SIZE || 5 * 1024 * 1024), files: 8 },
+  fileFilter: (req, file, cb) => cb(null, file.mimetype.startsWith("image/"))
+});
 
 const router = express.Router();
+
+const serializeProblem = (problem) => ({
+  ...problem,
+  title: problem.titulo,
+  description: problem.descricao,
+  address: problem.endereco,
+  createdAt: problem.dataCriacao,
+  category: problem.categoria
+    ? { id: problem.categoria.id, name: problem.categoria.nome }
+    : null,
+  author: problem.usuario ? { id: problem.usuario.id, name: problem.usuario.nome } : null,
+  images: problem.imagens || [],
+  votes: problem._count?.votos || problem.votos?.length || 0
+});
 
 // Listar problemas com filtros
 router.get(
@@ -34,14 +53,18 @@ router.get(
       page = 1,
       limit = 20,
       category,
-      status = "ABERTO",
+      status,
       lat,
       lng,
       radius = 5 // km
     } = req.query;
 
-    const skip = (page - 1) * limit;
-    const where = { status };
+    const pageNumber = Math.max(1, Number(page));
+    const pageSize = Math.min(100, Math.max(1, Number(limit)));
+    const skip = (pageNumber - 1) * pageSize;
+    const where = {};
+
+    if (status) where.status = status;
 
     // Filtro por categoria
     if (category) {
@@ -80,20 +103,20 @@ router.get(
           },
           imagens: true,
           _count: {
-            select: { votosRegistrados: true }
+            select: { votos: true }
           }
         },
         skip,
-        take: parseInt(limit),
+        take: pageSize,
         orderBy: { dataCriacao: "desc" }
       })
     ]);
 
     res.json({
       total,
-      page: parseInt(page),
-      limit: parseInt(limit),
-      data
+      page: pageNumber,
+      limit: pageSize,
+      data: data.map(serializeProblem)
     });
   })
 );
@@ -101,6 +124,8 @@ router.get(
 // Criar problema
 router.post(
   "/",
+  authMiddleware,
+  upload.array("images"),
   asyncHandler(async (req, res) => {
     const { title, description, latitude, longitude, address, categoryId } =
       req.body;
@@ -108,6 +133,10 @@ router.post(
 
     if (!req.userId) {
       return res.status(401).json({ error: "Autenticação necessária" });
+    }
+
+    if (!title || !description || !categoryId || !Number.isFinite(Number(latitude)) || !Number.isFinite(Number(longitude))) {
+      return res.status(400).json({ error: "Título, descrição, categoria e localização são obrigatórios" });
     }
 
     const problem = await prisma.problema.create({
@@ -128,11 +157,25 @@ router.post(
             nome: true,
             fotoPerfil: true
           }
-        }
+          },
+        imagens: true
       }
     });
 
-    res.status(201).json(problem);
+    if (req.files?.length) {
+      await prisma.imagem.createMany({
+        data: req.files.map((file) => ({
+          url: `/uploads/problems/${file.filename}`,
+          problemaId: problem.id
+        }))
+      });
+    }
+
+    const createdProblem = await prisma.problema.findUnique({
+      where: { id: problem.id },
+      include: { categoria: true, usuario: { select: { id: true, nome: true } }, imagens: true }
+    });
+    res.status(201).json(serializeProblem(createdProblem));
   })
 );
 
@@ -152,7 +195,8 @@ router.get(
           }
         },
         imagens: true,
-        votosRegistrados: true
+        votos: true,
+        _count: { select: { votos: true } }
       }
     });
 
@@ -160,17 +204,7 @@ router.get(
       return res.status(404).json({ error: "Problema não encontrado" });
     }
 
-    // Incrementar visualizações
-    await prisma.problema.update({
-      where: { id: req.params.id },
-      data: {
-        visualizacoes: {
-          increment: 1
-        }
-      }
-    });
-
-    res.json(problem);
+    res.json(serializeProblem(problem));
   })
 );
 

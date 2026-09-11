@@ -16,6 +16,7 @@ import ProblemDetailPage from './pages/ProblemDetailPage';
 import ReportProblemPage from './pages/ReportProblemPage';
 import AdminDashboard from './pages/AdminDashboard';
 import ProfilePage from './pages/ProfilePage';
+import VerifyEmailPage from './pages/VerifyEmailPage';
 
 // Components
 import Header from './components/Header';
@@ -41,6 +42,7 @@ function App() {
                   <Route path="/map" element={<HomePage />} />
                   <Route path="/login" element={user ? <Navigate to="/" /> : <LoginPage />} />
                   <Route path="/register" element={user ? <Navigate to="/" /> : <RegisterPage />} />
+                  <Route path="/verify-email" element={<VerifyEmailPage />} />
                   <Route path="/problem/:id" element={<ProblemDetailPage />} />
 
                   {/* Rotas protegidas */}

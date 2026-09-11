@@ -1,6 +1,7 @@
 import axios from 'axios';
 
 const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
+export const mediaUrl = (url) => (url?.startsWith('http') ? url : `${API_URL.replace(/\/api\/?$/, '')}${url}`);
 
 const api = axios.create({
   baseURL: API_URL,
@@ -35,6 +36,8 @@ api.interceptors.response.use(
 export const authAPI = {
   register: (data) => api.post('/auth/register', data),
   login: (data) => api.post('/auth/login', data),
+  verifyEmail: (token) => api.get('/auth/verify-email', { params: { token } }),
+  resendVerification: (email) => api.post('/auth/resend-verification', { email }),
 };
 
 // Problems
@@ -62,7 +65,9 @@ export const votesAPI = {
 // Users
 export const usersAPI = {
   getMe: () => api.get('/users/me'),
-  updateMe: (data) => api.put('/users/me', data),
+  updateMe: (data) => data instanceof FormData
+    ? api.put('/users/me', data, { headers: { 'Content-Type': 'multipart/form-data' } })
+    : api.put('/users/me', data),
 };
 
 // Admin

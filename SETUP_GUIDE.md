@@ -3,39 +3,33 @@
 ## ✅ O que já está pronto:
 - **Frontend**: Landing page, registro e login (design profissional) ✓
 - **Backend**: APIs e rotas configuradas ✓  
-- **Database**: PostgreSQL configurado no Docker Compose
+- **Database**: MySQL local
 
-## ⚠️ Próximo passo: Iniciar o PostgreSQL
+## ⚠️ Próximo passo: Iniciar o MySQL pelo XAMPP
 
-### Opção 1: Docker Desktop (Recomendado)
-1. **Abra o Docker Desktop** manualmente:
-   - Procure por "Docker Desktop" no menu Iniciar do Windows
-   - Aguarde 30-60 segundos para ele inicializar completamente
-
-2. **Em seguida, no PowerShell (na raiz do projeto):**
+1. Abra o XAMPP Control Panel.
+2. Clique em **Start** na linha **MySQL**. O Apache não é necessário para o backend.
+3. Confirme que a porta do MySQL é `3306`.
+4. Acesse `http://localhost/phpmyadmin` e crie o banco `voz_urbana` com collation `utf8mb4_unicode_ci`.
+5. No arquivo `backend/.env`, use a configuração padrão do XAMPP:
    ```powershell
-   docker compose up -d
+   DATABASE_URL=mysql://root:@localhost:3306/voz_urbana
+   DATABASE_HOST=localhost
+   DATABASE_PORT=3306
+   DATABASE_USER=root
+   DATABASE_PASSWORD=
+   DATABASE_NAME=voz_urbana
    ```
-
-3. **Verifique se está rodando:**
-   ```powershell
-   docker ps
-   ```
-
-### Opção 2: PostgreSQL Local (sem Docker)
-1. Instale PostgreSQL no Windows em `C:\Program Files\PostgreSQL`
-2. Use `psql` para criar o banco:
-   ```sql
-   CREATE DATABASE voz_urbana;
-   ```
-
-3. Atualize `.env` do backend para apontar para o local PostgreSQL
 
 ## 🔄 Depois de iniciar o banco:
 
 ### Terminal 1: Backend
 ```powershell
 cd backend
+npm install
+copy .env.example .env
+npx prisma migrate deploy
+npm run prisma:seed
 npm run dev
 ```
 Será iniciado em: `http://localhost:5000`
@@ -57,15 +51,14 @@ Acesse em: `http://localhost:3000`
 
 ## 📝 Credenciais de teste:
 ```
-Email: test@example.com
-Senha: 123456
+Email: o valor de ADMIN_EMAIL no backend/.env
+Senha: o valor de ADMIN_PASSWORD no backend/.env
 ```
 
 ## ❓ Problemas?
 - **Porta 3000 em uso**: `netstat -ano | findstr :3000` e mate o processo
 - **Porta 5000 em uso**: `netstat -ano | findstr :5000` e mate o processo  
-- **Docker não abre**: Certifique-se de que Docker Desktop está instalado
-- **Banco não conecta**: Verifique se PostgreSQL está rodando com `docker ps`
+- **Banco não conecta**: Verifique o serviço MySQL80 no Windows e confirme a senha da `DATABASE_URL`
 
 ---
-**Status**: Frontend pronto ✓ | Backend pronto ✓ | Aguardando PostgreSQL ⏳
+**Status**: Frontend pronto ✓ | Backend pronto ✓ | Aguardando MySQL local ⏳

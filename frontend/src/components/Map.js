@@ -3,7 +3,6 @@ import { CircleMarker, MapContainer, Marker, Popup, Polygon, Polyline, TileLayer
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { getPurpleTone } from '../utils/theme';
-import MapGoogle from './MapGoogle';
 
 // Corrigir ícone do Leaflet
 delete L.Icon.Default.prototype._getIconUrl;
@@ -187,6 +186,38 @@ const AreaDrawingLayer = ({ active, selectedArea, onAreaComplete, onAreaDrawingT
   );
 };
 
+const LocationPicker = ({ position, onChange }) => {
+  const [markerPosition, setMarkerPosition] = useState(position);
+
+  useEffect(() => {
+    setMarkerPosition(position);
+  }, [position]);
+
+  useMapEvents({
+    click: (event) => {
+      const nextPosition = [event.latlng.lat, event.latlng.lng];
+      setMarkerPosition(nextPosition);
+      onChange?.(nextPosition);
+    },
+  });
+
+  if (!markerPosition) return null;
+
+  return (
+    <Marker
+      position={markerPosition}
+      draggable
+      eventHandlers={{
+        dragend: (event) => {
+          const nextPosition = [event.target.getLatLng().lat, event.target.getLatLng().lng];
+          setMarkerPosition(nextPosition);
+          onChange?.(nextPosition);
+        },
+      }}
+    />
+  );
+};
+
 const Map = ({
   problems = [],
   onMarkerClick,
@@ -196,19 +227,9 @@ const Map = ({
   areaDrawingActive = false,
   onAreaComplete,
   onAreaDrawingToggle,
+  location,
+  onLocationChange,
 }) => {
-  const useGoogle = Boolean(process.env.REACT_APP_GOOGLE_MAPS_KEY);
-
-  if (useGoogle) {
-    return (
-      <MapGoogle
-        problems={problems}
-        onMarkerClick={onMarkerClick}
-        height={height}
-        className={className}
-      />
-    );
-  }
   const validProblems = problems.filter((problem) => toPoint(problem));
 
   return (
@@ -220,8 +241,8 @@ const Map = ({
         style={{ height, width: '100%' }}
       >
         <TileLayer
-          url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
-          attribution='&copy; OpenStreetMap contributors &copy; CARTO'
+          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+          attribution='&copy; OpenStreetMap contributors'
         />
         <FitBounds problems={validProblems} />
         <AreaDrawingLayer
@@ -230,6 +251,9 @@ const Map = ({
           onAreaComplete={onAreaComplete}
           onAreaDrawingToggle={onAreaDrawingToggle}
         />
+        {onLocationChange && (
+          <LocationPicker position={location} onChange={onLocationChange} />
+        )}
         {validProblems.map((problem) => {
           const point = toPoint(problem);
           const markerColor = getPurpleTone(problem.category?.name || problem.category?.id || problem.id);
@@ -262,7 +286,7 @@ const Map = ({
         })}
       </MapContainer>
 
-      {validProblems.length === 0 && (
+      {validProblems.length === 0 && !onLocationChange && (
         <div className="absolute inset-0 flex items-center justify-center bg-zinc-950/70 backdrop-blur-sm rounded-3xl">
           <div className="text-center px-6 py-4">
             <p className="font-semibold text-white">Nenhum ponto disponível no mapa</p>

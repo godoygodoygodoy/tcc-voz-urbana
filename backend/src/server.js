@@ -18,6 +18,7 @@ import adminRoutes from "./routes/admin.js";
 // Importar middlewares
 import { errorHandler } from "./middlewares/errorHandler.js";
 import { authMiddleware } from "./middlewares/auth.js";
+import { adminMiddleware } from "./middlewares/auth.js";
 
 const app = express();
 
@@ -48,7 +49,7 @@ app.use("/api/problems", problemRoutes);
 // Rotas protegidas
 app.use("/api/users", authMiddleware, userRoutes);
 app.use("/api/votes", authMiddleware, voteRoutes);
-app.use("/api/admin", authMiddleware, adminRoutes);
+app.use("/api/admin", authMiddleware, adminMiddleware, adminRoutes);
 
 // 404 handler
 app.use((req, res) => {

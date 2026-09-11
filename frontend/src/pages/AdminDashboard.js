@@ -45,7 +45,7 @@ const AdminDashboard = () => {
   );
 
   return (
-    <div className="min-h-screen bg-[#06070b] py-8 text-white">
+    <div className="min-h-screen bg-[#1b1d1f] py-8 text-white">
       <div className="container mx-auto px-4">
         <h1 className="mb-8 text-3xl font-black">Painel Administrativo</h1>
 
@@ -91,7 +91,7 @@ const AdminDashboard = () => {
             </div>
             <div className="p-4 border-l-4 border-violet-400">
               <p className="text-white/55 text-sm">Em Andamento</p>
-              <p className="text-2xl font-bold text-violet-300">0</p>
+              <p className="text-2xl font-bold text-violet-300">{stats?.inProgressProblems || 0}</p>
             </div>
             <div className="p-4 border-l-4 border-violet-700">
               <p className="text-white/55 text-sm">Resolvidos</p>

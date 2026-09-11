@@ -1,4 +1,5 @@
 import jwt from "jsonwebtoken";
+import { prisma } from "../config/prisma.js";
 
 export const authMiddleware = (req, res, next) => {
   try {
@@ -18,11 +19,16 @@ export const authMiddleware = (req, res, next) => {
   }
 };
 
-export const adminMiddleware = (req, res, next) => {
-  if (req.userRole !== "admin") {
+export const adminMiddleware = async (req, res, next) => {
+  const admin = await prisma.admin.findUnique({
+    where: { usuarioId: req.userId }
+  });
+
+  if (!admin) {
     return res
       .status(403)
       .json({ error: "Acesso negado. Apenas administradores." });
   }
+  req.adminLevel = admin.nivel;
   next();
 };

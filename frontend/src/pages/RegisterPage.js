@@ -39,7 +39,7 @@ const RegisterPage = () => {
         email: formData.email,
         password: formData.password,
       });
-      toast.success('Cadastro realizado com sucesso!');
+      toast.success('Cadastro realizado! Verifique seu e-mail para confirmar a conta.');
       navigate('/');
     } catch (error) {
       toast.error(error.response?.data?.error || 'Erro ao cadastrar');

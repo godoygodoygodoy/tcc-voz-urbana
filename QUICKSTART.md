@@ -7,7 +7,7 @@
 
 ```bash
 # Abra um terminal na raiz do projeto e execute:
-docker-compose up -d
+mysql -u root -p -e "CREATE DATABASE voz_urbana CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"
 
 # Verifique se está rodando:
 docker-compose ps
@@ -19,6 +19,8 @@ docker-compose ps
 # Terminal 1
 cd backend
 npm install
+npx prisma migrate deploy
+npm run prisma:seed
 npm run dev
 ```
 
@@ -40,7 +42,7 @@ npm start
 ### Backend (`/backend`)
 - ✅ Servidor Express com todas as rotas
 - ✅ Autenticação JWT
-- ✅ Modelos Sequelize (User, Problem, Category, Vote, Image)
+- ✅ Prisma com MySQL (Usuario, Problema, Categoria, Voto, Imagem)
 - ✅ Middlewares de erro e autenticação
 - ✅ Rotas de:
   - Autenticação (registro, login)
@@ -97,13 +99,16 @@ npm start
 
 **Backend** (`backend/.env`):
 ```
-DB_HOST=localhost
-DB_PORT=5432
-DB_NAME=voz_urbana
-DB_USER=postgres
-DB_PASSWORD=postgres
+DATABASE_URL=mysql://root:SUA_SENHA@localhost:3306/voz_urbana
+DATABASE_HOST=localhost
+DATABASE_PORT=3306
+DATABASE_USER=root
+DATABASE_PASSWORD=SUA_SENHA
+DATABASE_NAME=voz_urbana
 PORT=5000
 JWT_SECRET=mudeme_em_producao
+ADMIN_EMAIL=admin@vozurbana.local
+ADMIN_PASSWORD=troque-esta-senha
 ```
 
 **Frontend** (`frontend/.env`):

@@ -58,7 +58,7 @@ const HomePage = () => {
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedCategory, setSelectedCategory] = useState(null);
-  const [selectedStatus, setSelectedStatus] = useState('open');
+  const [selectedStatus, setSelectedStatus] = useState('ABERTO');
   const [mapProblems, setMapProblems] = useState([]);
   const [selectedProblem, setSelectedProblem] = useState(null);
   const [selectedArea, setSelectedArea] = useState(null);
@@ -99,13 +99,13 @@ const HomePage = () => {
   };
 
   const statusOptions = [
-    { value: 'open', label: 'Abertos' },
-    { value: 'in_progress', label: 'Em Andamento' },
-    { value: 'resolved', label: 'Resolvidos' },
+    { value: 'ABERTO', label: 'Abertos' },
+    { value: 'EM_ANDAMENTO', label: 'Em andamento' },
+    { value: 'RESOLVIDO', label: 'Resolvidos' },
   ];
 
   return (
-    <div className="min-h-screen bg-[#06070b] text-white">
+    <div className="min-h-screen bg-[#1b1d1f] text-white">
       {/* Hero Section */}
       <section className="border-b border-white/10 bg-[radial-gradient(circle_at_top_left,rgba(168,85,247,0.26),transparent_28%),linear-gradient(180deg,rgba(6,7,11,0.98),rgba(6,7,11,0.92))] py-12">
         <div className="container mx-auto px-4">

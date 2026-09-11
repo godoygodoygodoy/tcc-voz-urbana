@@ -1,19 +1,19 @@
 import React, { useState, useEffect } from 'react';
 import { usersAPI } from '../services/api';
 import { toast } from 'react-toastify';
-import { useAuthStore } from '../store';
 
 const ProfilePage = () => {
   const [profile, setProfile] = useState(null);
   const [formData, setFormData] = useState({
     name: '',
+    username: '',
     phone: '',
     bio: '',
     avatar: '',
+    avatarFile: null,
   });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const { user } = useAuthStore();
 
   useEffect(() => {
     const fetchProfile = async () => {
@@ -21,10 +21,11 @@ const ProfilePage = () => {
         const res = await usersAPI.getMe();
         setProfile(res.data);
         setFormData({
-          name: res.data.name,
-          phone: res.data.phone || '',
+          name: res.data.name || res.data.nome || '',
+          username: res.data.username || '',
+          phone: res.data.phone || res.data.telefone || '',
           bio: res.data.bio || '',
-          avatar: res.data.avatar || '',
+          avatar: res.data.avatar || res.data.fotoPerfil || '',
         });
       } catch (error) {
         toast.error('Erro ao carregar perfil');
@@ -46,7 +47,15 @@ const ProfilePage = () => {
     setSaving(true);
 
     try {
-      await usersAPI.updateMe(formData);
+      const payload = new FormData();
+      payload.append('name', formData.name);
+      payload.append('username', formData.username);
+      payload.append('phone', formData.phone);
+      payload.append('bio', formData.bio);
+      if (formData.avatarFile) payload.append('avatarFile', formData.avatarFile);
+      else payload.append('avatar', formData.avatar);
+      const response = await usersAPI.updateMe(payload);
+      setProfile((current) => ({ ...current, ...response.data }));
       toast.success('Perfil atualizado com sucesso!');
     } catch (error) {
       toast.error('Erro ao atualizar perfil');
@@ -81,6 +90,20 @@ const ProfilePage = () => {
             </div>
 
             <div>
+              <label className="block text-sm font-semibold mb-2">Nome de usuário</label>
+              <input
+                type="text"
+                name="username"
+                value={formData.username}
+                onChange={handleChange}
+                className="w-full border rounded-lg p-3"
+                placeholder="@seuusuario"
+                maxLength="30"
+              />
+              <p className="mt-1 text-xs text-gray-500">Será exibido como @{formData.username.replace(/^@/, '') || 'usuario'}.</p>
+            </div>
+
+            <div>
               <label className="block text-sm font-semibold mb-2">Nome</label>
               <input
                 type="text"
@@ -89,6 +112,25 @@ const ProfilePage = () => {
                 onChange={handleChange}
                 className="w-full border rounded-lg p-3"
               />
+            </div>
+
+            <div>
+              <label className="block text-sm font-semibold mb-2">Foto de perfil</label>
+              <div className="flex items-center gap-4">
+                {formData.avatar ? (
+                  <img src={formData.avatar} alt="Prévia do perfil" className="h-16 w-16 rounded-full object-cover border-2 border-violet-500" />
+                ) : (
+                  <div className="h-16 w-16 rounded-full bg-violet-100 flex items-center justify-center text-violet-700 font-bold">{formData.name?.[0] || '?'}</div>
+                )}
+                <div className="flex-1">
+                  <input type="file" accept="image/*" onChange={(event) => {
+                    const file = event.target.files?.[0];
+                    if (file) setFormData((current) => ({ ...current, avatarFile: file, avatar: URL.createObjectURL(file) }));
+                  }} className="w-full border rounded-lg p-3" />
+                  <input type="url" name="avatar" value={formData.avatarFile ? '' : formData.avatar} onChange={handleChange} className="mt-2 w-full border rounded-lg p-3" placeholder="Ou use uma URL de imagem" />
+                  {formData.avatar && <button type="button" onClick={() => setFormData((current) => ({ ...current, avatar: '', avatarFile: null }))} className="mt-2 text-sm text-red-600">Remover foto</button>}
+                </div>
+              </div>
             </div>
 
             <div>
