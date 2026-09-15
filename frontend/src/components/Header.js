@@ -1,11 +1,20 @@
 import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { FiLogOut, FiUser, FiPlus } from 'react-icons/fi';
+import { FiLogOut, FiUser, FiPlus, FiSun, FiMoon } from 'react-icons/fi';
 import { useAuthStore } from '../store';
+import NotificationBell from './NotificationBell';
 
 const Header = () => {
   const { user, logout } = useAuthStore();
   const navigate = useNavigate();
+  const [theme, setTheme] = React.useState(() => localStorage.getItem('theme') || 'dark');
+
+  const toggleTheme = () => {
+    const nextTheme = theme === 'dark' ? 'light' : 'dark';
+    setTheme(nextTheme);
+    localStorage.setItem('theme', nextTheme);
+    document.documentElement.dataset.theme = nextTheme;
+  };
 
   const handleLogout = () => {
     logout();
@@ -39,6 +48,9 @@ const Header = () => {
           </nav>
 
           <div className="flex items-center gap-3">
+            <button type="button" onClick={toggleTheme} aria-label="Alternar tema" className="text-gray-700 hover:text-primary-600">
+              {theme === 'dark' ? <FiSun size={18} /> : <FiMoon size={18} />}
+            </button>
             <Link
               to="/report"
               className="hidden md:inline-flex items-center gap-2 bg-gradient-to-r from-primary to-primary-600 text-white px-4 py-2 rounded-full shadow-sm"
@@ -48,6 +60,7 @@ const Header = () => {
 
             {user ? (
               <>
+                <NotificationBell />
                 <Link to="/profile" className="text-gray-700 hover:text-primary-600">
                   <FiUser size={20} />
                 </Link>

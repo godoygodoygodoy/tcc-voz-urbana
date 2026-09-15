@@ -2,6 +2,7 @@ import express from "express";
 import { prisma } from "../config/prisma.js";
 import { authMiddleware } from "../middlewares/auth.js";
 import { asyncHandler } from "../middlewares/errorHandler.js";
+import { notifyProblemOwner } from "../utils/notifications.js";
 
 const router = express.Router();
 
@@ -24,6 +25,8 @@ router.post(
     if (!problem) {
       return res.status(404).json({ error: "Problema não encontrado" });
     }
+
+    await notifyProblemOwner({ problem, tipo: "VOTO", titulo: "Novo apoio", mensagem: "Seu problema recebeu uma nova interação" });
 
     // Verificar se já votou
     const existingVote = await prisma.voto.findUnique({

@@ -63,17 +63,24 @@ const HomePage = () => {
   const [selectedProblem, setSelectedProblem] = useState(null);
   const [selectedArea, setSelectedArea] = useState(null);
   const [drawingMode, setDrawingMode] = useState(false);
+  const [from, setFrom] = useState('');
+  const [to, setTo] = useState('');
+  const [sort, setSort] = useState('recent');
+  const [radius, setRadius] = useState('5');
+  const [page, setPage] = useState(1);
+  const [total, setTotal] = useState(0);
 
   useEffect(() => {
     const fetchData = async () => {
       try {
         setLoading(true);
         const [problemsRes, categoriesRes] = await Promise.all([
-          problemsAPI.list({ status: selectedStatus, category: selectedCategory }),
+          problemsAPI.list({ status: selectedStatus, category: selectedCategory, from, to, sort, radius, page, limit: 9 }),
           categoriesAPI.list(),
         ]);
         const fetchedProblems = problemsRes.data.data || [];
         const fetchedCategories = categoriesRes.data || [];
+        setTotal(problemsRes.data.total || 0);
 
         setProblems(fetchedProblems.length > 0 ? fetchedProblems : demoProblems);
         setMapProblems(fetchedProblems.length > 0 ? fetchedProblems : demoProblems);
@@ -91,7 +98,7 @@ const HomePage = () => {
     };
 
     fetchData();
-  }, [selectedStatus, selectedCategory]);
+  }, [selectedStatus, selectedCategory, from, to, sort, radius, page]);
 
   const handleAreaComplete = (points) => {
     setSelectedArea(points);
@@ -193,6 +200,36 @@ const HomePage = () => {
                 ))}
               </select>
             </div>
+            <div>
+              <label className="mb-2 block text-sm font-semibold text-white/70">Ordenar</label>
+              <select value={sort} onChange={(e) => { setSort(e.target.value); setPage(1); }} className="w-full rounded-xl border border-white/10 bg-black/20 p-3 text-white outline-none">
+                <option value="recent">Mais recentes</option>
+                <option value="votes">Mais votados</option>
+              </select>
+            </div>
+            <div>
+              <label className="mb-2 block text-sm font-semibold text-white/70">Data inicial</label>
+              <input type="date" value={from} onChange={(e) => { setFrom(e.target.value); setPage(1); }} className="w-full rounded-xl border border-white/10 bg-black/20 p-3 text-white outline-none" />
+            </div>
+            <div>
+              <label className="mb-2 block text-sm font-semibold text-white/70">Data final</label>
+              <input type="date" value={to} onChange={(e) => { setTo(e.target.value); setPage(1); }} className="w-full rounded-xl border border-white/10 bg-black/20 p-3 text-white outline-none" />
+            </div>
+            <div>
+              <label className="mb-2 block text-sm font-semibold text-white/70">Raio de distância</label>
+              <select value={radius} onChange={(e) => setRadius(e.target.value)} className="w-full rounded-xl border border-white/10 bg-black/20 p-3 text-white outline-none">
+                <option value="1">1 km</option><option value="5">5 km</option><option value="10">10 km</option><option value="25">25 km</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <div className="mt-6 flex items-center justify-between text-sm text-white/60">
+          <span>{total} ocorrência(s)</span>
+          <div className="flex items-center gap-2">
+            <button type="button" disabled={page <= 1} onClick={() => setPage((current) => current - 1)} className="rounded-lg border border-white/15 px-3 py-2 disabled:opacity-30">Anterior</button>
+            <span>Página {page}</span>
+            <button type="button" disabled={page * 9 >= total} onClick={() => setPage((current) => current + 1)} className="rounded-lg border border-white/15 px-3 py-2 disabled:opacity-30">Próxima</button>
           </div>
         </div>
 

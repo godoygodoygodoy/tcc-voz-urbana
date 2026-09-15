@@ -17,6 +17,11 @@ import {
   Sparkles,
   Shield,
   Waves,
+  Settings,
+  UserRound,
+  UserPlus,
+  LogOut,
+  ChevronDown,
 } from 'lucide-react';
 import { Card, CardContent } from '../components/ui/card';
 import { Button } from '../components/ui/button';
@@ -103,6 +108,7 @@ export default function LandingPage() {
   const [categories, setCategories] = useState([]);
   const [loadingFeed, setLoadingFeed] = useState(true);
   const [selectedProblem, setSelectedProblem] = useState(null);
+  const [accountMenuOpen, setAccountMenuOpen] = useState(false);
   const heroRef = useRef(null);
 
   useEffect(() => {
@@ -199,9 +205,9 @@ export default function LandingPage() {
   const activeCategories = categories.length > 0 ? categories : fallbackCategories;
 
   const stats = useMemo(() => {
-    const openCount = recentProblems.filter((problem) => problem.status === 'open').length;
-    const inProgressCount = recentProblems.filter((problem) => problem.status === 'in_progress').length;
-    const resolvedCount = recentProblems.filter((problem) => problem.status === 'resolved').length;
+    const openCount = recentProblems.filter((problem) => ['open', 'ABERTO'].includes(problem.status)).length;
+    const inProgressCount = recentProblems.filter((problem) => ['in_progress', 'EM_ANDAMENTO'].includes(problem.status)).length;
+    const resolvedCount = recentProblems.filter((problem) => ['resolved', 'RESOLVIDO'].includes(problem.status)).length;
 
     return [
       { label: 'Relatos exibidos', value: recentProblems.length || 0 },
@@ -260,19 +266,37 @@ export default function LandingPage() {
           </nav>
 
           {user ? (
-            <div className="flex items-center gap-3">
-              <Link to="/profile">
-                <Button className="rounded-full bg-white px-5 py-3 text-sm font-black text-zinc-950 hover:bg-white/90">
-                  Minha conta
-                </Button>
-              </Link>
+            <div className="relative flex items-center gap-3">
               <button
                 type="button"
-                onClick={logout}
-                className="rounded-full border border-white/15 bg-white/6 px-4 py-3 text-sm font-black text-white hover:bg-white/12"
+                onClick={() => setAccountMenuOpen((open) => !open)}
+                aria-expanded={accountMenuOpen}
+                className="group flex items-center gap-2 rounded-full border border-white/15 bg-white/8 p-1.5 pr-3 text-sm font-black text-white transition hover:bg-white/15"
               >
-                Sair
+                {user.avatar || user.fotoPerfil ? (
+                  <img src={user.avatar || user.fotoPerfil} alt="Perfil" className="h-9 w-9 rounded-full object-cover" />
+                ) : (
+                  <span className="flex h-9 w-9 items-center justify-center rounded-full bg-violet-500 text-sm text-white">{(user.name || user.nome || 'U').charAt(0).toUpperCase()}</span>
+                )}
+                <span className="hidden sm:inline">{user.username ? `@${user.username.replace(/^@/, '')}` : 'Minha conta'}</span>
+                <ChevronDown className={`h-4 w-4 transition-transform ${accountMenuOpen ? 'rotate-180' : ''}`} />
               </button>
+              {accountMenuOpen && (
+                <div className="account-menu absolute right-0 top-full z-[100] mt-3 w-64 rounded-2xl border border-white/12 bg-[#202326] p-2 text-white shadow-2xl">
+                  <Link to="/profile" onClick={() => setAccountMenuOpen(false)} className="flex items-center gap-3 rounded-xl px-3 py-3 text-sm hover:bg-white/10">
+                    <UserRound className="h-4 w-4 text-violet-300" /> Configurações da conta
+                  </Link>
+                  <Link to="/register" onClick={() => setAccountMenuOpen(false)} className="flex items-center gap-3 rounded-xl px-3 py-3 text-sm hover:bg-white/10">
+                    <UserPlus className="h-4 w-4 text-violet-300" /> Criar novo perfil
+                  </Link>
+                  <Link to="/profile" onClick={() => setAccountMenuOpen(false)} className="flex items-center gap-3 rounded-xl px-3 py-3 text-sm hover:bg-white/10">
+                    <Settings className="h-4 w-4 text-violet-300" /> Configurações do site
+                  </Link>
+                  <button type="button" onClick={logout} className="flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left text-sm text-red-200 hover:bg-red-500/15">
+                    <LogOut className="h-4 w-4" /> Sair
+                  </button>
+                </div>
+              )}
             </div>
           ) : (
             <Link to="/login">
@@ -369,9 +393,9 @@ export default function LandingPage() {
           >
             <div className="absolute -inset-4 rounded-[2.25rem] bg-[radial-gradient(circle_at_top,rgba(124,58,237,0.24),transparent_48%),radial-gradient(circle_at_bottom_right,rgba(168,85,247,0.14),transparent_35%)] blur-2xl" />
 
-            <Card className="glass-panel relative overflow-hidden rounded-[2rem] border-white/10 text-white shadow-[0_26px_80px_rgba(0,0,0,0.45)]">
+            <Card className="glass-panel relative z-10 min-h-[620px] overflow-hidden rounded-[2rem] border-white/10 bg-[#202326]/90 text-white shadow-[0_26px_80px_rgba(0,0,0,0.45)]">
               <CardContent className="p-0">
-                <div className="absolute inset-0 opacity-65">
+                <div className="pointer-events-none absolute inset-0 z-0 opacity-35">
                   <ThreeCityBackdrop />
                 </div>
                 <div className="flex items-center justify-between border-b border-white/8 bg-white/5 px-5 py-4">
@@ -572,7 +596,7 @@ export default function LandingPage() {
             </CardContent>
           </Card>
 
-          <Card className="glass-panel rounded-[2rem] border-white/10 bg-white/6 text-white shadow-[0_24px_70px_rgba(0,0,0,0.26)]">
+          {!user && <Card className="glass-panel rounded-[2rem] border-white/10 bg-white/6 text-white shadow-[0_24px_70px_rgba(0,0,0,0.26)]">
             <CardContent className="p-8 sm:p-10 space-y-5">
               <div>
                 <p className="text-xs font-semibold uppercase tracking-[0.32em] text-white/45">Acesso rápido</p>
@@ -593,7 +617,7 @@ export default function LandingPage() {
                 </Button>
               </Link>
             </CardContent>
-          </Card>
+          </Card>}
         </div>
       </motion.section>
 

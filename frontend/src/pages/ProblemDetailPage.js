@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
-import { problemsAPI, votesAPI, mediaUrl } from '../services/api';
+import { problemsAPI, votesAPI, commentsAPI, mediaUrl } from '../services/api';
 import { toast } from 'react-toastify';
 import { FiThumbsUp, FiMapPin, FiCalendar, FiUser } from 'react-icons/fi';
 import { formatDistanceToNow } from 'date-fns';
@@ -12,6 +12,9 @@ const ProblemDetailPage = () => {
   const [problem, setProblem] = useState(null);
   const [loading, setLoading] = useState(true);
   const [votingLoading, setVotingLoading] = useState(false);
+  const [comments, setComments] = useState([]);
+  const [commentText, setCommentText] = useState('');
+  const [commentLoading, setCommentLoading] = useState(false);
   const { user } = useAuthStore();
 
   useEffect(() => {
@@ -20,6 +23,8 @@ const ProblemDetailPage = () => {
         setLoading(true);
         const res = await problemsAPI.get(id);
         setProblem(res.data);
+        const commentsRes = await commentsAPI.list(id);
+        setComments(commentsRes.data || []);
       } catch (error) {
         toast.error('Erro ao carregar problema');
       } finally {
@@ -45,6 +50,23 @@ const ProblemDetailPage = () => {
       toast.error('Erro ao votar');
     } finally {
       setVotingLoading(false);
+    }
+  };
+
+  const handleComment = async (event) => {
+    event.preventDefault();
+    if (!user) return toast.error('Faça login para comentar');
+    if (commentText.trim().length < 2) return toast.error('Escreva um comentário');
+    try {
+      setCommentLoading(true);
+      const response = await commentsAPI.create(id, { texto: commentText });
+      setComments((current) => [...current, response.data]);
+      setCommentText('');
+      toast.success('Comentário publicado');
+    } catch (error) {
+      toast.error(error.response?.data?.error || 'Erro ao publicar comentário');
+    } finally {
+      setCommentLoading(false);
     }
   };
 
@@ -84,6 +106,7 @@ const ProblemDetailPage = () => {
               {problem.images.map((img) => (
                 <div key={img.id} className="bg-gray-200 rounded-lg overflow-hidden">
                   <img src={mediaUrl(img.url)} alt="Problem" className="w-full h-64 object-cover" />
+                  <p className="px-3 py-2 text-xs font-semibold text-gray-600">{img.tipo === 'DEPOIS' ? 'Depois' : 'Antes'}</p>
                 </div>
               ))}
             </div>
@@ -155,6 +178,27 @@ const ProblemDetailPage = () => {
                 </button>
               </div>
             </div>
+
+            <section className="mt-8 border-t pt-6">
+              <h2 className="text-xl font-bold mb-4">Comentários ({comments.length})</h2>
+              <form onSubmit={handleComment} className="flex flex-col gap-3 sm:flex-row">
+                <input value={commentText} onChange={(event) => setCommentText(event.target.value)} placeholder="Escreva uma atualização ou comentário" className="flex-1 rounded-lg border p-3" maxLength="1000" />
+                <button disabled={commentLoading} className="rounded-lg bg-violet-600 px-5 py-3 font-semibold text-white disabled:opacity-50">Comentar</button>
+              </form>
+              <div className="mt-5 space-y-4">
+                {comments.length === 0 ? <p className="text-gray-500">Ainda não há comentários.</p> : comments.map((comment) => (
+                  <article key={comment.id} className="rounded-lg bg-gray-50 p-4">
+                    <div className="flex items-center justify-between gap-3"><strong>{comment.usuario?.username ? `@${comment.usuario.username}` : comment.usuario?.nome}</strong><span className="text-xs text-gray-500">{formatDistanceToNow(new Date(comment.dataCriacao), { locale: ptBR, addSuffix: true })}</span></div>
+                    <p className="mt-2 text-gray-700">{comment.texto}</p>
+                  </article>
+                ))}
+              </div>
+            </section>
+
+            {problem.updates?.length > 0 && <section className="mt-8 border-t pt-6">
+              <h2 className="text-xl font-bold mb-4">Atualizações</h2>
+              <div className="space-y-3">{problem.updates.map((update) => <div key={update.id} className="border-l-4 border-violet-500 bg-violet-50 p-4"><p className="font-semibold">{update.status || 'Atualização'}</p><p className="mt-1 text-gray-700">{update.texto}</p></div>)}</div>
+            </section>}
           </div>
         </div>
       </div>

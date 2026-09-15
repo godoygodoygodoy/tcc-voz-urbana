@@ -14,6 +14,9 @@ import userRoutes from "./routes/users.js";
 import categoryRoutes from "./routes/categories.js";
 import voteRoutes from "./routes/votes.js";
 import adminRoutes from "./routes/admin.js";
+import commentRoutes from "./routes/comments.js";
+import notificationRoutes from "./routes/notifications.js";
+import rateLimit from "express-rate-limit";
 
 // Importar middlewares
 import { errorHandler } from "./middlewares/errorHandler.js";
@@ -32,6 +35,7 @@ app.use(
 );
 app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ limit: "10mb", extended: true }));
+app.use("/api/", rateLimit({ windowMs: 15 * 60 * 1000, max: 300, standardHeaders: true, legacyHeaders: false, message: { error: "Muitas requisições. Tente novamente em alguns minutos." } }));
 
 // Servir arquivos estáticos
 app.use("/uploads", express.static("uploads"));
@@ -45,11 +49,13 @@ app.get("/api/health", (req, res) => {
 app.use("/api/auth", authRoutes);
 app.use("/api/categories", categoryRoutes);
 app.use("/api/problems", problemRoutes);
+app.use("/api/comments", commentRoutes);
 
 // Rotas protegidas
 app.use("/api/users", authMiddleware, userRoutes);
 app.use("/api/votes", authMiddleware, voteRoutes);
 app.use("/api/admin", authMiddleware, adminMiddleware, adminRoutes);
+app.use("/api/notifications", notificationRoutes);
 
 // 404 handler
 app.use((req, res) => {

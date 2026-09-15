@@ -22,6 +22,16 @@ body {
     linear-gradient(180deg, #fafafb 0%, #f4f4f7 100%);
 }
 
+:root[data-theme='light'] body {
+  color: #1f2937;
+  background: #f6f7fb;
+}
+
+:root[data-theme='light'] .min-h-screen.bg-\[\#1b1d1f\] {
+  background: #f6f7fb;
+  color: #1f2937;
+}
+
 html {
   scroll-behavior: auto;
 }
@@ -167,4 +177,29 @@ code {
   background: rgba(15, 23, 42, 0.55);
   border: 1px solid rgba(255, 255, 255, 0.08);
   backdrop-filter: blur(22px);
+  animation: panelReveal 0.75s cubic-bezier(0.22, 1, 0.36, 1) both;
+  transition: border-color 240ms ease, box-shadow 240ms ease, transform 240ms ease, background-color 240ms ease;
+}
+
+.glass-panel:hover {
+  border-color: rgba(196, 181, 253, 0.24);
+  box-shadow: 0 24px 70px rgba(0, 0, 0, 0.22);
+}
+
+@keyframes panelReveal {
+  from {
+    opacity: 0;
+    transform: translateY(16px) scale(0.985);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .glass-panel {
+    animation: none;
+    transition: none;
+  }
 }

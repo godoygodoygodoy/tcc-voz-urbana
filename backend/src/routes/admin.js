@@ -2,6 +2,7 @@ import express from "express";
 import { adminMiddleware } from "../middlewares/auth.js";
 import { prisma } from "../config/prisma.js";
 import { asyncHandler } from "../middlewares/errorHandler.js";
+import { createNotification } from "../utils/notifications.js";
 
 const router = express.Router();
 
@@ -42,6 +43,13 @@ router.put(
       where: { id: req.params.id },
       data: updateData
     });
+
+    await prisma.atualizacaoProblema.create({
+      data: { texto: `Status alterado para ${status}`, status, usuarioId: req.userId, problemaId: req.params.id }
+    });
+    if (problem.usuarioId !== req.userId) {
+      await createNotification({ usuarioId: problem.usuarioId, tipo: "STATUS", titulo: "Problema atualizado", mensagem: `O status foi alterado para ${status}`, link: `/problem/${problem.id}` });
+    }
 
     res.json(updatedProblem);
   })
@@ -110,5 +118,20 @@ router.get(
     });
   })
 );
+
+router.get("/export/problems.csv", asyncHandler(async (req, res) => {
+  const problems = await prisma.problema.findMany({ include: { categoria: true, _count: { select: { votos: true } } }, orderBy: { dataCriacao: "desc" } });
+  const escape = (value) => `"${String(value ?? "").replaceAll('"', '""')}"`;
+  const rows = ["id,titulo,categoria,status,votos,latitude,longitude,data_criacao", ...problems.map((problem) => [problem.id, problem.titulo, problem.categoria.nome, problem.status, problem._count.votos, problem.latitude, problem.longitude, problem.dataCriacao.toISOString()].map(escape).join(","))];
+  res.setHeader("Content-Type", "text/csv; charset=utf-8");
+  res.setHeader("Content-Disposition", "attachment; filename=problemas.csv");
+  res.send(`\ufeff${rows.join("\n")}`);
+}));
+
+router.get("/analytics", asyncHandler(async (req, res) => {
+  const byCategory = await prisma.problema.groupBy({ by: ["categoriaId"], _count: { _all: true }, orderBy: { _count: { categoriaId: "desc" } } });
+  const categories = await prisma.categoria.findMany({ where: { id: { in: byCategory.map((item) => item.categoriaId) } } });
+  res.json(byCategory.map((item) => ({ category: categories.find((category) => category.id === item.categoriaId)?.nome || "Sem categoria", total: item._count._all })));
+}));
 
 export default router;

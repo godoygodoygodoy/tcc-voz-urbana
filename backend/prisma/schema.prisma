@@ -25,6 +25,11 @@ enum TipoVoto {
   RESOLVER
 }
 
+enum TipoImagem {
+  ANTES
+  DEPOIS
+}
+
 model Usuario {
   id          String    @id @default(uuid()) @db.Char(36)
   nome        String    @db.VarChar(100)
@@ -43,6 +48,9 @@ model Usuario {
   votos       Voto[]
   admin       Admin?
   logs        Log[]
+  comentarios Comentario[]
+  notificacoes Notificacao[]
+  atualizacoes AtualizacaoProblema[]
 
   @@map("usuarios")
 }
@@ -70,6 +78,8 @@ model Problema {
   categoria   Categoria      @relation(fields: [categoriaId], references: [id])
   imagens     Imagem[]
   votos       Voto[]
+  comentarios Comentario[]
+  atualizacoes AtualizacaoProblema[]
 
   @@index([latitude, longitude])
   @@index([status])
@@ -80,10 +90,53 @@ model Problema {
 model Imagem {
   id         String   @id @default(uuid()) @db.Char(36)
   url        String   @db.VarChar(500)
+  tipo       TipoImagem @default(ANTES)
   problemaId String   @map("problema_id") @db.Char(36)
   problema   Problema @relation(fields: [problemaId], references: [id], onDelete: Cascade)
 
   @@map("imagens")
+}
+
+model Comentario {
+  id         String   @id @default(uuid()) @db.Char(36)
+  texto      String   @db.Text
+  dataCriacao DateTime @default(now()) @map("data_criacao")
+  usuarioId  String   @map("usuario_id") @db.Char(36)
+  problemaId String   @map("problema_id") @db.Char(36)
+  usuario    Usuario  @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+  problema   Problema @relation(fields: [problemaId], references: [id], onDelete: Cascade)
+
+  @@index([problemaId, dataCriacao])
+  @@map("comentarios")
+}
+
+model Notificacao {
+  id         String   @id @default(uuid()) @db.Char(36)
+  tipo       String   @db.VarChar(50)
+  titulo     String   @db.VarChar(150)
+  mensagem   String   @db.VarChar(500)
+  lida       Boolean  @default(false)
+  link       String?  @db.VarChar(300)
+  dataCriacao DateTime @default(now()) @map("data_criacao")
+  usuarioId  String   @map("usuario_id") @db.Char(36)
+  usuario    Usuario  @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+
+  @@index([usuarioId, lida, dataCriacao])
+  @@map("notificacoes")
+}
+
+model AtualizacaoProblema {
+  id         String   @id @default(uuid()) @db.Char(36)
+  texto      String   @db.Text
+  status     StatusProblema?
+  dataCriacao DateTime @default(now()) @map("data_criacao")
+  usuarioId  String   @map("usuario_id") @db.Char(36)
+  problemaId String   @map("problema_id") @db.Char(36)
+  usuario    Usuario  @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+  problema   Problema @relation(fields: [problemaId], references: [id], onDelete: Cascade)
+
+  @@index([problemaId, dataCriacao])
+  @@map("atualizacoes_problemas")
 }
 
 model Voto {

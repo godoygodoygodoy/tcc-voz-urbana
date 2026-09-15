@@ -42,6 +42,7 @@ const serializeProblem = (problem) => ({
     : null,
   author: problem.usuario ? { id: problem.usuario.id, name: problem.usuario.nome } : null,
   images: problem.imagens || [],
+  updates: problem.atualizacoes || [],
   votes: problem._count?.votos || problem.votos?.length || 0
 });
 
@@ -56,7 +57,10 @@ router.get(
       status,
       lat,
       lng,
-      radius = 5 // km
+      radius = 5,
+      from,
+      to,
+      sort = "recent"
     } = req.query;
 
     const pageNumber = Math.max(1, Number(page));
@@ -69,6 +73,12 @@ router.get(
     // Filtro por categoria
     if (category) {
       where.categoriaId = category;
+    }
+
+    if (from || to) {
+      where.dataCriacao = {};
+      if (from) where.dataCriacao.gte = new Date(from);
+      if (to) where.dataCriacao.lte = new Date(`${to}T23:59:59.999`);
     }
 
     // Filtro geográfico (aproximado)
@@ -88,6 +98,8 @@ router.get(
       };
     }
 
+    const orderBy = sort === "votes" ? { votos: { _count: "desc" } } : { dataCriacao: "desc" };
+
     const [total, data] = await Promise.all([
       prisma.problema.count({ where }),
       prisma.problema.findMany({
@@ -102,13 +114,14 @@ router.get(
             }
           },
           imagens: true,
+          atualizacoes: { orderBy: { dataCriacao: "desc" } },
           _count: {
             select: { votos: true }
           }
         },
         skip,
         take: pageSize,
-        orderBy: { dataCriacao: "desc" }
+        orderBy
       })
     ]);
 
@@ -166,6 +179,7 @@ router.post(
       await prisma.imagem.createMany({
         data: req.files.map((file) => ({
           url: `/uploads/problems/${file.filename}`,
+          tipo: req.body.imageType === "DEPOIS" ? "DEPOIS" : "ANTES",
           problemaId: problem.id
         }))
       });
@@ -173,7 +187,7 @@ router.post(
 
     const createdProblem = await prisma.problema.findUnique({
       where: { id: problem.id },
-      include: { categoria: true, usuario: { select: { id: true, nome: true } }, imagens: true }
+      include: { categoria: true, usuario: { select: { id: true, nome: true } }, imagens: true, atualizacoes: { orderBy: { dataCriacao: "desc" } } }
     });
     res.status(201).json(serializeProblem(createdProblem));
   })
@@ -196,6 +210,7 @@ router.get(
         },
         imagens: true,
         votos: true,
+        atualizacoes: { orderBy: { dataCriacao: "desc" } },
         _count: { select: { votos: true } }
       }
     });

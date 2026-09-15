@@ -62,6 +62,17 @@ export const votesAPI = {
   vote: (problemId, data) => api.post(`/votes/${problemId}`, data),
 };
 
+export const commentsAPI = {
+  list: (problemId) => api.get(`/comments/${problemId}`),
+  create: (problemId, data) => api.post(`/comments/${problemId}`, data),
+};
+
+export const notificationsAPI = {
+  list: () => api.get('/notifications'),
+  markRead: (id) => api.patch(`/notifications/${id}/read`),
+  markAllRead: () => api.patch('/notifications/read-all'),
+};
+
 // Users
 export const usersAPI = {
   getMe: () => api.get('/users/me'),
