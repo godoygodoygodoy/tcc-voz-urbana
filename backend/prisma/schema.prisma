@@ -7,50 +7,27 @@ datasource db {
   provider = "mysql"
 }
 
-enum StatusProblema {
-  ABERTO
-  EM_ANDAMENTO
-  RESOLVIDO
-  REJEITADO
-}
-
-enum NivelAdmin {
-  MODERADOR
-  ADMIN
-  SUPER_ADMIN
-}
-
-enum TipoVoto {
-  CONFIRMAR
-  RESOLVER
-}
-
-enum TipoImagem {
-  ANTES
-  DEPOIS
-}
-
 model Usuario {
-  id          String    @id @default(uuid()) @db.Char(36)
-  nome        String    @db.VarChar(100)
-  email       String    @unique @db.VarChar(150)
-  username    String?   @unique @db.VarChar(30)
-  senhaHash   String    @map("senha_hash") @db.VarChar(255)
-  fotoPerfil  String?   @map("foto_perfil") @db.VarChar(500)
-  telefone    String?   @db.VarChar(30)
-  bio         String?   @db.Text
-  nivel       String    @default("USUARIO") @db.VarChar(20)
-  emailVerificado Boolean @default(false) @map("email_verificado")
-  tokenVerificacao String? @unique @map("token_verificacao") @db.VarChar(100)
-  tokenVerificacaoExpira DateTime? @map("token_verificacao_expira")
-  dataCriacao DateTime  @default(now()) @map("data_criacao")
-  problemas   Problema[]
-  votos       Voto[]
-  admin       Admin?
-  logs        Log[]
-  comentarios Comentario[]
-  notificacoes Notificacao[]
-  atualizacoes AtualizacaoProblema[]
+  id                     String                @id @default(uuid()) @db.Char(36)
+  nome                   String                @db.VarChar(100)
+  email                  String                @unique @db.VarChar(150)
+  senhaHash              String                @map("senha_hash") @db.VarChar(255)
+  fotoPerfil             String?               @map("foto_perfil") @db.VarChar(500)
+  dataCriacao            DateTime              @default(now()) @map("data_criacao")
+  username               String?               @unique @db.VarChar(30)
+  telefone               String?               @db.VarChar(30)
+  bio                    String?               @db.Text
+  nivel                  String                @default("USUARIO") @db.VarChar(20)
+  emailVerificado        Boolean               @default(false) @map("email_verificado")
+  tokenVerificacao       String?               @unique @map("token_verificacao") @db.VarChar(100)
+  tokenVerificacaoExpira DateTime?             @map("token_verificacao_expira")
+  admin                  Admin?
+  atualizacoes           AtualizacaoProblema[]
+  comentarios            Comentario[]
+  logs                   Log[]
+  notificacoes           Notificacao[]
+  problemas              Problema[]
+  votos                  Voto[]
 
   @@map("usuarios")
 }
@@ -64,78 +41,82 @@ model Categoria {
 }
 
 model Problema {
-  id          String         @id @default(uuid()) @db.Char(36)
-  titulo      String         @db.VarChar(150)
-  descricao   String         @db.Text
-  latitude    Decimal        @db.Decimal(10, 7)
-  longitude   Decimal        @db.Decimal(10, 7)
-  endereco    String?        @db.VarChar(300)
-  status      StatusProblema @default(ABERTO)
-  dataCriacao DateTime       @default(now()) @map("data_criacao")
-  usuarioId   String         @map("usuario_id") @db.Char(36)
-  categoriaId String         @map("categoria_id") @db.Char(36)
-  usuario     Usuario        @relation(fields: [usuarioId], references: [id])
-  categoria   Categoria      @relation(fields: [categoriaId], references: [id])
-  imagens     Imagem[]
-  votos       Voto[]
-  comentarios Comentario[]
+  id           String                @id @default(uuid()) @db.Char(36)
+  titulo       String                @db.VarChar(150)
+  descricao    String                @db.Text
+  latitude     Decimal               @db.Decimal(10, 7)
+  longitude    Decimal               @db.Decimal(10, 7)
+  endereco     String?               @db.VarChar(300)
+  status       StatusProblema        @default(ABERTO)
+  dataCriacao  DateTime              @default(now()) @map("data_criacao")
+  usuarioId    String                @map("usuario_id") @db.Char(36)
+  categoriaId  String                @map("categoria_id") @db.Char(36)
   atualizacoes AtualizacaoProblema[]
+  comentarios  Comentario[]
+  imagens      Imagem[]
+  categoria    Categoria             @relation(fields: [categoriaId], references: [id])
+  usuario      Usuario               @relation(fields: [usuarioId], references: [id])
+  votos        Voto[]
 
   @@index([latitude, longitude])
   @@index([status])
   @@index([categoriaId])
+  @@index([usuarioId], map: "problemas_usuario_id_fkey")
   @@map("problemas")
 }
 
 model Imagem {
-  id         String   @id @default(uuid()) @db.Char(36)
-  url        String   @db.VarChar(500)
+  id         String     @id @default(uuid()) @db.Char(36)
+  url        String     @db.VarChar(500)
+  problemaId String     @map("problema_id") @db.Char(36)
   tipo       TipoImagem @default(ANTES)
-  problemaId String   @map("problema_id") @db.Char(36)
-  problema   Problema @relation(fields: [problemaId], references: [id], onDelete: Cascade)
+  problema   Problema   @relation(fields: [problemaId], references: [id], onDelete: Cascade)
 
+  @@index([problemaId], map: "imagens_problema_id_fkey")
   @@map("imagens")
 }
 
 model Comentario {
-  id         String   @id @default(uuid()) @db.Char(36)
-  texto      String   @db.Text
+  id          String   @id @default(uuid()) @db.Char(36)
+  texto       String   @db.Text
   dataCriacao DateTime @default(now()) @map("data_criacao")
-  usuarioId  String   @map("usuario_id") @db.Char(36)
-  problemaId String   @map("problema_id") @db.Char(36)
-  usuario    Usuario  @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
-  problema   Problema @relation(fields: [problemaId], references: [id], onDelete: Cascade)
+  usuarioId   String   @map("usuario_id") @db.Char(36)
+  problemaId  String   @map("problema_id") @db.Char(36)
+  problema    Problema @relation(fields: [problemaId], references: [id], onDelete: Cascade, onUpdate: Restrict, map: "comentarios_problema_fk")
+  usuario     Usuario  @relation(fields: [usuarioId], references: [id], onDelete: Cascade, onUpdate: Restrict, map: "comentarios_usuario_fk")
 
-  @@index([problemaId, dataCriacao])
+  @@index([problemaId, dataCriacao], map: "comentarios_problema_data_idx")
+  @@index([usuarioId], map: "comentarios_usuario_fk")
   @@map("comentarios")
 }
 
 model Notificacao {
-  id         String   @id @default(uuid()) @db.Char(36)
-  tipo       String   @db.VarChar(50)
-  titulo     String   @db.VarChar(150)
-  mensagem   String   @db.VarChar(500)
-  lida       Boolean  @default(false)
-  link       String?  @db.VarChar(300)
+  id          String   @id @default(uuid()) @db.Char(36)
+  tipo        String   @db.VarChar(50)
+  titulo      String   @db.VarChar(150)
+  mensagem    String   @db.VarChar(500)
+  lida        Boolean  @default(false)
+  link        String?  @db.VarChar(300)
   dataCriacao DateTime @default(now()) @map("data_criacao")
-  usuarioId  String   @map("usuario_id") @db.Char(36)
-  usuario    Usuario  @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+  usuarioId   String   @map("usuario_id") @db.Char(36)
+  usuario     Usuario  @relation(fields: [usuarioId], references: [id], onDelete: Cascade, onUpdate: Restrict, map: "notificacoes_usuario_fk")
 
-  @@index([usuarioId, lida, dataCriacao])
+  @@index([usuarioId, lida, dataCriacao], map: "notificacoes_usuario_lida_data_idx")
   @@map("notificacoes")
 }
 
 model AtualizacaoProblema {
-  id         String   @id @default(uuid()) @db.Char(36)
-  texto      String   @db.Text
-  status     StatusProblema?
-  dataCriacao DateTime @default(now()) @map("data_criacao")
-  usuarioId  String   @map("usuario_id") @db.Char(36)
-  problemaId String   @map("problema_id") @db.Char(36)
-  usuario    Usuario  @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
-  problema   Problema @relation(fields: [problemaId], references: [id], onDelete: Cascade)
+  id          String          @id @default(uuid()) @db.Char(36)
+  texto       String          @db.Text
+  status      StatusProblema?
+  dataCriacao DateTime        @default(now()) @map("data_criacao")
+  usuarioId   String          @map("usuario_id") @db.Char(36)
+  problemaId  String          @map("problema_id") @db.Char(36)
+  problema    Problema        @relation(fields: [problemaId], references: [id], onDelete: Cascade, onUpdate: Restrict, map: "atualizacoes_problema_fk")
+  usuario     Usuario         @relation(fields: [usuarioId], references: [id], onDelete: Cascade, onUpdate: Restrict, map: "atualizacoes_usuario_fk")
 
-  @@index([problemaId, dataCriacao])
+  @@index([problemaId, dataCriacao], map: "atualizacoes_problemas_data_idx")
+  @@index([usuarioId], map: "atualizacoes_usuario_fk")
   @@map("atualizacoes_problemas")
 }
 
@@ -144,10 +125,11 @@ model Voto {
   tipo       TipoVoto @default(CONFIRMAR)
   usuarioId  String   @map("usuario_id") @db.Char(36)
   problemaId String   @map("problema_id") @db.Char(36)
-  usuario    Usuario  @relation(fields: [usuarioId], references: [id])
   problema   Problema @relation(fields: [problemaId], references: [id], onDelete: Cascade)
+  usuario    Usuario  @relation(fields: [usuarioId], references: [id])
 
   @@unique([usuarioId, problemaId])
+  @@index([problemaId], map: "votos_problema_id_fkey")
   @@map("votos")
 }
 
@@ -169,4 +151,117 @@ model Log {
 
   @@index([usuarioId])
   @@map("logs")
+}
+
+model category {
+  id          String    @id
+  name        String    @unique(map: "Category_name_key")
+  description String?
+  color       String    @default("#7C3AED")
+  icon        String?
+  isActive    Boolean   @default(true)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime
+  problem     problem[]
+}
+
+model image {
+  id        String   @id
+  url       String
+  filename  String
+  mimetype  String?
+  size      Int?
+  problemId String
+  createdAt DateTime @default(now())
+  updatedAt DateTime
+  problem   problem  @relation(fields: [problemId], references: [id], onDelete: Cascade, map: "Image_problemId_fkey")
+
+  @@index([problemId], map: "Image_problemId_fkey")
+}
+
+model problem {
+  id           String   @id
+  title        String
+  description  String
+  latitude     Float
+  longitude    Float
+  address      String?
+  status       String   @default("open")
+  priority     String   @default("medium")
+  votes        Int      @default(0)
+  views        Int      @default(0)
+  isVerified   Boolean  @default(false)
+  verifiedById String?
+  userId       String
+  categoryId   String
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime
+  image        image[]
+  category     category @relation(fields: [categoryId], references: [id], map: "Problem_categoryId_fkey")
+  user         user     @relation(fields: [userId], references: [id], onDelete: Cascade, map: "Problem_userId_fkey")
+  vote         vote[]
+
+  @@index([categoryId], map: "Problem_categoryId_idx")
+  @@index([latitude, longitude], map: "Problem_latitude_longitude_idx")
+  @@index([status], map: "Problem_status_idx")
+  @@index([userId], map: "Problem_userId_idx")
+}
+
+model user {
+  id                       String    @id
+  name                     String
+  email                    String    @unique(map: "User_email_key")
+  password                 String
+  phone                    String?
+  role                     String    @default("user")
+  avatar                   String?
+  avatarPositionX          Float     @default(50)
+  avatarPositionY          Float     @default(50)
+  bio                      String?
+  isActive                 Boolean   @default(true)
+  emailVerified            Boolean   @default(false)
+  emailVerificationToken   String?
+  emailVerificationExpires DateTime?
+  lastLogin                DateTime?
+  createdAt                DateTime  @default(now())
+  updatedAt                DateTime
+  problem                  problem[]
+  vote                     vote[]
+}
+
+model vote {
+  id        String   @id
+  type      String   @default("up")
+  userId    String
+  problemId String
+  createdAt DateTime @default(now())
+  updatedAt DateTime
+  problem   problem  @relation(fields: [problemId], references: [id], onDelete: Cascade, map: "Vote_problemId_fkey")
+  user      user     @relation(fields: [userId], references: [id], onDelete: Cascade, map: "Vote_userId_fkey")
+
+  @@unique([userId, problemId], map: "Vote_userId_problemId_key")
+  @@index([problemId], map: "Vote_problemId_fkey")
+}
+
+enum StatusProblema {
+  ABERTO
+  EM_ANDAMENTO
+  RESOLVIDO
+  REJEITADO
+}
+
+enum NivelAdmin {
+  MODERADOR
+  ADMIN
+  SUPER_ADMIN
+}
+
+enum TipoVoto {
+  CONFIRMAR
+  RESOLVER
+}
+
+enum TipoImagem {
+  ANTES
+  DEPOIS
 }
