@@ -143,7 +143,7 @@ model Admin {
 }
 
 model Log {
-  id        String   @id @default(uuid()) @db.Char(36)
+  id        String   @id @default(uuid())
   acao      String   @db.VarChar(200)
   data      DateTime @default(now())
   usuarioId String   @map("usuario_id") @db.Char(36)
@@ -151,96 +151,6 @@ model Log {
 
   @@index([usuarioId])
   @@map("logs")
-}
-
-model category {
-  id          String    @id
-  name        String    @unique(map: "Category_name_key")
-  description String?
-  color       String    @default("#7C3AED")
-  icon        String?
-  isActive    Boolean   @default(true)
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime
-  problem     problem[]
-}
-
-model image {
-  id        String   @id
-  url       String
-  filename  String
-  mimetype  String?
-  size      Int?
-  problemId String
-  createdAt DateTime @default(now())
-  updatedAt DateTime
-  problem   problem  @relation(fields: [problemId], references: [id], onDelete: Cascade, map: "Image_problemId_fkey")
-
-  @@index([problemId], map: "Image_problemId_fkey")
-}
-
-model problem {
-  id           String   @id
-  title        String
-  description  String
-  latitude     Float
-  longitude    Float
-  address      String?
-  status       String   @default("open")
-  priority     String   @default("medium")
-  votes        Int      @default(0)
-  views        Int      @default(0)
-  isVerified   Boolean  @default(false)
-  verifiedById String?
-  userId       String
-  categoryId   String
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime
-  image        image[]
-  category     category @relation(fields: [categoryId], references: [id], map: "Problem_categoryId_fkey")
-  user         user     @relation(fields: [userId], references: [id], onDelete: Cascade, map: "Problem_userId_fkey")
-  vote         vote[]
-
-  @@index([categoryId], map: "Problem_categoryId_idx")
-  @@index([latitude, longitude], map: "Problem_latitude_longitude_idx")
-  @@index([status], map: "Problem_status_idx")
-  @@index([userId], map: "Problem_userId_idx")
-}
-
-model user {
-  id                       String    @id
-  name                     String
-  email                    String    @unique(map: "User_email_key")
-  password                 String
-  phone                    String?
-  role                     String    @default("user")
-  avatar                   String?
-  avatarPositionX          Float     @default(50)
-  avatarPositionY          Float     @default(50)
-  bio                      String?
-  isActive                 Boolean   @default(true)
-  emailVerified            Boolean   @default(false)
-  emailVerificationToken   String?
-  emailVerificationExpires DateTime?
-  lastLogin                DateTime?
-  createdAt                DateTime  @default(now())
-  updatedAt                DateTime
-  problem                  problem[]
-  vote                     vote[]
-}
-
-model vote {
-  id        String   @id
-  type      String   @default("up")
-  userId    String
-  problemId String
-  createdAt DateTime @default(now())
-  updatedAt DateTime
-  problem   problem  @relation(fields: [problemId], references: [id], onDelete: Cascade, map: "Vote_problemId_fkey")
-  user      user     @relation(fields: [userId], references: [id], onDelete: Cascade, map: "Vote_userId_fkey")
-
-  @@unique([userId, problemId], map: "Vote_userId_problemId_key")
-  @@index([problemId], map: "Vote_problemId_fkey")
 }
 
 enum StatusProblema {
