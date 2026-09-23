@@ -100,8 +100,12 @@ router.post(
     if (!user) {
       return res.status(401).json({ error: "Credenciais inválidas" });
     }
-
+console.log("EMAIL RECEBIDO:", email);
+console.log("USUARIO:", user);
+console.log("HASH SALVO:", user?.senhaHash);
     const isValid = await comparePassword(password, user.senhaHash);
+    console.log("SENHA RECEBIDA:", password);
+console.log("COMPARE RESULT:", isValid);
     if (!isValid) {
       return res.status(401).json({ error: "Credenciais inválidas" });
     }
