@@ -30,15 +30,24 @@ router.post(
       return res.status(400).json({ error: error.details[0].message });
     }
 
-    const { name, email, password } = value;
+  const { name, email, password } = value;
 
-    const existingUser = await prisma.usuario.findUnique({
-      where: { email }
-    });
+console.log("EMAIL REGISTER:", email);
 
-    if (existingUser) {
-      return res.status(409).json({ error: "Email já cadastrado" });
-    }
+const existingUser = await prisma.usuario.findUnique({
+  where: { email }
+});
+
+console.log("EXISTING USER:", existingUser);
+
+if (existingUser) {
+  console.log("USUARIO JA EXISTE");
+  return res.status(409).json({
+    error: "Email já cadastrado"
+  });
+}
+
+console.log("VAI CRIAR USUARIO");
 
     const senhaHash = await hashPassword(password);
     const tokenVerificacao = crypto.randomBytes(32).toString("hex");
