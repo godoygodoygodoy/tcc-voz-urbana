@@ -113,7 +113,7 @@ ADMIN_PASSWORD=troque-esta-senha
 
 **Frontend** (`frontend/.env`):
 ```
-REACT_APP_API_URL=http://localhost:5000/api
+REACT_APP_API_URL=https://voz-urbana-api.onrender.com/api
 ```
 
 ## 🚀 Próximos Passos
