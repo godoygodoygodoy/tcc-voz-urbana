@@ -27,7 +27,7 @@ const Header = () => {
       <div className="container mx-auto px-4 py-4">
         <div className="flex justify-between items-center">
           <Link to="/" className="flex items-center gap-3">
-            <img src="/branding/mascote-voz-urbana.png" alt="Voz Urbana" className="h-10 w-10 rounded-full object-cover" />
+            <img src="/branding/mascote-voz-urbana.png" alt="Voz Urbana" className="h-10 w-10 rounded-full bg-transparent object-contain" />
             <img src="/branding/voz-urbana-texto.png" alt="Voz Urbana" className="h-9 w-auto max-w-[165px] object-contain" />
           </Link>
 
