@@ -245,7 +245,7 @@ export default function LandingPage() {
       <header className="sticky top-0 z-50 border-b border-white/10 bg-black/55 backdrop-blur-2xl">
         <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-4 sm:px-6 lg:px-8">
           <Link to="/" className="group flex items-center gap-3">
-            <img src="/branding/mascote-voz-urbana.png" alt="Voz Urbana" className="h-11 w-11 rounded-full bg-transparent object-contain shadow-[0_0_30px_rgba(255,255,255,0.18)] transition-transform duration-300 group-hover:scale-105" />
+            <img src="/branding/mascote-voz-urbana.png" alt="Voz Urbana" className="h-11 w-11 bg-transparent object-contain drop-shadow-[0_0_8px_rgba(168,85,247,0.55)] transition-transform duration-300 group-hover:scale-105" />
             <img src="/branding/voz-urbana-texto.png" alt="Voz Urbana" className="h-10 w-auto max-w-[190px] object-contain" />
           </Link>
 
@@ -337,13 +337,7 @@ export default function LandingPage() {
             </motion.div>
           </motion.div>
 
-          <motion.div
-            data-hero-panel
-            initial={{ opacity: 0, x: 36 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.9, ease: 'easeOut', delay: 0.15 }}
-            className="relative"
-          >
+          <div data-hero-panel className="hero-live-panel relative">
             <div className="absolute -inset-4 rounded-[2.25rem] bg-[radial-gradient(circle_at_top,rgba(124,58,237,0.24),transparent_48%),radial-gradient(circle_at_bottom_right,rgba(168,85,247,0.14),transparent_35%)] blur-2xl" />
 
             <Card className="live-panel relative z-10 isolate min-h-[620px] overflow-hidden rounded-[2rem] border border-white/10 bg-[#202326] text-white shadow-[0_26px_80px_rgba(0,0,0,0.45)]">
@@ -423,7 +417,7 @@ export default function LandingPage() {
                 </div>
               </CardContent>
             </Card>
-          </motion.div>
+          </div>
         </div>
       </section>
 

@@ -187,6 +187,13 @@ code {
   transform: none !important;
 }
 
+.hero-live-panel {
+  display: block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  transform: none !important;
+}
+
 .live-panel canvas {
   pointer-events: none !important;
 }
