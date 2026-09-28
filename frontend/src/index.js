@@ -3,6 +3,7 @@ import ReactDOM from 'react-dom/client';
 import Lenis from 'lenis';
 import './index.css';
 import App from './App';
+import { I18nProvider } from './i18n';
 
 function AppShell() {
   React.useEffect(() => {
@@ -32,7 +33,7 @@ function AppShell() {
     };
   }, []);
 
-  return <App />;
+  return <I18nProvider><App /></I18nProvider>;
 }
 
 const root = ReactDOM.createRoot(document.getElementById('root'));

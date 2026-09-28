@@ -6,6 +6,7 @@ import { toast } from 'react-toastify';
 import { categoriesAPI, mediaUrl, problemsAPI } from '../services/api';
 import { getPurpleTone, getStatusTone } from '../utils/theme';
 import { Link } from 'react-router-dom';
+import { useI18n } from '../i18n';
 
 const statusLabels = {
   ABERTO: 'Aberto',
@@ -18,6 +19,7 @@ const statusLabels = {
 };
 
 const FeedPage = () => {
+  const { t } = useI18n();
   const [posts, setPosts] = useState([]);
   const [categories, setCategories] = useState([]);
   const [category, setCategory] = useState('');
@@ -60,31 +62,31 @@ const FeedPage = () => {
       <div className="mx-auto max-w-6xl">
         <header className="mb-8 flex flex-col gap-5 md:flex-row md:items-end md:justify-between">
           <div>
-            <p className="text-xs font-bold uppercase tracking-[0.3em] text-violet-300">Comunidade</p>
-            <h1 className="mt-2 text-4xl font-black sm:text-5xl">Feed de problemas</h1>
-            <p className="mt-3 max-w-2xl text-white/60">Fotos, relatos e atualizações da cidade em um só lugar.</p>
+            <p className="text-xs font-bold uppercase tracking-[0.3em] text-violet-300">{t('navFeed')}</p>
+            <h1 className="mt-2 text-4xl font-black sm:text-5xl">{t('recentIdentifications')}</h1>
+            <p className="mt-3 max-w-2xl text-white/60">{t('heroCopy')}</p>
           </div>
-          <Link to="/report" className="rounded-full bg-white px-5 py-3 text-center text-sm font-black text-zinc-950 transition hover:bg-violet-100">Publicar problema</Link>
+          <Link to="/report" className="rounded-full bg-white px-5 py-3 text-center text-sm font-black text-zinc-950 transition hover:bg-violet-100">{t('reportProblem')}</Link>
         </header>
 
         <section className="mb-8 grid gap-3 rounded-3xl border border-white/10 bg-white/6 p-4 backdrop-blur-xl sm:grid-cols-2 lg:grid-cols-5">
           <label className="relative lg:col-span-2">
             <Search className="pointer-events-none absolute left-3 top-3 h-5 w-5 text-white/40" />
-            <input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Buscar no feed" className="w-full rounded-xl border border-white/10 bg-black/20 py-3 pl-10 pr-3 text-white outline-none placeholder:text-white/35 focus:border-violet-300" />
+            <input value={search} onChange={(event) => setSearch(event.target.value)} placeholder={`${t('navFeed')}...`} className="w-full rounded-xl border border-white/10 bg-black/20 py-3 pl-10 pr-3 text-white outline-none placeholder:text-white/35 focus:border-violet-300" />
           </label>
           <select value={status} onChange={(event) => { setStatus(event.target.value); setPage(1); }} className="rounded-xl border border-white/10 bg-[#202326] p-3 text-white outline-none">
-            <option value="">Todos os status</option>
+            <option value="">{t('allStatuses')}</option>
             <option value="ABERTO">Abertos</option>
             <option value="EM_ANDAMENTO">Em andamento</option>
             <option value="RESOLVIDO">Resolvidos</option>
           </select>
           <select value={category} onChange={(event) => { setCategory(event.target.value); setPage(1); }} className="rounded-xl border border-white/10 bg-[#202326] p-3 text-white outline-none">
-            <option value="">Todas as categorias</option>
+            <option value="">{t('allCategories')}</option>
             {categories.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}
           </select>
           <select value={sort} onChange={(event) => { setSort(event.target.value); setPage(1); }} className="rounded-xl border border-white/10 bg-[#202326] p-3 text-white outline-none">
-            <option value="recent">Mais recentes</option>
-            <option value="votes">Mais apoiados</option>
+            <option value="recent">{t('recentCases')}</option>
+            <option value="votes">{t('collectiveSupport')}</option>
           </select>
         </section>
 

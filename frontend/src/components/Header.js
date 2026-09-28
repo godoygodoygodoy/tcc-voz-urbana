@@ -4,9 +4,11 @@ import { FiPlus, FiSun, FiMoon } from 'react-icons/fi';
 import { useAuthStore } from '../store';
 import NotificationBell from './NotificationBell';
 import AccessMenu from './AccessMenu';
+import { useI18n } from '../i18n';
 
 const Header = () => {
   const { user, logout } = useAuthStore();
+  const { t } = useI18n();
   const navigate = useNavigate();
   const [theme, setTheme] = React.useState(() => localStorage.getItem('theme') || 'dark');
 
@@ -33,16 +35,16 @@ const Header = () => {
 
           <nav className="hidden md:flex gap-6 items-center">
             <Link to="/" className="text-gray-700 hover:text-primary-600">
-              Início
+              {t('navHome')}
             </Link>
             <Link to="/map" className="text-gray-700 hover:text-primary-600">
-              Mapa
+              {t('navMap')}
             </Link>
             <Link to="/feed" className="text-gray-700 hover:text-primary-600">
-              Feed
+              {t('navFeed')}
             </Link>
             <Link to="/about" className="text-gray-700 hover:text-primary-600">
-              Sobre
+              {t('navAbout')}
             </Link>
           </nav>
 
@@ -54,7 +56,7 @@ const Header = () => {
               to="/report"
               className="hidden md:inline-flex items-center gap-2 bg-gradient-to-r from-primary to-primary-600 text-white px-4 py-2 rounded-full shadow-sm"
             >
-              <FiPlus /> Identificar problema
+              <FiPlus /> {t('reportProblem')}
             </Link>
 
             {user && <NotificationBell />}
