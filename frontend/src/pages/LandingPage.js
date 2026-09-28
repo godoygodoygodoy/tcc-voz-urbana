@@ -149,14 +149,6 @@ export default function LandingPage() {
         ease: 'power2.out',
       });
 
-      gsap.from('[data-hero-panel]', {
-        x: 36,
-        opacity: 0,
-        duration: 1.1,
-        delay: 0.25,
-        ease: 'power3.out',
-      });
-
       gsap.to('[data-hero-orb]', {
         y: 18,
         duration: 4.5,
