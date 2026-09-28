@@ -181,6 +181,20 @@ code {
   transition: border-color 240ms ease, box-shadow 240ms ease, transform 240ms ease, background-color 240ms ease;
 }
 
+.live-panel {
+  isolation: isolate;
+  opacity: 1 !important;
+  transform: none !important;
+}
+
+.live-panel canvas {
+  pointer-events: none !important;
+}
+
+.live-panel .glass-panel {
+  animation: none;
+}
+
 .glass-panel:hover {
   border-color: rgba(196, 181, 253, 0.24);
   box-shadow: 0 24px 70px rgba(0, 0, 0, 0.22);

@@ -17,6 +17,7 @@ import ReportProblemPage from './pages/ReportProblemPage';
 import AdminDashboard from './pages/AdminDashboard';
 import ProfilePage from './pages/ProfilePage';
 import VerifyEmailPage from './pages/VerifyEmailPage';
+import FeedPage from './pages/FeedPage';
 
 // Components
 import Header from './components/Header';
@@ -44,6 +45,7 @@ function App() {
                 <Header />
                 <Routes>
                   <Route path="/map" element={<HomePage />} />
+                  <Route path="/feed" element={<FeedPage />} />
                   <Route path="/login" element={user ? <Navigate to="/" /> : <LoginPage />} />
                   <Route path="/register" element={<RegisterPage />} />
                   <Route path="/verify-email" element={<VerifyEmailPage />} />

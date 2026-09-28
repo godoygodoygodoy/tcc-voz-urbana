@@ -1,8 +1,9 @@
 import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { FiLogOut, FiUser, FiPlus, FiSun, FiMoon } from 'react-icons/fi';
+import { FiPlus, FiSun, FiMoon } from 'react-icons/fi';
 import { useAuthStore } from '../store';
 import NotificationBell from './NotificationBell';
+import AccessMenu from './AccessMenu';
 
 const Header = () => {
   const { user, logout } = useAuthStore();
@@ -26,13 +27,8 @@ const Header = () => {
       <div className="container mx-auto px-4 py-4">
         <div className="flex justify-between items-center">
           <Link to="/" className="flex items-center gap-3">
-            <div className="w-10 h-10 brand-gradient rounded-full flex items-center justify-center">
-              <span className="text-white font-extrabold">V</span>
-            </div>
-            <div>
-              <div className="font-bold text-lg text-neutral">VOZ URBANA</div>
-              <div className="text-xs text-gray-500">Sua voz melhora a cidade</div>
-            </div>
+            <img src="/branding/mascote-voz-urbana.png" alt="Voz Urbana" className="h-10 w-10 rounded-full object-cover" />
+            <img src="/branding/voz-urbana-texto.png" alt="Voz Urbana" className="h-9 w-auto max-w-[165px] object-contain" />
           </Link>
 
           <nav className="hidden md:flex gap-6 items-center">
@@ -41,6 +37,9 @@ const Header = () => {
             </Link>
             <Link to="/map" className="text-gray-700 hover:text-primary-600">
               Mapa
+            </Link>
+            <Link to="/feed" className="text-gray-700 hover:text-primary-600">
+              Feed
             </Link>
             <Link to="/about" className="text-gray-700 hover:text-primary-600">
               Sobre
@@ -58,26 +57,8 @@ const Header = () => {
               <FiPlus /> Identificar problema
             </Link>
 
-            {user ? (
-              <>
-                <NotificationBell />
-                <Link to="/profile" className="text-gray-700 hover:text-primary-600">
-                  <FiUser size={20} />
-                </Link>
-                <button onClick={handleLogout} className="text-gray-700 hover:text-primary-600">
-                  <FiLogOut size={20} />
-                </button>
-              </>
-            ) : (
-              <>
-                <Link to="/login" className="text-gray-700 hover:text-primary-600">
-                  Entrar
-                </Link>
-                <Link to="/register" className="hidden md:inline-flex items-center bg-white border border-primary px-4 py-2 rounded-full text-primary hover:bg-primary hover:text-white transition">
-                  Cadastre-se
-                </Link>
-              </>
-            )}
+            {user && <NotificationBell />}
+            <AccessMenu authenticated={Boolean(user)} user={user} onLogout={handleLogout} />
           </div>
         </div>
       </div>

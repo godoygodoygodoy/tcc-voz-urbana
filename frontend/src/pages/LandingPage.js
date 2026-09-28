@@ -9,7 +9,8 @@ import {
   CheckCircle2,
   Mail,
   Phone,
-  AlertTriangle,
+  PhoneCall,
+  MessageCircle,
   ArrowRight,
   LayoutDashboard,
   FileText,
@@ -17,11 +18,6 @@ import {
   Sparkles,
   Shield,
   Waves,
-  Settings,
-  UserRound,
-  UserPlus,
-  LogOut,
-  ChevronDown,
 } from 'lucide-react';
 import { Card, CardContent } from '../components/ui/card';
 import { Button } from '../components/ui/button';
@@ -31,6 +27,7 @@ import { categoriesAPI, problemsAPI } from '../services/api';
 import ThreeCityBackdrop from '../components/ThreeCityBackdrop';
 import { getPurpleTone } from '../utils/theme';
 import { useAuthStore } from '../store';
+import AccessMenu from '../components/AccessMenu';
 
 const fallbackCategories = [
   { id: 'asfalto', name: 'Asfalto' },
@@ -108,7 +105,6 @@ export default function LandingPage() {
   const [categories, setCategories] = useState([]);
   const [loadingFeed, setLoadingFeed] = useState(true);
   const [selectedProblem, setSelectedProblem] = useState(null);
-  const [accountMenuOpen, setAccountMenuOpen] = useState(false);
   const heroRef = useRef(null);
 
   useEffect(() => {
@@ -249,62 +245,19 @@ export default function LandingPage() {
       <header className="sticky top-0 z-50 border-b border-white/10 bg-black/55 backdrop-blur-2xl">
         <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-4 sm:px-6 lg:px-8">
           <Link to="/" className="group flex items-center gap-3">
-            <div className="flex h-11 w-11 items-center justify-center rounded-full bg-white text-zinc-950 shadow-[0_0_30px_rgba(255,255,255,0.18)] transition-transform duration-300 group-hover:scale-105">
-              <span className="text-lg font-black">V</span>
-            </div>
-            <div>
-              <div className="text-sm font-black uppercase tracking-[0.28em] text-white/90">Voz Urbana</div>
-              <div className="text-xs text-white/50">A cidade fala, você amplifica</div>
-            </div>
+            <img src="/branding/mascote-voz-urbana.png" alt="Voz Urbana" className="h-11 w-11 rounded-full object-cover shadow-[0_0_30px_rgba(255,255,255,0.18)] transition-transform duration-300 group-hover:scale-105" />
+            <img src="/branding/voz-urbana-texto.png" alt="Voz Urbana" className="h-10 w-auto max-w-[190px] object-contain" />
           </Link>
 
           <nav className="hidden items-center gap-7 text-sm font-medium text-white/70 lg:flex">
             <a href="#como" className="transition-colors hover:text-white">Como funciona</a>
             <a href="#mapa" className="transition-colors hover:text-white">Mapa</a>
+            <Link to="/feed" className="transition-colors hover:text-white">Feed</Link>
             <a href="#sobre" className="transition-colors hover:text-white">Sobre</a>
             <a href="#contato" className="transition-colors hover:text-white">Contato</a>
           </nav>
 
-          {user ? (
-            <div className="relative flex items-center gap-3">
-              <button
-                type="button"
-                onClick={() => setAccountMenuOpen((open) => !open)}
-                aria-expanded={accountMenuOpen}
-                className="group flex items-center gap-2 rounded-full border border-white/15 bg-white/8 p-1.5 pr-3 text-sm font-black text-white transition hover:bg-white/15"
-              >
-                {user.avatar || user.fotoPerfil ? (
-                  <img src={user.avatar || user.fotoPerfil} alt="Perfil" className="h-9 w-9 rounded-full object-cover" />
-                ) : (
-                  <span className="flex h-9 w-9 items-center justify-center rounded-full bg-violet-500 text-sm text-white">{(user.name || user.nome || 'U').charAt(0).toUpperCase()}</span>
-                )}
-                <span className="hidden sm:inline">{user.username ? `@${user.username.replace(/^@/, '')}` : 'Minha conta'}</span>
-                <ChevronDown className={`h-4 w-4 transition-transform ${accountMenuOpen ? 'rotate-180' : ''}`} />
-              </button>
-              {accountMenuOpen && (
-                <div className="account-menu absolute right-0 top-full z-[100] mt-3 w-64 rounded-2xl border border-white/12 bg-[#202326] p-2 text-white shadow-2xl">
-                  <Link to="/profile" onClick={() => setAccountMenuOpen(false)} className="flex items-center gap-3 rounded-xl px-3 py-3 text-sm hover:bg-white/10">
-                    <UserRound className="h-4 w-4 text-violet-300" /> Configurações da conta
-                  </Link>
-                  <Link to="/register" onClick={() => setAccountMenuOpen(false)} className="flex items-center gap-3 rounded-xl px-3 py-3 text-sm hover:bg-white/10">
-                    <UserPlus className="h-4 w-4 text-violet-300" /> Criar novo perfil
-                  </Link>
-                  <Link to="/profile" onClick={() => setAccountMenuOpen(false)} className="flex items-center gap-3 rounded-xl px-3 py-3 text-sm hover:bg-white/10">
-                    <Settings className="h-4 w-4 text-violet-300" /> Configurações do site
-                  </Link>
-                  <button type="button" onClick={logout} className="flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left text-sm text-red-200 hover:bg-red-500/15">
-                    <LogOut className="h-4 w-4" /> Sair
-                  </button>
-                </div>
-              )}
-            </div>
-          ) : (
-            <Link to="/login">
-              <Button className="rounded-full bg-white px-5 py-3 text-sm font-black text-zinc-950 hover:bg-white/90">
-                Entrar
-              </Button>
-            </Link>
-          )}
+          <AccessMenu authenticated={Boolean(user)} user={user} onLogout={logout} />
         </div>
       </header>
 
@@ -393,12 +346,12 @@ export default function LandingPage() {
           >
             <div className="absolute -inset-4 rounded-[2.25rem] bg-[radial-gradient(circle_at_top,rgba(124,58,237,0.24),transparent_48%),radial-gradient(circle_at_bottom_right,rgba(168,85,247,0.14),transparent_35%)] blur-2xl" />
 
-            <Card className="glass-panel relative z-10 min-h-[620px] overflow-hidden rounded-[2rem] border-white/10 bg-[#202326]/90 text-white shadow-[0_26px_80px_rgba(0,0,0,0.45)]">
+            <Card className="live-panel relative z-10 isolate min-h-[620px] overflow-hidden rounded-[2rem] border border-white/10 bg-[#202326] text-white shadow-[0_26px_80px_rgba(0,0,0,0.45)]">
               <CardContent className="p-0">
-                <div className="pointer-events-none absolute inset-0 z-0 opacity-35">
+                <div className="pointer-events-none absolute inset-0 z-0 h-full w-full opacity-20" aria-hidden="true">
                   <ThreeCityBackdrop />
                 </div>
-                <div className="flex items-center justify-between border-b border-white/8 bg-white/5 px-5 py-4">
+                <div className="relative z-20 flex items-center justify-between border-b border-white/8 bg-[#202326]/95 px-5 py-4">
                   <div className="flex items-center gap-2 text-xs uppercase tracking-[0.24em] text-white/50">
                     <Shield className="h-4 w-4 text-violet-300" />
                     Painel ao vivo
@@ -408,7 +361,7 @@ export default function LandingPage() {
                   </div>
                 </div>
 
-                <div className="relative z-10 space-y-5 p-5 sm:p-6">
+                <div className="relative z-20 space-y-5 p-5 sm:p-6">
                   <div className="rounded-[1.6rem] border border-white/10 bg-[linear-gradient(135deg,rgba(255,255,255,0.12),rgba(255,255,255,0.03))] p-5">
                     <div className="flex items-center justify-between gap-3">
                       <div>
@@ -782,7 +735,10 @@ export default function LandingPage() {
             <div className="space-y-5">
               <Card className="glass-panel rounded-[1.5rem] border-white/10 bg-white/6 text-white">
                 <CardContent className="flex items-center gap-4 p-6">
-                  <Mail className="h-6 w-6 text-violet-300" />
+                  <span className="relative flex h-7 w-7 items-center justify-center text-violet-300" aria-hidden="true">
+                    <MessageCircle className="h-7 w-7" />
+                    <PhoneCall className="absolute h-3.5 w-3.5" />
+                  </span>
                   <span className="font-bold">WhatsApp</span>
                 </CardContent>
               </Card>
@@ -794,7 +750,7 @@ export default function LandingPage() {
               </Card>
               <Card className="glass-panel rounded-[1.5rem] border-white/10 bg-white/6 text-white">
                 <CardContent className="flex items-center gap-4 p-6">
-                  <AlertTriangle className="h-6 w-6 text-violet-300" />
+                  <Mail className="h-6 w-6 text-violet-300" />
                   <span className="font-bold">E-mail</span>
                 </CardContent>
               </Card>
