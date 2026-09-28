@@ -32,22 +32,15 @@ router.post(
 
   const { name, email, password } = value;
 
-console.log("EMAIL REGISTER:", email);
-
 const existingUser = await prisma.usuario.findUnique({
   where: { email }
 });
 
-console.log("EXISTING USER:", existingUser);
-
 if (existingUser) {
-  console.log("USUARIO JA EXISTE");
   return res.status(409).json({
     error: "Email já cadastrado"
   });
 }
-
-console.log("VAI CRIAR USUARIO");
 
     const senhaHash = await hashPassword(password);
     const tokenVerificacao = crypto.randomBytes(32).toString("hex");
@@ -85,7 +78,7 @@ console.log("VAI CRIAR USUARIO");
 
     res.status(201).json({
       message: "Usuário registrado com sucesso",
-      user: { ...user, name: user.nome, avatar: user.fotoPerfil },
+      user: { ...user, name: user.nome, avatar: user.fotoPerfil, role: "usuario" },
       token
     });
   })
@@ -103,18 +96,14 @@ router.post(
     const { email, password } = value;
 
     const user = await prisma.usuario.findUnique({
-      where: { email }
+      where: { email: email.toLowerCase() },
+      include: { admin: true }
     });
 
     if (!user) {
       return res.status(401).json({ error: "Credenciais inválidas" });
     }
-console.log("EMAIL RECEBIDO:", email);
-console.log("USUARIO:", user);
-console.log("HASH SALVO:", user?.senhaHash);
     const isValid = await comparePassword(password, user.senhaHash);
-    console.log("SENHA RECEBIDA:", password);
-console.log("COMPARE RESULT:", isValid);
     if (!isValid) {
       return res.status(401).json({ error: "Credenciais inválidas" });
     }
@@ -129,7 +118,12 @@ console.log("COMPARE RESULT:", isValid);
 
     res.json({
       message: "Login bem-sucedido",
-      user: { ...userWithoutPassword, name: userWithoutPassword.nome, avatar: userWithoutPassword.fotoPerfil },
+      user: {
+        ...userWithoutPassword,
+        name: userWithoutPassword.nome,
+        avatar: userWithoutPassword.fotoPerfil,
+        role: user.admin ? "admin" : user.nivel.toLowerCase()
+      },
       token
     });
   })

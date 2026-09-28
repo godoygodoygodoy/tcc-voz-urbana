@@ -13,21 +13,21 @@ const seed = async () => {
     });
   }
 
-  const email = process.env.ADMIN_EMAIL || "admin@vozurbana.local";
-  const password = process.env.ADMIN_PASSWORD;
-  if (!password) {
-    throw new Error("ADMIN_PASSWORD precisa estar definido para executar o seed");
+  const email = (process.env.ADMIN_EMAIL || "danielgodoy.txt@gmail.com").trim().toLowerCase();
+  let user = await prisma.usuario.findUnique({ where: { email } });
+  if (!user) {
+    const password = process.env.ADMIN_PASSWORD;
+    if (!password) throw new Error("Defina ADMIN_PASSWORD para criar a conta administrativa inexistente");
+    user = await prisma.usuario.create({
+      data: {
+        nome: "Administrador",
+        email,
+        senhaHash: await hashPassword(password)
+      }
+    });
   }
 
-  const user = await prisma.usuario.upsert({
-    where: { email },
-    update: {},
-    create: {
-      nome: "Administrador",
-      email,
-      senhaHash: await hashPassword(password)
-    }
-  });
+  await prisma.usuario.update({ where: { id: user.id }, data: { nivel: "ADMIN" } });
 
   await prisma.admin.upsert({
     where: { usuarioId: user.id },

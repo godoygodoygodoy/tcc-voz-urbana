@@ -93,6 +93,11 @@ npm start
 2. Acesse `/admin`
 3. Veja estatísticas e gerencie problemas
 
+Para promover a conta existente `danielgodoy.txt@gmail.com`, configure `ADMIN_EMAIL` no `backend/.env` com esse endereço e execute `npm run prisma:seed` dentro de `backend`. O seed adiciona as permissões administrativas sem trocar a senha da conta. Se ela ainda não existir, defina também `ADMIN_PASSWORD` para criá-la; depois, entre usando essa senha.
+
+### Imagens de perfil e denúncias
+Os arquivos enviados são guardados localmente em `backend/uploads` (até 5 MB por imagem; JPG, PNG, WEBP ou GIF). Isso serve para desenvolvimento e para servidores com disco persistente. Em hospedagens com sistema de arquivos temporário, configure um armazenamento de objetos como Cloudinary, Amazon S3 ou Cloudflare R2 e grave na base somente a URL permanente retornada pelo provedor.
+
 ## 🔧 Configurações Importantes
 
 ### Variáveis de Ambiente
@@ -107,8 +112,9 @@ DATABASE_PASSWORD=SUA_SENHA
 DATABASE_NAME=voz_urbana
 PORT=5000
 JWT_SECRET=mudeme_em_producao
-ADMIN_EMAIL=admin@vozurbana.local
-ADMIN_PASSWORD=troque-esta-senha
+ADMIN_EMAIL=danielgodoy.txt@gmail.com
+# Necessária somente se essa conta ainda não existir no banco:
+ADMIN_PASSWORD=defina-uma-senha-forte-se-for-criar-a-conta
 ```
 
 **Frontend** (`frontend/.env`):
@@ -120,9 +126,8 @@ REACT_APP_API_URL=https://voz-urbana-api.onrender.com/api
 
 ### Funcionalidades Recomendadas para Implementar:
 
-1. **Upload de Imagens** (backend)
-   - Implementar multer para upload
-   - Salvar em bucket (AWS S3, Firebase)
+1. **Armazenamento permanente de imagens**
+   - Migrar os uploads locais para Cloudinary, AWS S3 ou Cloudflare R2 antes do deploy em uma hospedagem sem disco persistente.
 
 2. **Notificações em Tempo Real** (WebSocket)
    - Usar Socket.io

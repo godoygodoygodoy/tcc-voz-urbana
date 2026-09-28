@@ -1,13 +1,10 @@
 import axios from 'axios';
 
 const API_URL = process.env.REACT_APP_API_URL || 'https://voz-urbana-api.onrender.com/api';
-export const mediaUrl = (url) => (url?.startsWith('http') ? url : `${API_URL.replace(/\/api\/?$/, '')}${url}`);
+export const mediaUrl = (url) => (!url || /^(https?:|blob:|data:)/i.test(url) ? url : `${API_URL.replace(/\/api\/?$/, '')}${url.startsWith('/') ? '' : '/'}${url}`);
 
 const api = axios.create({
   baseURL: API_URL,
-  headers: {
-    'Content-Type': 'application/json',
-  },
 });
 
 // Interceptor para adicionar token
@@ -44,9 +41,6 @@ export const authAPI = {
 export const problemsAPI = {
   list: (params) => api.get('/problems', { params }),
   create: (data) => {
-    if (data instanceof FormData) {
-      return api.post('/problems', data, { headers: { 'Content-Type': 'multipart/form-data' } });
-    }
     return api.post('/problems', data);
   },
   get: (id) => api.get(`/problems/${id}`),
@@ -77,7 +71,7 @@ export const notificationsAPI = {
 export const usersAPI = {
   getMe: () => api.get('/users/me'),
   updateMe: (data) => data instanceof FormData
-    ? api.put('/users/me', data, { headers: { 'Content-Type': 'multipart/form-data' } })
+    ? api.put('/users/me', data)
     : api.put('/users/me', data),
 };
 

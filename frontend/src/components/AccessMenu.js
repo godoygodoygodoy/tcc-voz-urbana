@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { ChevronDown, Globe2, LogIn, UserPlus } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useI18n } from '../i18n';
+import { mediaUrl } from '../services/api';
 
 const AccessMenu = ({ authenticated = false, user, onLogout }) => {
   const { language, setLanguage, t } = useI18n();
@@ -19,7 +20,7 @@ const AccessMenu = ({ authenticated = false, user, onLogout }) => {
     <div className="relative">
       <button type="button" onClick={() => setOpen((value) => !value)} aria-expanded={open} className="group flex items-center gap-2 rounded-full border border-white/15 bg-white/8 p-1.5 pr-3 text-sm font-black text-white transition hover:bg-white/15">
         {authenticated ? (
-          user?.avatar || user?.fotoPerfil ? <img src={user.avatar || user.fotoPerfil} alt="Perfil" className="h-9 w-9 rounded-full object-cover" /> : <span className="flex h-9 w-9 items-center justify-center rounded-full bg-violet-500 text-white">{(user?.name || user?.nome || 'U').charAt(0).toUpperCase()}</span>
+          user?.avatar || user?.fotoPerfil ? <img src={mediaUrl(user.avatar || user.fotoPerfil)} alt="Perfil" className="h-9 w-9 rounded-full object-cover" /> : <span className="flex h-9 w-9 items-center justify-center rounded-full bg-violet-500 text-white">{(user?.name || user?.nome || 'U').charAt(0).toUpperCase()}</span>
         ) : <LogIn className="ml-2 h-5 w-5" />}
         <span className="hidden sm:inline">{authenticated ? (user?.username ? `@${user.username.replace(/^@/, '')}` : t('account')) : t('login')}</span>
         <ChevronDown className={`h-4 w-4 transition-transform ${open ? 'rotate-180' : ''}`} />

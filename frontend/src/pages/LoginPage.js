@@ -37,14 +37,14 @@ const LoginPage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-zinc-100 flex items-center justify-center py-12 px-4">
+    <div className="min-h-screen bg-[#1b1b20] flex items-center justify-center py-12 px-4 text-white">
       <Card className="rounded-3xl w-full max-w-md shadow-2xl">
         <CardContent className="p-10">
           <div className="text-center mb-8">
             <h1 className="text-4xl font-black mb-2">
               <span className="text-violet-600">VOZ</span> URBANA
             </h1>
-            <p className="text-gray-600">Entrar na sua conta</p>
+            <p className="text-white/60">Entrar na sua conta</p>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-4">
@@ -57,7 +57,7 @@ const LoginPage = () => {
                 onChange={handleChange}
                 placeholder="seu@email.com"
                 required
-                className="w-full border-2 rounded-xl p-3 focus:outline-none focus:border-violet-600"
+                className="w-full rounded-xl border-2 border-white/10 p-3 focus:outline-none focus:border-violet-500"
               />
             </div>
 
@@ -70,7 +70,7 @@ const LoginPage = () => {
                 onChange={handleChange}
                 placeholder="Sua senha"
                 required
-                className="w-full border-2 rounded-xl p-3 focus:outline-none focus:border-violet-600"
+                className="w-full rounded-xl border-2 border-white/10 p-3 focus:outline-none focus:border-violet-500"
               />
             </div>
 
@@ -84,7 +84,7 @@ const LoginPage = () => {
           </form>
 
           <div className="text-center mt-6">
-            <p className="text-gray-600">
+            <p className="text-white/60">
               Não tem conta?{' '}
               <Link to="/register" className="text-violet-600 font-bold hover:underline">
                 Cadastre-se

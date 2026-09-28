@@ -7,6 +7,11 @@ export const useAuthStore = create((set, get) => ({
   loading: false,
   error: null,
 
+  setUser: (user) => {
+    localStorage.setItem('user', JSON.stringify(user));
+    set({ user });
+  },
+
   register: async (data) => {
     set({ loading: true, error: null });
     try {

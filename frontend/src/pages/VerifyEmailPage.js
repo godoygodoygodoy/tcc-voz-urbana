@@ -19,10 +19,10 @@ const VerifyEmailPage = () => {
   }, [searchParams]);
 
   return (
-    <main className="min-h-screen bg-zinc-100 flex items-center justify-center px-4">
-      <section className="w-full max-w-md rounded-2xl bg-white p-8 text-center shadow-xl">
-        <h1 className="text-2xl font-bold text-zinc-900">Verificação de e-mail</h1>
-        <p className="mt-4 text-zinc-600">{state.loading ? 'Validando seu link...' : state.message}</p>
+      <main className="min-h-screen bg-[#1b1b20] flex items-center justify-center px-4 text-white">
+      <section className="w-full max-w-md rounded-2xl border border-white/10 bg-[#202026] p-8 text-center shadow-xl">
+        <h1 className="text-2xl font-bold text-white">Verificação de e-mail</h1>
+        <p className="mt-4 text-white/65">{state.loading ? 'Validando seu link...' : state.message}</p>
         {!state.loading && <Link to="/login" className="mt-6 inline-block font-semibold text-violet-700">Ir para o login</Link>}
       </section>
     </main>

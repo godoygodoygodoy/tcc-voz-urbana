@@ -5,17 +5,21 @@ import { asyncHandler } from "../middlewares/errorHandler.js";
 import multer from "multer";
 import path from "path";
 import fs from "fs";
+import { fileURLToPath } from "url";
 
 const router = express.Router();
-const profileUploadDir = path.resolve(process.cwd(), "uploads", "profiles");
+const profileUploadDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../../uploads/profiles");
 fs.mkdirSync(profileUploadDir, { recursive: true });
+const imageExtensions = { "image/jpeg": ".jpg", "image/png": ".png", "image/webp": ".webp", "image/gif": ".gif" };
 const profileUpload = multer({
   storage: multer.diskStorage({
     destination: profileUploadDir,
-    filename: (req, file, cb) => cb(null, `${Date.now()}-${Math.random().toString(36).slice(2, 8)}${path.extname(file.originalname)}`)
+    filename: (req, file, cb) => cb(null, `${Date.now()}-${Math.random().toString(36).slice(2, 8)}${imageExtensions[file.mimetype]}`)
   }),
   limits: { fileSize: 5 * 1024 * 1024 },
-  fileFilter: (req, file, cb) => cb(null, file.mimetype.startsWith("image/"))
+  fileFilter: (req, file, cb) => imageExtensions[file.mimetype]
+    ? cb(null, true)
+    : cb(Object.assign(new Error("Formato de imagem não suportado. Use JPG, PNG, WEBP ou GIF."), { status: 400 }))
 });
 
 // Perfil do usuário
@@ -32,12 +36,13 @@ router.get(
         telefone: true,
         bio: true,
         nivel: true,
+        admin: { select: { id: true } },
         fotoPerfil: true,
         emailVerificado: true,
         dataCriacao: true
       }
     });
-    res.json({ ...user, name: user.nome, phone: user.telefone, avatar: user.fotoPerfil });
+    res.json({ ...user, name: user.nome, phone: user.telefone, avatar: user.fotoPerfil, role: user.admin ? "admin" : user.nivel.toLowerCase() });
   })
 );
 
@@ -66,13 +71,14 @@ router.put(
         telefone: true,
         bio: true,
         nivel: true,
+        admin: { select: { id: true } },
         fotoPerfil: true,
         emailVerificado: true,
         dataCriacao: true
       }
     });
 
-    res.json({ ...user, name: user.nome, phone: user.telefone, avatar: user.fotoPerfil });
+    res.json({ ...user, name: user.nome, phone: user.telefone, avatar: user.fotoPerfil, role: user.admin ? "admin" : user.nivel.toLowerCase() });
   })
 );
 

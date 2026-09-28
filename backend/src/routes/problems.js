@@ -2,22 +2,25 @@ import express from "express";
 import path from "path";
 import fs from "fs";
 import multer from "multer";
+import { fileURLToPath } from "url";
 import { prisma } from "../config/prisma.js";
 import { asyncHandler } from "../middlewares/errorHandler.js";
 import { authMiddleware } from "../middlewares/auth.js";
 
 // Preparar pasta de uploads
-const UPLOAD_DIR = path.resolve(process.cwd(), "uploads", "problems");
+const UPLOAD_DIR = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../../uploads/problems");
 if (!fs.existsSync(UPLOAD_DIR)) {
   fs.mkdirSync(UPLOAD_DIR, { recursive: true });
 }
+
+const imageExtensions = { "image/jpeg": ".jpg", "image/png": ".png", "image/webp": ".webp", "image/gif": ".gif" };
 
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
     cb(null, UPLOAD_DIR);
   },
   filename: function (req, file, cb) {
-    const ext = path.extname(file.originalname);
+    const ext = imageExtensions[file.mimetype];
     const name = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}${ext}`;
     cb(null, name);
   }
@@ -26,7 +29,9 @@ const storage = multer.diskStorage({
 const upload = multer({
   storage,
   limits: { fileSize: Number(process.env.MAX_FILE_SIZE || 5 * 1024 * 1024), files: 8 },
-  fileFilter: (req, file, cb) => cb(null, file.mimetype.startsWith("image/"))
+  fileFilter: (req, file, cb) => imageExtensions[file.mimetype]
+    ? cb(null, true)
+    : cb(Object.assign(new Error("Formato de imagem não suportado. Use JPG, PNG, WEBP ou GIF."), { status: 400 }))
 });
 
 const router = express.Router();

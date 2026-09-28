@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { usersAPI } from '../services/api';
+import { usersAPI, mediaUrl } from '../services/api';
 import { toast } from 'react-toastify';
+import { useAuthStore } from '../store';
 
 const ProfilePage = () => {
   const [profile, setProfile] = useState(null);
@@ -14,6 +15,7 @@ const ProfilePage = () => {
   });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const setUser = useAuthStore((state) => state.setUser);
 
   useEffect(() => {
     const fetchProfile = async () => {
@@ -39,7 +41,7 @@ const ProfilePage = () => {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
+    setFormData((prev) => ({ ...prev, [name]: value, ...(name === 'avatar' ? { avatarFile: null } : {}) }));
   };
 
   const handleSubmit = async (e) => {
@@ -55,10 +57,13 @@ const ProfilePage = () => {
       if (formData.avatarFile) payload.append('avatarFile', formData.avatarFile);
       else payload.append('avatar', formData.avatar);
       const response = await usersAPI.updateMe(payload);
-      setProfile((current) => ({ ...current, ...response.data }));
+      const updatedProfile = response.data;
+      setProfile((current) => ({ ...current, ...updatedProfile }));
+      setFormData((current) => ({ ...current, avatar: updatedProfile.avatar || updatedProfile.fotoPerfil || '', avatarFile: null }));
+      setUser({ ...useAuthStore.getState().user, ...updatedProfile });
       toast.success('Perfil atualizado com sucesso!');
     } catch (error) {
-      toast.error('Erro ao atualizar perfil');
+      toast.error(error.response?.data?.error || 'Erro ao atualizar perfil');
     } finally {
       setSaving(false);
     }
@@ -73,9 +78,9 @@ const ProfilePage = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
+    <div className="min-h-screen bg-[#1b1b20] py-8 text-white">
       <div className="container mx-auto px-4">
-        <div className="max-w-2xl mx-auto bg-white rounded-lg shadow-md p-8">
+        <div className="max-w-2xl mx-auto rounded-3xl border border-white/10 bg-[#202026] shadow-xl p-8">
           <h1 className="text-3xl font-bold mb-8">Meu Perfil</h1>
 
           <form onSubmit={handleSubmit} className="space-y-6">
@@ -118,15 +123,25 @@ const ProfilePage = () => {
               <label className="block text-sm font-semibold mb-2">Foto de perfil</label>
               <div className="flex items-center gap-4">
                 {formData.avatar ? (
-                  <img src={formData.avatar} alt="Prévia do perfil" className="h-16 w-16 rounded-full object-cover border-2 border-violet-500" />
+                  <img src={mediaUrl(formData.avatar)} alt="Prévia do perfil" className="h-16 w-16 rounded-full object-cover border-2 border-violet-500" />
                 ) : (
                   <div className="h-16 w-16 rounded-full bg-violet-100 flex items-center justify-center text-violet-700 font-bold">{formData.name?.[0] || '?'}</div>
                 )}
                 <div className="flex-1">
                   <input type="file" accept="image/*" onChange={(event) => {
                     const file = event.target.files?.[0];
+                    if (file && !file.type.startsWith('image/')) {
+                      toast.error('Selecione um arquivo de imagem válido.');
+                      event.target.value = '';
+                      return;
+                    }
+                    if (file && file.size > 5 * 1024 * 1024) {
+                      toast.error('A imagem deve ter no máximo 5 MB.');
+                      event.target.value = '';
+                      return;
+                    }
                     if (file) setFormData((current) => ({ ...current, avatarFile: file, avatar: URL.createObjectURL(file) }));
-                  }} className="w-full border rounded-lg p-3" />
+                  }} className="w-full rounded-lg border border-white/15 bg-[#17171b] p-3 text-sm" />
                   <input type="url" name="avatar" value={formData.avatarFile ? '' : formData.avatar} onChange={handleChange} className="mt-2 w-full border rounded-lg p-3" placeholder="Ou use uma URL de imagem" />
                   {formData.avatar && <button type="button" onClick={() => setFormData((current) => ({ ...current, avatar: '', avatarFile: null }))} className="mt-2 text-sm text-red-600">Remover foto</button>}
                 </div>
