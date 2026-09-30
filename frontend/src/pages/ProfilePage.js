@@ -32,6 +32,7 @@ const ProfilePage = () => {
           avatar: res.data.avatar || res.data.fotoPerfil || '',
         });
       } catch (error) {
+        if (error.response?.data?.code === 'EMAIL_NOT_VERIFIED') return;
         toast.error('Erro ao carregar perfil');
       } finally {
         setLoading(false);

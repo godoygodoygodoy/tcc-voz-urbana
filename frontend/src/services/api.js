@@ -20,6 +20,12 @@ api.interceptors.request.use((config) => {
 api.interceptors.response.use(
   (response) => response,
   (error) => {
+    if (error.response?.status === 403 && error.response?.data?.code === 'EMAIL_NOT_VERIFIED') {
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+      const email = error.response.data.email || '';
+      window.location.href = `/verify-email?email=${encodeURIComponent(email)}`;
+    }
     if (error.response?.status === 401) {
       localStorage.removeItem('token');
       localStorage.removeItem('user');

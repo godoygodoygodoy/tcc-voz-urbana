@@ -12,10 +12,16 @@ export const authMiddleware = async (req, res, next) => {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
     const user = await prisma.usuario.findUnique({
       where: { id: decoded.id },
-      select: { emailVerificado: true }
+      select: { email: true, emailVerificado: true }
     });
     if (!user) return res.status(401).json({ error: "Conta não encontrada" });
-    if (!user.emailVerificado) return res.status(403).json({ error: "Confirme seu e-mail para acessar a conta" });
+    if (!user.emailVerificado) {
+      return res.status(403).json({
+        error: "Confirme seu e-mail para acessar a conta",
+        code: "EMAIL_NOT_VERIFIED",
+        email: user.email
+      });
+    }
     req.userId = decoded.id;
     req.userRole = decoded.role;
 
