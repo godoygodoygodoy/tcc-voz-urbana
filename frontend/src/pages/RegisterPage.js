@@ -51,14 +51,14 @@ const RegisterPage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-zinc-100 flex items-center justify-center py-12 px-4">
+    <div className="min-h-screen bg-[#1b1b20] flex items-center justify-center py-12 px-4 text-white">
       <Card className="rounded-3xl w-full max-w-md shadow-2xl">
         <CardContent className="p-10">
           <div className="text-center mb-8">
             <h1 className="text-4xl font-black mb-2">
               <span className="text-violet-600">VOZ</span> URBANA
             </h1>
-            <p className="text-gray-600">Cadastro</p>
+            <p className="text-white/60">Cadastro</p>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-4">
@@ -71,7 +71,7 @@ const RegisterPage = () => {
                 onChange={handleChange}
                 placeholder="Seu nome completo"
                 required
-                className="w-full border-2 rounded-xl p-3 focus:outline-none focus:border-violet-600"
+                className="w-full rounded-xl border-2 border-white/10 p-3 focus:outline-none focus:border-violet-500"
               />
             </div>
 
@@ -84,7 +84,7 @@ const RegisterPage = () => {
                 onChange={handleChange}
                 placeholder="seu@email.com"
                 required
-                className="w-full border-2 rounded-xl p-3 focus:outline-none focus:border-violet-600"
+                className="w-full rounded-xl border-2 border-white/10 p-3 focus:outline-none focus:border-violet-500"
               />
             </div>
 
@@ -117,7 +117,7 @@ const RegisterPage = () => {
                 onChange={handleChange}
                 placeholder="Mínimo 6 caracteres"
                 required
-                className="w-full border-2 rounded-xl p-3 focus:outline-none focus:border-violet-600"
+                className="w-full rounded-xl border-2 border-white/10 p-3 focus:outline-none focus:border-violet-500"
               />
             </div>
 
@@ -130,7 +130,7 @@ const RegisterPage = () => {
                 onChange={handleChange}
                 placeholder="Confirme sua senha"
                 required
-                className="w-full border-2 rounded-xl p-3 focus:outline-none focus:border-violet-600"
+                className="w-full rounded-xl border-2 border-white/10 p-3 focus:outline-none focus:border-violet-500"
               />
             </div>
 
@@ -144,7 +144,7 @@ const RegisterPage = () => {
           </form>
 
           <div className="text-center mt-6">
-            <p className="text-gray-600">
+            <p className="text-white/60">
               Já tem conta?{' '}
               <Link to="/login" className="text-violet-600 font-bold hover:underline">
                 Faça login

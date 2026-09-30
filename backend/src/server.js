@@ -17,6 +17,8 @@ import adminRoutes from "./routes/admin.js";
 import commentRoutes from "./routes/comments.js";
 import notificationRoutes from "./routes/notifications.js";
 import rateLimit from "express-rate-limit";
+import path from "path";
+import { fileURLToPath } from "url";
 
 // Importar middlewares
 import { errorHandler } from "./middlewares/errorHandler.js";
@@ -38,7 +40,8 @@ app.use(express.urlencoded({ limit: "10mb", extended: true }));
 app.use("/api/", rateLimit({ windowMs: 15 * 60 * 1000, max: 300, standardHeaders: true, legacyHeaders: false, message: { error: "Muitas requisições. Tente novamente em alguns minutos." } }));
 
 // Servir arquivos estáticos
-app.use("/uploads", express.static("uploads"));
+const uploadsRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../uploads");
+app.use("/uploads", express.static(uploadsRoot));
 
 // Health check
 app.get("/api/health", (req, res) => {

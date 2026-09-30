@@ -16,11 +16,11 @@ export const getPurpleTone = (seed = 0, index) => {
 
 export const getStatusTone = (status = '') => {
   const tones = {
-    ABERTO: 'bg-red-600 text-white',
-    EM_ANDAMENTO: 'bg-amber-500 text-zinc-950',
-    RESOLVIDO: 'bg-emerald-600 text-white',
+    ABERTO: 'bg-violet-700 text-white',
+    EM_ANDAMENTO: 'bg-violet-500 text-white',
+    RESOLVIDO: 'bg-violet-900 text-violet-100',
     REJEITADO: 'bg-zinc-700 text-white',
   };
 
-  return tones[status] || tones.open;
+  return tones[status] || tones.ABERTO;
 };

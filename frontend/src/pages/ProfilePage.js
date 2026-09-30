@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { usersAPI } from '../services/api';
+import { usersAPI, mediaUrl } from '../services/api';
 import { toast } from 'react-toastify';
+import { useAuthStore } from '../store';
 
 const ProfilePage = () => {
   const [profile, setProfile] = useState(null);
@@ -16,6 +17,7 @@ const ProfilePage = () => {
   const [saving, setSaving] = useState(false);
   const [crop, setCrop] = useState({ zoom: 1, x: 0, y: 0 });
   const [dragStart, setDragStart] = useState(null);
+  const setUser = useAuthStore((state) => state.setUser);
 
   useEffect(() => {
     const fetchProfile = async () => {
@@ -41,7 +43,7 @@ const ProfilePage = () => {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
+    setFormData((prev) => ({ ...prev, [name]: value, ...(name === 'avatar' ? { avatarFile: null } : {}) }));
   };
 
   const selectAvatar = (file) => {
@@ -89,10 +91,13 @@ const ProfilePage = () => {
       if (formData.avatarFile) payload.append('avatarFile', await createCroppedAvatar());
       else payload.append('avatar', formData.avatar);
       const response = await usersAPI.updateMe(payload);
-      setProfile((current) => ({ ...current, ...response.data }));
+      const updatedProfile = response.data;
+      setProfile((current) => ({ ...current, ...updatedProfile }));
+      setFormData((current) => ({ ...current, avatar: updatedProfile.avatar || updatedProfile.fotoPerfil || '', avatarFile: null }));
+      setUser({ ...useAuthStore.getState().user, ...updatedProfile });
       toast.success('Perfil atualizado com sucesso!');
     } catch (error) {
-      toast.error('Erro ao atualizar perfil');
+      toast.error(error.response?.data?.error || 'Erro ao atualizar perfil');
     } finally {
       setSaving(false);
     }
@@ -107,9 +112,9 @@ const ProfilePage = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
+    <div className="min-h-screen bg-[#1b1b20] py-8 text-white">
       <div className="container mx-auto px-4">
-        <div className="max-w-2xl mx-auto bg-white rounded-lg shadow-md p-8">
+        <div className="max-w-2xl mx-auto rounded-3xl border border-white/10 bg-[#202026] shadow-xl p-8">
           <h1 className="text-3xl font-bold mb-8">Meu Perfil</h1>
 
           <form onSubmit={handleSubmit} className="space-y-6">
@@ -162,7 +167,7 @@ const ProfilePage = () => {
                     onPointerUp={() => setDragStart(null)}
                     onPointerLeave={() => setDragStart(null)}
                   >
-                    <img src={formData.avatar} alt="Prévia editável do perfil" className="h-full w-full select-none object-cover" draggable="false" style={{ transform: `translate(${crop.x}px, ${crop.y}px) scale(${crop.zoom})` }} />
+                    <img src={formData.avatar.startsWith('blob:') ? formData.avatar : mediaUrl(formData.avatar)} alt="Prévia editável do perfil" className="h-full w-full select-none object-cover" draggable="false" style={{ transform: `translate(${crop.x}px, ${crop.y}px) scale(${crop.zoom})` }} />
                   </div>
                 ) : (
                   <div className="h-64 w-64 shrink-0 rounded-full bg-violet-100 flex items-center justify-center text-5xl text-violet-700 font-bold">{formData.name?.[0] || '?'}</div>
@@ -170,8 +175,18 @@ const ProfilePage = () => {
                 <div className="flex-1 space-y-3">
                   <input type="file" accept="image/*" onChange={(event) => {
                     const file = event.target.files?.[0];
+                    if (file && !file.type.startsWith('image/')) {
+                      toast.error('Selecione um arquivo de imagem válido.');
+                      event.target.value = '';
+                      return;
+                    }
+                    if (file && file.size > 5 * 1024 * 1024) {
+                      toast.error('A imagem deve ter no máximo 5 MB.');
+                      event.target.value = '';
+                      return;
+                    }
                     selectAvatar(file);
-                  }} className="w-full border rounded-lg p-3" />
+                  }} className="w-full rounded-lg border border-white/15 bg-[#17171b] p-3 text-sm" />
                   {formData.avatarFile && <>
                     <div>
                       <label className="mb-1 block text-sm font-medium">Zoom</label>

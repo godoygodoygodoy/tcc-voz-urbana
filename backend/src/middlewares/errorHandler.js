@@ -1,6 +1,13 @@
 export const errorHandler = (err, req, res, next) => {
   console.error("Erro:", err);
 
+  if (err.code === "LIMIT_FILE_SIZE") {
+    return res.status(413).json({ error: "A imagem excede o limite de 5 MB." });
+  }
+  if (err.name === "MulterError" || err.status === 400) {
+    return res.status(err.status || 400).json({ error: err.message || "Não foi possível processar o arquivo enviado." });
+  }
+
   // Erros de validação Joi
   if (err.isJoi) {
     return res.status(400).json({

@@ -88,10 +88,10 @@ const ProblemDetailPage = () => {
 
   const getStatusColor = (status) => {
     const colors = {
-      open: 'bg-red-100 text-red-800',
-      in_progress: 'bg-yellow-100 text-yellow-800',
-      resolved: 'bg-green-100 text-green-800',
-      closed: 'bg-gray-100 text-gray-800',
+      open: 'bg-violet-900 text-violet-100',
+      in_progress: 'bg-violet-700 text-white',
+      resolved: 'bg-violet-600 text-white',
+      closed: 'bg-zinc-700 text-white',
     };
     return colors[status] || colors.open;
   };

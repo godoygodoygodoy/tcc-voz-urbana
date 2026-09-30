@@ -27,7 +27,8 @@ function App() {
   const { user } = useAuthStore();
 
   React.useEffect(() => {
-    document.documentElement.dataset.theme = localStorage.getItem('theme') || 'dark';
+    document.documentElement.dataset.theme = 'dark';
+    localStorage.setItem('theme', 'dark');
   }, []);
 
   return (
@@ -41,7 +42,7 @@ function App() {
           <Route
             path="/*"
             element={
-              <div className="min-h-screen bg-gray-50">
+              <div className="min-h-screen bg-[#1b1b20] text-white">
                 <Header />
                 <Routes>
                   <Route path="/map" element={<HomePage />} />

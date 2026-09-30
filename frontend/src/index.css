@@ -15,22 +15,24 @@ body {
   font-family: 'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  color: #111827;
+  color: #f4f1fa;
   background:
-    radial-gradient(circle at top left, rgba(124, 58, 237, 0.08), transparent 26%),
-    radial-gradient(circle at top right, rgba(14, 165, 233, 0.08), transparent 22%),
-    linear-gradient(180deg, #fafafb 0%, #f4f4f7 100%);
+    radial-gradient(circle at top left, rgba(124, 58, 237, 0.12), transparent 28%),
+    linear-gradient(180deg, #111113 0%, #1b1b20 100%);
+  min-height: 100vh;
 }
 
-:root[data-theme='light'] body {
-  color: #1f2937;
-  background: #f6f7fb;
+:root { color-scheme: dark; }
+
+input, textarea, select {
+  color: #f4f1fa;
+  background-color: #202026;
+  border-color: rgba(255, 255, 255, 0.14);
 }
 
-:root[data-theme='light'] .min-h-screen.bg-\[\#1b1d1f\] {
-  background: #f6f7fb;
-  color: #1f2937;
-}
+input::placeholder, textarea::placeholder { color: #9b96a6; }
+input:focus, textarea:focus, select:focus { outline: 2px solid rgba(139, 92, 246, 0.6); outline-offset: 1px; }
+option { background: #202026; color: #f4f1fa; }
 
 html {
   scroll-behavior: auto;
@@ -153,6 +155,8 @@ code {
   background-color: #7c3aed;
 }
 
+.Toastify__toast { color: #fff; }
+
 /* Small helpers for the design */
 .brand-gradient {
   background: linear-gradient(90deg,#7C3AED 0%, #6B21A8 100%);
@@ -240,3 +244,14 @@ code {
     transition: none;
   }
 }
+
+/* Compatibilidade com utilitários claros legados: todo o produto permanece escuro. */
+.bg-white, .bg-gray-50, .bg-gray-100, .bg-zinc-100 { background-color: #202026 !important; }
+.bg-gray-200 { background-color: #2b2a33 !important; }
+.bg-white\/80 { background-color: rgba(32, 32, 38, 0.9) !important; }
+.bg-violet-50 { background-color: rgba(124, 58, 237, 0.14) !important; }
+.text-zinc-950, .text-zinc-900, .text-gray-900, .text-gray-800, .text-gray-700 { color: #f4f1fa !important; }
+.text-gray-600, .text-gray-500 { color: #b8b2c4 !important; }
+.text-zinc-600, .text-zinc-500 { color: #b8b2c4 !important; }
+.text-violet-700, .text-violet-600, .text-purple-700, .text-purple-600 { color: #c4b5fd !important; }
+.bg-gray-50.text-gray-700, .bg-gray-100.text-gray-700 { color: #f4f1fa !important; }

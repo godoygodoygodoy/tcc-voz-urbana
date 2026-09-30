@@ -54,7 +54,6 @@ const existingUsername = await prisma.usuario.findUnique({ where: { username } }
 if (existingUsername) {
   return res.status(409).json({ error: "Este @ já está em uso" });
 }
-
     const senhaHash = await hashPassword(password);
     const tokenVerificacao = crypto.randomBytes(32).toString("hex");
 
@@ -88,7 +87,7 @@ if (existingUsername) {
 
     res.status(201).json({
       message: "Usuário registrado com sucesso",
-      user: { ...user, name: user.nome, avatar: user.fotoPerfil },
+      user: { ...user, name: user.nome, avatar: user.fotoPerfil, role: "usuario" },
       token
     });
   })
@@ -106,7 +105,8 @@ router.post(
     const { email, password } = value;
 
     const user = await prisma.usuario.findUnique({
-      where: { email }
+      where: { email: email.toLowerCase() },
+      include: { admin: true }
     });
 
     if (!user) {
@@ -135,7 +135,12 @@ router.post(
 
     res.json({
       message: "Login bem-sucedido",
-      user: { ...userWithoutPassword, name: userWithoutPassword.nome, avatar: userWithoutPassword.fotoPerfil },
+      user: {
+        ...userWithoutPassword,
+        name: userWithoutPassword.nome,
+        avatar: userWithoutPassword.fotoPerfil,
+        role: user.admin ? "admin" : user.nivel.toLowerCase()
+      },
       token
     });
   })
