@@ -1,7 +1,10 @@
 import nodemailer from "nodemailer";
 
 const createTransporter = () => {
-  if (!process.env.SMTP_USER || !process.env.SMTP_PASS) return null;
+  if (!process.env.SMTP_USER || !process.env.SMTP_PASS) {
+    console.error("SMTP não configurado: defina SMTP_USER e SMTP_PASS nas variáveis de ambiente do servidor.");
+    return null;
+  }
 
   return nodemailer.createTransport({
     host: process.env.SMTP_HOST || "smtp.gmail.com",
@@ -20,7 +23,9 @@ const createTransporter = () => {
 
 export const sendVerificationEmail = async ({ email, name, token }) => {
   const transporter = createTransporter();
-  if (!transporter) return false;
+  if (!transporter) {
+    throw new Error("O envio de e-mail não está configurado no servidor.");
+  }
 
   const frontendUrl = process.env.FRONTEND_URL || "http://localhost:3000";
   const verificationUrl = `${frontendUrl}/verify-email?token=${encodeURIComponent(token)}`;
