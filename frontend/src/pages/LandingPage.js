@@ -582,9 +582,9 @@ export default function LandingPage() {
               <h4 className="text-xl font-black">Categorias ativas</h4>
               <p className="text-sm text-white/55">Legenda compacta para leitura rápida.</p>
               <div className="mt-4 grid gap-3">
-                {activeCategories.slice(0, 8).map((category) => (
+                {activeCategories.slice(0, 8).map((category, index) => (
                   <div key={category.id} className="flex items-center gap-3 rounded-2xl border border-white/8 bg-black/15 px-4 py-3">
-                    <span className="h-4 w-4 rounded-full" style={{ backgroundColor: getPurpleTone(category.name || category.id) }} />
+                    <span className="h-4 w-4 rounded-full" style={{ backgroundColor: getPurpleTone(category.name || category.id, index) }} />
                     <span className="text-sm font-semibold text-white/85">{category.name}</span>
                   </div>
                 ))}

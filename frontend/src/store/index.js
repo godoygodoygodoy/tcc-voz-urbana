@@ -11,9 +11,10 @@ export const useAuthStore = create((set, get) => ({
     set({ loading: true, error: null });
     try {
       const response = await authAPI.register(data);
-      localStorage.setItem('token', response.data.token);
-      localStorage.setItem('user', JSON.stringify(response.data.user));
-      set({ user: response.data.user, token: response.data.token });
+      // A newly created account must confirm its e-mail before it can start a session.
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+      set({ user: null, token: null });
       return response.data;
     } catch (error) {
       set({ error: error.response?.data?.error || 'Erro ao registrar' });

@@ -9,8 +9,12 @@ const createTransporter = () => {
     secure: String(process.env.SMTP_PORT || 587) === "465",
     auth: {
       user: process.env.SMTP_USER,
-      pass: process.env.SMTP_PASS
-    }
+      // Gmail shows app passwords in blocks of four; SMTP needs it without spaces.
+      pass: process.env.SMTP_PASS.replace(/\s+/g, "")
+    },
+    connectionTimeout: 10_000,
+    greetingTimeout: 10_000,
+    socketTimeout: 15_000
   });
 };
 

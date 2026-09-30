@@ -1,6 +1,7 @@
 import request from "supertest";
 import { createTestApp } from "../helpers/testApp.js";
 import { cleanDatabase, createTestUser } from "../helpers/testDb.js";
+import { prisma } from "../../src/config/prisma.js";
 
 const app = createTestApp();
 
@@ -15,7 +16,8 @@ describe("Auth Routes", () => {
       const userData = {
         name: "João Silva",
         email: "joao@example.com",
-        password: "senha123"
+        password: "senha123",
+        username: "joao.silva"
       };
 
       const response = await request(app)
@@ -65,7 +67,8 @@ describe("Auth Routes", () => {
       const userData = {
         name: "João Silva",
         email: "joao@example.com",
-        password: "senha123"
+        password: "senha123",
+        username: "joao.silva"
       };
 
       // Primeiro registro
@@ -99,8 +102,10 @@ describe("Auth Routes", () => {
       await request(app).post("/api/auth/register").send({
         name: "Test User",
         email: "test@example.com",
-        password: "password123"
+        password: "password123",
+        username: "test.user"
       });
+      await prisma.usuario.update({ where: { email: "test@example.com" }, data: { emailVerificado: true } });
     });
 
     it("deve fazer login com sucesso", async () => {
@@ -179,8 +184,11 @@ describe("Auth Routes", () => {
         .send({
           name: "Test User",
           email: "test@example.com",
-          password: "password123"
+          password: "password123",
+          username: "test.user"
         });
+
+      await prisma.usuario.update({ where: { email: "test@example.com" }, data: { emailVerificado: true } });
 
       token = registerResponse.body.token;
       user = registerResponse.body.user;

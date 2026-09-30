@@ -9,11 +9,19 @@ import { sendVerificationEmail } from "../utils/email.js";
 
 const router = express.Router();
 
+const dispatchVerificationEmail = ({ email, name, token }) => {
+  // Account creation should not wait for an external SMTP connection.
+  void sendVerificationEmail({ email, name, token }).catch((error) => {
+    console.error("Verification email delivery failed:", error.message);
+  });
+};
+
 // Validação
 const registerSchema = Joi.object({
   name: Joi.string().required(),
   email: Joi.string().email().required(),
-  password: Joi.string().min(6).required()
+  password: Joi.string().min(6).required(),
+  username: Joi.string().trim().lowercase().pattern(/^[a-z0-9._]+$/).min(3).max(30).required()
 });
 
 const loginSchema = Joi.object({
@@ -30,24 +38,22 @@ router.post(
       return res.status(400).json({ error: error.details[0].message });
     }
 
-  const { name, email, password } = value;
-
-console.log("EMAIL REGISTER:", email);
+  const { name, email, password, username } = value;
 
 const existingUser = await prisma.usuario.findUnique({
   where: { email }
 });
 
-console.log("EXISTING USER:", existingUser);
-
 if (existingUser) {
-  console.log("USUARIO JA EXISTE");
   return res.status(409).json({
     error: "Email já cadastrado"
   });
 }
 
-console.log("VAI CRIAR USUARIO");
+const existingUsername = await prisma.usuario.findUnique({ where: { username } });
+if (existingUsername) {
+  return res.status(409).json({ error: "Este @ já está em uso" });
+}
 
     const senhaHash = await hashPassword(password);
     const tokenVerificacao = crypto.randomBytes(32).toString("hex");
@@ -56,6 +62,7 @@ console.log("VAI CRIAR USUARIO");
       data: {
         nome: name,
         email,
+        username,
         senhaHash,
         tokenVerificacao,
         tokenVerificacaoExpira: new Date(Date.now() + 24 * 60 * 60 * 1000)
@@ -71,11 +78,7 @@ console.log("VAI CRIAR USUARIO");
       }
     });
 
-    try {
-      await sendVerificationEmail({ email: user.email, name: user.nome, token: tokenVerificacao });
-    } catch (emailError) {
-      console.error("Falha ao enviar verificação de e-mail:", emailError.message);
-    }
+    dispatchVerificationEmail({ email: user.email, name: user.nome, token: tokenVerificacao });
 
     const token = jwt.sign(
       { id: user.id, email: user.email },
@@ -109,14 +112,17 @@ router.post(
     if (!user) {
       return res.status(401).json({ error: "Credenciais inválidas" });
     }
-console.log("EMAIL RECEBIDO:", email);
-console.log("USUARIO:", user);
-console.log("HASH SALVO:", user?.senhaHash);
     const isValid = await comparePassword(password, user.senhaHash);
-    console.log("SENHA RECEBIDA:", password);
-console.log("COMPARE RESULT:", isValid);
     if (!isValid) {
       return res.status(401).json({ error: "Credenciais inválidas" });
+    }
+
+    if (!user.emailVerificado) {
+      return res.status(403).json({
+        error: "Confirme seu e-mail antes de entrar na conta",
+        code: "EMAIL_NOT_VERIFIED",
+        email: user.email
+      });
     }
 
     const token = jwt.sign(
@@ -162,7 +168,7 @@ router.post("/resend-verification", asyncHandler(async (req, res) => {
     where: { id: user.id },
     data: { tokenVerificacao: token, tokenVerificacaoExpira: new Date(Date.now() + 24 * 60 * 60 * 1000) }
   });
-  await sendVerificationEmail({ email: user.email, name: user.nome, token });
+  dispatchVerificationEmail({ email: user.email, name: user.nome, token });
   res.json({ message: "E-mail de verificação reenviado" });
 }));
 

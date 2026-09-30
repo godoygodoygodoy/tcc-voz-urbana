@@ -29,7 +29,8 @@ export const createTestUser = async (data = {}) => {
   const defaultData = {
     nome: "Test User",
     email: `test-${Date.now()}@example.com`,
-    senhaHash: await hashPassword("password123")
+    senhaHash: await hashPassword("password123"),
+    emailVerificado: true
   };
 
   return prisma.usuario.create({

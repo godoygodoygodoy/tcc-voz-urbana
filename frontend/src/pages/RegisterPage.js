@@ -9,6 +9,7 @@ const RegisterPage = () => {
   const [formData, setFormData] = useState({
     name: '',
     email: '',
+    username: '',
     password: '',
     passwordConfirm: '',
   });
@@ -38,9 +39,10 @@ const RegisterPage = () => {
         name: formData.name,
         email: formData.email,
         password: formData.password,
+        username: formData.username.replace(/^@/, '').trim(),
       });
       toast.success('Cadastro realizado! Verifique seu e-mail para confirmar a conta.');
-      navigate('/');
+      navigate(`/verify-email?email=${encodeURIComponent(formData.email)}`);
     } catch (error) {
       toast.error(error.response?.data?.error || 'Erro ao cadastrar');
     } finally {
@@ -84,6 +86,26 @@ const RegisterPage = () => {
                 required
                 className="w-full border-2 rounded-xl p-3 focus:outline-none focus:border-violet-600"
               />
+            </div>
+
+            <div>
+              <label className="block text-sm font-semibold mb-2">Nome de usuário</label>
+              <div className="flex items-center border-2 rounded-xl focus-within:border-violet-600">
+                <span className="pl-3 text-gray-500">@</span>
+                <input
+                  type="text"
+                  name="username"
+                  value={formData.username}
+                  onChange={handleChange}
+                  placeholder="seuusuario"
+                  required
+                  minLength="3"
+                  maxLength="30"
+                  pattern="[A-Za-z0-9._]+"
+                  className="w-full rounded-xl p-3 focus:outline-none"
+                />
+              </div>
+              <p className="mt-1 text-xs text-gray-500">Use de 3 a 30 caracteres: letras, números, ponto ou sublinhado.</p>
             </div>
 
             <div>
