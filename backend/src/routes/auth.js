@@ -173,8 +173,17 @@ router.post("/resend-verification", asyncHandler(async (req, res) => {
     where: { id: user.id },
     data: { tokenVerificacao: token, tokenVerificacaoExpira: new Date(Date.now() + 24 * 60 * 60 * 1000) }
   });
-  dispatchVerificationEmail({ email: user.email, name: user.nome, token });
-  res.json({ message: "E-mail de verificação reenviado" });
+  try {
+    // Unlike registration, the explicit resend action must only report success
+    // after the SMTP server has accepted the message.
+    await sendVerificationEmail({ email: user.email, name: user.nome, token });
+    res.json({ message: "E-mail de verificação reenviado" });
+  } catch (emailError) {
+    console.error("Falha ao reenviar verificação de e-mail:", emailError.message);
+    res.status(502).json({
+      error: "Não foi possível enviar o e-mail agora. Tente novamente em instantes."
+    });
+  }
 }));
 
 export default router;
