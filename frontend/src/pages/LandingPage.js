@@ -749,7 +749,7 @@ export default function LandingPage() {
       </motion.section>
 
       <footer className="border-t border-white/10 bg-black py-8 text-center text-sm text-white/55">
-        © Voz Urbana 2024 - Sua voz melhora a cidade
+        © Voz Urbana 2026 - Sua voz melhora a cidade
       </footer>
     </div>
   );
