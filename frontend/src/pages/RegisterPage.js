@@ -54,7 +54,7 @@ const RegisterPage = () => {
 
   return (
     <div className="min-h-screen bg-[#1b1b20] flex items-center justify-center py-12 px-4 text-white">
-      <Card className="rounded-3xl w-full max-w-md shadow-2xl">
+      <Card className="glass-panel rounded-3xl w-full max-w-md shadow-2xl">
         <CardContent className="p-10">
           <div className="text-center mb-8">
             <h1 className="text-4xl font-black mb-2">

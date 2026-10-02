@@ -6,9 +6,11 @@ import { ptBR } from 'date-fns/locale';
 import { motion } from 'framer-motion';
 import { getPurpleTone, getStatusTone } from '../utils/theme';
 import { mediaUrl } from '../services/api';
+import { useI18n } from '../i18n';
 
 const ProblemCard = ({ problem }) => {
   const navigate = useNavigate();
+  const { t } = useI18n();
 
   const categoryColor = getPurpleTone(problem.category?.name || problem.category?.id || problem.id);
 
@@ -16,7 +18,7 @@ const ProblemCard = ({ problem }) => {
     <motion.article
       role="button"
       tabIndex={0}
-      aria-label={`Abrir problema ${problem.title}`}
+      aria-label={`${t('openProblem')} ${problem.title}`}
       className="group relative overflow-hidden rounded-[1.75rem] border border-white/10 bg-[#17191b] shadow-[0_18px_50px_rgba(0,0,0,0.28)] outline-none"
       style={{ transformStyle: 'preserve-3d' }}
       onClick={() => navigate(`/problem/${problem.id}`)}
@@ -51,7 +53,7 @@ const ProblemCard = ({ problem }) => {
             className="inline-flex max-w-[70%] items-center rounded-full px-3 py-1 text-sm font-semibold text-white shadow-sm"
             style={{ backgroundColor: categoryColor }}
           >
-            {problem.category?.name || 'Sem categoria'}
+            {problem.category?.name || t('noCategory')}
           </div>
           <span className={`rounded-full px-3 py-1 text-[11px] font-bold uppercase tracking-[0.18em] ${getStatusTone(problem.status)}`}>
             {problem.status}
@@ -63,7 +65,7 @@ const ProblemCard = ({ problem }) => {
 
         <div className="mb-4 flex items-start gap-2 text-sm text-white/55">
           <FiMapPin size={16} className="mt-0.5 shrink-0" />
-          <span className="line-clamp-2">{problem.address || 'Local não especificado'}</span>
+          <span className="line-clamp-2">{problem.address || t('locationNotSpecified')}</span>
         </div>
 
         <div className="flex items-center justify-between border-t border-white/8 pt-4">

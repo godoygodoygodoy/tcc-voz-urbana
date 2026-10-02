@@ -107,8 +107,8 @@ const ProblemDetailPage = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-6 bg-gray-100">
               {problem.images.map((img) => (
                 <div key={img.id} className="bg-gray-200 rounded-lg overflow-hidden">
-                  <img src={mediaUrl(img.url)} alt="Problem" className="w-full h-64 object-cover" />
-                  <p className="px-3 py-2 text-xs font-semibold text-gray-600">{img.tipo === 'DEPOIS' ? 'Depois' : 'Antes'}</p>
+                  <img src={mediaUrl(img.url)} alt={problem.title} className="w-full h-64 object-cover" />
+                  <p className="px-3 py-2 text-xs font-semibold text-gray-600">{img.tipo === 'DEPOIS' ? t('after') : t('before')}</p>
                 </div>
               ))}
             </div>
@@ -134,7 +134,7 @@ const ProblemDetailPage = () => {
                 <FiMapPin className="text-purple-600" />
                 <div>
                   <p className="text-xs text-gray-600">{t('address')}</p>
-                  <p className="font-semibold">{problem.address || 'Não especificado'}</p>
+                  <p className="font-semibold">{problem.address || t('locationNotSpecified')}</p>
                 </div>
               </div>
 
@@ -199,7 +199,7 @@ const ProblemDetailPage = () => {
 
             {problem.updates?.length > 0 && <section className="mt-8 border-t pt-6">
               <h2 className="text-xl font-bold mb-4">{t('updates')}</h2>
-              <div className="space-y-3">{problem.updates.map((update) => <div key={update.id} className="border-l-4 border-violet-500 bg-violet-50 p-4"><p className="font-semibold">{update.status || 'Atualização'}</p><p className="mt-1 text-gray-700">{update.texto}</p></div>)}</div>
+              <div className="space-y-3">{problem.updates.map((update) => <div key={update.id} className="border-l-4 border-violet-500 bg-violet-50 p-4"><p className="font-semibold">{update.status || t('update')}</p><p className="mt-1 text-gray-700">{update.texto}</p></div>)}</div>
             </section>}
           </div>
         </div>

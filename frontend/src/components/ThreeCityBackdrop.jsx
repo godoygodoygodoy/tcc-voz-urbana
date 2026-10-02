@@ -19,8 +19,8 @@ const ThreeCityBackdrop = () => {
       camera={{ position: [0, 2.5, 10], fov: 36 }}
       gl={{ alpha: true, antialias: true }}
     >
-      <color attach="background" args={['#04050a']} />
-      <fog attach="fog" args={['#04050a', 9, 24]} />
+      <color attach="background" args={['#100817']} />
+      <fog attach="fog" args={['#100817', 9, 24]} />
 
       <ambientLight intensity={0.55} />
       <directionalLight position={[6, 10, 6]} intensity={1.4} color="#ffffff" />
@@ -40,7 +40,7 @@ const ThreeCityBackdrop = () => {
 
       <mesh position={[0, -2.2, 0]} rotation={[-Math.PI / 2, 0, 0]}>
         <planeGeometry args={[40, 40]} />
-        <meshStandardMaterial color="#020617" roughness={1} />
+        <meshStandardMaterial color="#120b20" roughness={1} />
       </mesh>
 
       <mesh position={[0, -1.7, -4]} rotation={[-Math.PI / 2, 0, 0]}>

@@ -1,6 +1,6 @@
 const categoryPalette = [
-  '#E4572E', '#9D4EDD', '#2A9D8F', '#E9C46A', '#7B2CBF',
-  '#D7263D', '#C084FC', '#F77F00', '#8338EC', '#06D6A0',
+  '#E4572E', '#168AAD', '#2A9D8F', '#E9C46A', '#7B2CBF',
+  '#D7263D', '#3A86FF', '#F77F00', '#8338EC', '#06D6A0',
 ];
 
 const hashString = (value = '') => String(value)

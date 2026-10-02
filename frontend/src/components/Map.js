@@ -1,8 +1,9 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { CircleMarker, MapContainer, Marker, Popup, Polygon, Polyline, TileLayer, useMap, useMapEvents } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { getPurpleTone } from '../utils/theme';
+import { useI18n } from '../i18n';
 
 // Corrigir ícone do Leaflet
 delete L.Icon.Default.prototype._getIconUrl;
@@ -27,12 +28,12 @@ const createMarkerIcon = (color = '#7C3AED') => L.divIcon({
 
 const MIN_AREA_POINTS = 4;
 
-const formatAreaLabel = (points) => {
+const formatAreaLabel = (points, t) => {
   if (!points || points.length < MIN_AREA_POINTS) {
-    return `Clique em pelo menos ${MIN_AREA_POINTS} pontos para fechar a área.`;
+    return `${t('areaInstruction')} ${MIN_AREA_POINTS} ${t('points')}.`;
   }
 
-  return `Área em desenho com ${points.length} pontos.`;
+  return `${t('areaInProgress')} ${points.length} ${t('points')}.`;
 };
 
 const toPoint = (problem) => {
@@ -78,7 +79,16 @@ const FitBounds = ({ problems }) => {
 
 const AreaDrawingLayer = ({ active, selectedArea, onAreaComplete, onAreaDrawingToggle }) => {
   const map = useMap();
+  const controlsRef = useRef(null);
+  const { t } = useI18n();
   const [draftPoints, setDraftPoints] = useState([]);
+
+  useEffect(() => {
+    if (controlsRef.current) {
+      L.DomEvent.disableClickPropagation(controlsRef.current);
+      L.DomEvent.disableScrollPropagation(controlsRef.current);
+    }
+  }, [active]);
 
   useEffect(() => {
     if (!active) {
@@ -111,7 +121,9 @@ const AreaDrawingLayer = ({ active, selectedArea, onAreaComplete, onAreaDrawingT
     },
   });
 
-  const finishDrawing = () => {
+  const finishDrawing = (event) => {
+    event?.preventDefault();
+    event?.stopPropagation();
     if (draftPoints.length >= MIN_AREA_POINTS) {
       onAreaComplete?.(draftPoints);
       setDraftPoints([]);
@@ -153,14 +165,14 @@ const AreaDrawingLayer = ({ active, selectedArea, onAreaComplete, onAreaDrawingT
 
       {active && (
         <div className="pointer-events-none absolute inset-x-4 top-4 z-[500] flex flex-col gap-3 sm:inset-x-auto sm:left-4 sm:w-[300px]">
-          <div className="pointer-events-auto rounded-2xl border border-white/10 bg-zinc-950/90 p-4 text-white shadow-[0_20px_60px_rgba(0,0,0,0.35)] backdrop-blur-xl">
+          <div ref={controlsRef} className="pointer-events-auto rounded-2xl border border-white/10 bg-zinc-950/90 p-4 text-white shadow-[0_20px_60px_rgba(0,0,0,0.35)] backdrop-blur-xl">
             <div className="flex items-center justify-between gap-3">
               <div>
-                <p className="text-xs font-semibold uppercase tracking-[0.24em] text-violet-200">Selecionar área</p>
-                <p className="mt-1 text-sm text-white/70">{formatAreaLabel(draftPoints)}</p>
+                <p className="text-xs font-semibold uppercase tracking-[0.24em] text-violet-200">{t('selectArea')}</p>
+                <p className="mt-1 text-sm text-white/70">{formatAreaLabel(draftPoints, t)}</p>
               </div>
               <span className="rounded-full border border-violet-400/30 bg-violet-500/15 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.2em] text-violet-200">
-                Desenho
+                {t('drawing')}
               </span>
             </div>
 
@@ -168,21 +180,20 @@ const AreaDrawingLayer = ({ active, selectedArea, onAreaComplete, onAreaDrawingT
               <button
                 type="button"
                 onClick={(event) => {
-                  event.stopPropagation();
                   L.DomEvent.stopPropagation(event.nativeEvent);
-                  finishDrawing();
+                  finishDrawing(event);
                 }}
                 disabled={draftPoints.length < MIN_AREA_POINTS}
                 className="rounded-full bg-white px-4 py-2 text-sm font-bold text-zinc-950 disabled:cursor-not-allowed disabled:opacity-40"
               >
-                Finalizar área
+                {t('finishArea')}
               </button>
               <button
                 type="button"
                 onClick={clearDrawing}
                 className="rounded-full border border-white/12 bg-white/6 px-4 py-2 text-sm font-bold text-white"
               >
-                Limpar
+                {t('clear')}
               </button>
             </div>
           </div>
@@ -192,7 +203,7 @@ const AreaDrawingLayer = ({ active, selectedArea, onAreaComplete, onAreaDrawingT
   );
 };
 
-const LocationPicker = ({ position, onChange }) => {
+const LocationPicker = ({ position, onChange, active }) => {
   const [markerPosition, setMarkerPosition] = useState(position);
 
   useEffect(() => {
@@ -201,6 +212,7 @@ const LocationPicker = ({ position, onChange }) => {
 
   useMapEvents({
     click: (event) => {
+      if (active) return;
       const nextPosition = [event.latlng.lat, event.latlng.lng];
       setMarkerPosition(nextPosition);
       onChange?.(nextPosition);
@@ -236,6 +248,7 @@ const Map = ({
   location,
   onLocationChange,
 }) => {
+  const { t } = useI18n();
   const validProblems = problems.filter((problem) => toPoint(problem));
 
   return (
@@ -258,7 +271,7 @@ const Map = ({
           onAreaDrawingToggle={onAreaDrawingToggle}
         />
         {onLocationChange && (
-          <LocationPicker position={location} onChange={onLocationChange} />
+          <LocationPicker position={location} onChange={onLocationChange} active={areaDrawingActive} />
         )}
         {validProblems.map((problem) => {
           const point = toPoint(problem);
@@ -282,7 +295,7 @@ const Map = ({
                       className="px-2 py-1 rounded text-white text-xs font-semibold"
                       style={{ backgroundColor: markerColor }}
                     >
-                      {problem.category?.name || 'Sem categoria'}
+                      {problem.category?.name || t('noCategory')}
                     </span>
                   </p>
                 </div>
@@ -295,8 +308,8 @@ const Map = ({
       {validProblems.length === 0 && !onLocationChange && (
         <div className="absolute inset-0 flex items-center justify-center bg-zinc-950/70 backdrop-blur-sm rounded-3xl">
           <div className="text-center px-6 py-4">
-            <p className="font-semibold text-white">Nenhum ponto disponível no mapa</p>
-            <p className="text-sm text-white/70 mt-1">Cadastre um problema para ver os marcadores aqui.</p>
+            <p className="font-semibold text-white">{t('noMapPoints')}</p>
+            <p className="text-sm text-white/70 mt-1">{t('mapEmptyHint')}</p>
           </div>
         </div>
       )}

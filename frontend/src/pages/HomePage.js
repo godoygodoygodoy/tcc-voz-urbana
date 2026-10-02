@@ -93,14 +93,14 @@ const HomePage = () => {
         setMapProblems(demoProblems);
         setSelectedProblem(demoProblems[0]);
         setCategories(demoCategories);
-        toast.info('Modo demonstração ativado, a API não respondeu');
+        toast.info(t('demoMode'));
       } finally {
         setLoading(false);
       }
     };
 
     fetchData();
-  }, [selectedStatus, selectedCategory, from, to, sort, radius, page]);
+  }, [selectedStatus, selectedCategory, from, to, sort, radius, page, t]);
 
   const handleAreaComplete = (points) => {
     setSelectedArea(points);
@@ -108,9 +108,9 @@ const HomePage = () => {
   };
 
   const statusOptions = [
-    { value: 'ABERTO', label: 'Abertos' },
-    { value: 'EM_ANDAMENTO', label: 'Em andamento' },
-    { value: 'RESOLVIDO', label: 'Resolvidos' },
+    { value: 'ABERTO', label: t('openStatus') },
+    { value: 'EM_ANDAMENTO', label: t('progressStatus') },
+    { value: 'RESOLVIDO', label: t('resolvedStatus') },
   ];
 
   return (
@@ -129,7 +129,7 @@ const HomePage = () => {
       {/* Mapa */}
       <section className="container mx-auto px-4 py-8">
         <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-          <h2 className="text-2xl font-bold text-white">Mapa de Problemas</h2>
+          <h2 className="text-2xl font-bold text-white">{t('mapProblems')}</h2>
           <div className="flex flex-wrap gap-3">
             <button
               type="button"
@@ -227,11 +227,11 @@ const HomePage = () => {
         </div>
 
         <div className="mt-6 flex items-center justify-between text-sm text-white/60">
-          <span>{total} ocorrência(s)</span>
+          <span>{total} {t('occurrences')}</span>
           <div className="flex items-center gap-2">
-            <button type="button" disabled={page <= 1} onClick={() => setPage((current) => current - 1)} className="rounded-lg border border-white/15 px-3 py-2 disabled:opacity-30">Anterior</button>
-            <span>Página {page}</span>
-            <button type="button" disabled={page * 9 >= total} onClick={() => setPage((current) => current + 1)} className="rounded-lg border border-white/15 px-3 py-2 disabled:opacity-30">Próxima</button>
+            <button type="button" disabled={page <= 1} onClick={() => setPage((current) => current - 1)} className="rounded-lg border border-white/15 px-3 py-2 disabled:opacity-30">{t('previous')}</button>
+            <span>{t('page')} {page}</span>
+            <button type="button" disabled={page * 9 >= total} onClick={() => setPage((current) => current + 1)} className="rounded-lg border border-white/15 px-3 py-2 disabled:opacity-30">{t('next')}</button>
           </div>
         </div>
 
@@ -261,14 +261,14 @@ const HomePage = () => {
                 onClick={() => setSelectedProblem(null)}
                 className="text-sm font-semibold text-violet-300 hover:underline"
               >
-                Limpar seleção
+                {t('clearSelection')}
               </button>
             )}
           </div>
           {selectedProblem ? (
             <ProblemCard problem={selectedProblem} />
           ) : (
-            <p className="text-white/70">Clique em um marcador do mapa para ver os detalhes aqui.</p>
+            <p className="text-white/70">{t('clickMarker')}</p>
           )}
         </div>
       </section>
