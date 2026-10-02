@@ -2,8 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { adminAPI } from '../services/api';
 import { toast } from 'react-toastify';
 import { FiBarChart2, FiCheckCircle, FiAlertCircle, FiUsers, FiTag } from 'react-icons/fi';
+import { useI18n } from '../i18n';
 
 const AdminDashboard = () => {
+  const { t } = useI18n();
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
 
@@ -13,19 +15,19 @@ const AdminDashboard = () => {
         const res = await adminAPI.getStats();
         setStats(res.data);
       } catch (error) {
-        toast.error('Erro ao carregar estatísticas');
+        toast.error(t('adminError'));
       } finally {
         setLoading(false);
       }
     };
 
     fetchStats();
-  }, []);
+  }, [t]);
 
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <p className="text-gray-600">Carregando...</p>
+        <p className="text-gray-600">{t('loading')}</p>
       </div>
     );
   }
@@ -47,54 +49,54 @@ const AdminDashboard = () => {
   return (
     <div className="min-h-screen bg-[#1b1d1f] py-8 text-white">
       <div className="container mx-auto px-4">
-        <h1 className="mb-8 text-3xl font-black">Painel Administrativo</h1>
+        <h1 className="mb-8 text-3xl font-black">{t('adminDashboard')}</h1>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
           <StatCard
             icon={FiBarChart2}
-            title="Total de Problemas"
+            title={t('totalProblems')}
             value={stats?.totalProblems || 0}
             color="bg-violet-500"
           />
           <StatCard
             icon={FiAlertCircle}
-            title="Abertos"
+            title={t('openStatus')}
             value={stats?.openProblems || 0}
             color="bg-violet-700"
           />
           <StatCard
             icon={FiCheckCircle}
-            title="Resolvidos"
+            title={t('resolvedStatus')}
             value={stats?.resolvedProblems || 0}
             color="bg-violet-400"
           />
           <StatCard
             icon={FiUsers}
-            title="Usuários"
+            title={t('users')}
             value={stats?.totalUsers || 0}
             color="bg-violet-600"
           />
           <StatCard
             icon={FiTag}
-            title="Categorias"
+            title={t('categories')}
             value={stats?.totalCategories || 0}
             color="bg-violet-800"
           />
         </div>
 
         <div className="mt-12 rounded-3xl border border-white/10 bg-white/6 p-8 shadow-[0_24px_70px_rgba(0,0,0,0.18)] backdrop-blur-xl">
-          <h2 className="text-2xl font-bold mb-4">Resumo</h2>
+          <h2 className="text-2xl font-bold mb-4">{t('summary')}</h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div className="p-4 border-l-4 border-violet-500">
-              <p className="text-white/55 text-sm">Problemas a Resolver</p>
+              <p className="text-white/55 text-sm">{t('toResolve')}</p>
               <p className="text-2xl font-bold text-violet-300">{stats?.openProblems || 0}</p>
             </div>
             <div className="p-4 border-l-4 border-violet-400">
-              <p className="text-white/55 text-sm">Em Andamento</p>
+              <p className="text-white/55 text-sm">{t('progressStatus')}</p>
               <p className="text-2xl font-bold text-violet-300">{stats?.inProgressProblems || 0}</p>
             </div>
             <div className="p-4 border-l-4 border-violet-700">
-              <p className="text-white/55 text-sm">Resolvidos</p>
+              <p className="text-white/55 text-sm">{t('resolvedStatus')}</p>
               <p className="text-2xl font-bold text-violet-300">{stats?.resolvedProblems || 0}</p>
             </div>
           </div>

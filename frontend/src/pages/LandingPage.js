@@ -29,6 +29,7 @@ import { getPurpleTone } from '../utils/theme';
 import { useAuthStore } from '../store';
 import AccessMenu from '../components/AccessMenu';
 import { useI18n } from '../i18n';
+import PigeonLogo from '../components/PigeonLogo';
 
 const fallbackCategories = [
   { id: 'asfalto', name: 'Asfalto' },
@@ -239,7 +240,7 @@ export default function LandingPage() {
       <header className="sticky top-0 z-50 border-b border-white/10 bg-black/55 backdrop-blur-2xl">
         <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-4 sm:px-6 lg:px-8">
           <Link to="/" className="group flex items-center gap-3">
-            <img src="/branding/mascote-voz-urbana.png" alt="Voz Urbana" className="h-11 w-11 bg-transparent object-contain drop-shadow-[0_0_8px_rgba(168,85,247,0.55)] transition-transform duration-300 group-hover:scale-105" />
+            <PigeonLogo className="h-11 w-11 bg-transparent object-contain drop-shadow-[0_0_8px_rgba(168,85,247,0.55)] transition-transform duration-300 group-hover:scale-105" />
             <img src="/branding/voz-urbana-texto.png" alt="Voz Urbana" className="h-10 w-auto max-w-[190px] object-contain" />
           </Link>
 

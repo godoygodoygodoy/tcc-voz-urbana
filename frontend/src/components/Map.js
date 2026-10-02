@@ -25,9 +25,11 @@ const createMarkerIcon = (color = '#7C3AED') => L.divIcon({
   popupAnchor: [0, -24],
 });
 
+const MIN_AREA_POINTS = 4;
+
 const formatAreaLabel = (points) => {
-  if (!points || points.length < 3) {
-    return 'Clique em pelo menos 3 pontos para fechar a área.';
+  if (!points || points.length < MIN_AREA_POINTS) {
+    return `Clique em pelo menos ${MIN_AREA_POINTS} pontos para fechar a área.`;
   }
 
   return `Área em desenho com ${points.length} pontos.`;
@@ -110,7 +112,7 @@ const AreaDrawingLayer = ({ active, selectedArea, onAreaComplete, onAreaDrawingT
   });
 
   const finishDrawing = () => {
-    if (draftPoints.length >= 3) {
+    if (draftPoints.length >= MIN_AREA_POINTS) {
       onAreaComplete?.(draftPoints);
       setDraftPoints([]);
       onAreaDrawingToggle?.(false);
@@ -133,7 +135,7 @@ const AreaDrawingLayer = ({ active, selectedArea, onAreaComplete, onAreaDrawingT
         />
       )}
 
-      {visibleArea?.length >= 3 && (
+      {visibleArea?.length >= MIN_AREA_POINTS && (
         <Polygon
           positions={visibleArea}
           pathOptions={{ color: '#C084FC', fillColor: '#7C3AED', fillOpacity: 0.22, weight: 2 }}
@@ -165,8 +167,12 @@ const AreaDrawingLayer = ({ active, selectedArea, onAreaComplete, onAreaDrawingT
             <div className="mt-4 flex flex-wrap gap-2">
               <button
                 type="button"
-                onClick={finishDrawing}
-                disabled={draftPoints.length < 3}
+                onClick={(event) => {
+                  event.stopPropagation();
+                  L.DomEvent.stopPropagation(event.nativeEvent);
+                  finishDrawing();
+                }}
+                disabled={draftPoints.length < MIN_AREA_POINTS}
                 className="rounded-full bg-white px-4 py-2 text-sm font-bold text-zinc-950 disabled:cursor-not-allowed disabled:opacity-40"
               >
                 Finalizar área

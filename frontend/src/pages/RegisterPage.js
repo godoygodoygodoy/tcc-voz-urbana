@@ -4,6 +4,7 @@ import { useAuthStore } from '../store';
 import { toast } from 'react-toastify';
 import { Card, CardContent } from '../components/ui/card';
 import { Button } from '../components/ui/button';
+import { useI18n } from '../i18n';
 
 const RegisterPage = () => {
   const [formData, setFormData] = useState({
@@ -16,6 +17,7 @@ const RegisterPage = () => {
   const [loading, setLoading] = useState(false);
   const { register } = useAuthStore();
   const navigate = useNavigate();
+  const { t } = useI18n();
 
   const handleChange = (e) => {
     setFormData({
@@ -28,7 +30,7 @@ const RegisterPage = () => {
     e.preventDefault();
 
     if (formData.password !== formData.passwordConfirm) {
-      toast.error('As senhas não coincidem');
+      toast.error(t('passwordMismatch'));
       return;
     }
 
@@ -41,10 +43,10 @@ const RegisterPage = () => {
         password: formData.password,
         username: formData.username.replace(/^@/, '').trim(),
       });
-      toast.success('Cadastro realizado! Verifique seu e-mail para confirmar a conta.');
+      toast.success(t('registerSuccess'));
       navigate(`/verify-email?email=${encodeURIComponent(formData.email)}`);
     } catch (error) {
-      toast.error(error.response?.data?.error || 'Erro ao cadastrar');
+      toast.error(error.response?.data?.error || t('registerError'));
     } finally {
       setLoading(false);
     }
@@ -58,38 +60,38 @@ const RegisterPage = () => {
             <h1 className="text-4xl font-black mb-2">
               <span className="text-violet-600">VOZ</span> URBANA
             </h1>
-            <p className="text-white/60">Cadastro</p>
+            <p className="text-white/60">{t('registerTitle')}</p>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label className="block text-sm font-semibold mb-2">Nome</label>
+              <label className="block text-sm font-semibold mb-2">{t('name')}</label>
               <input
                 type="text"
                 name="name"
                 value={formData.name}
                 onChange={handleChange}
-                placeholder="Seu nome completo"
+                placeholder={t('fullNamePlaceholder')}
                 required
                 className="w-full rounded-xl border-2 border-white/10 p-3 focus:outline-none focus:border-violet-500"
               />
             </div>
 
             <div>
-              <label className="block text-sm font-semibold mb-2">Email</label>
+              <label className="block text-sm font-semibold mb-2">{t('email')}</label>
               <input
                 type="email"
                 name="email"
                 value={formData.email}
                 onChange={handleChange}
-                placeholder="seu@email.com"
+                placeholder={t('emailPlaceholder')}
                 required
                 className="w-full rounded-xl border-2 border-white/10 p-3 focus:outline-none focus:border-violet-500"
               />
             </div>
 
             <div>
-              <label className="block text-sm font-semibold mb-2">Nome de usuário</label>
+              <label className="block text-sm font-semibold mb-2">{t('username')}</label>
               <div className="flex items-center border-2 rounded-xl focus-within:border-violet-600">
                 <span className="pl-3 text-gray-500">@</span>
                 <input
@@ -105,30 +107,30 @@ const RegisterPage = () => {
                   className="w-full rounded-xl p-3 focus:outline-none"
                 />
               </div>
-              <p className="mt-1 text-xs text-gray-500">Use de 3 a 30 caracteres: letras, números, ponto ou sublinhado.</p>
+              <p className="mt-1 text-xs text-gray-500">{t('usernameHint')}</p>
             </div>
 
             <div>
-              <label className="block text-sm font-semibold mb-2">Senha</label>
+              <label className="block text-sm font-semibold mb-2">{t('password')}</label>
               <input
                 type="password"
                 name="password"
                 value={formData.password}
                 onChange={handleChange}
-                placeholder="Mínimo 6 caracteres"
+                placeholder={t('minPassword')}
                 required
                 className="w-full rounded-xl border-2 border-white/10 p-3 focus:outline-none focus:border-violet-500"
               />
             </div>
 
             <div>
-              <label className="block text-sm font-semibold mb-2">Confirme a Senha</label>
+              <label className="block text-sm font-semibold mb-2">{t('passwordConfirm')}</label>
               <input
                 type="password"
                 name="passwordConfirm"
                 value={formData.passwordConfirm}
                 onChange={handleChange}
-                placeholder="Confirme sua senha"
+                placeholder={t('confirmPasswordPlaceholder')}
                 required
                 className="w-full rounded-xl border-2 border-white/10 p-3 focus:outline-none focus:border-violet-500"
               />
@@ -139,15 +141,15 @@ const RegisterPage = () => {
               className="w-full rounded-2xl py-3 text-lg font-bold mt-6"
               disabled={loading}
             >
-              {loading ? 'Criando conta...' : 'Criar conta'}
+              {loading ? t('registerLoading') : t('createAccount')}
             </Button>
           </form>
 
           <div className="text-center mt-6">
             <p className="text-white/60">
-              Já tem conta?{' '}
+              {t('hasAccount')}{' '}
               <Link to="/login" className="text-violet-600 font-bold hover:underline">
-                Faça login
+                {t('signIn')}
               </Link>
             </p>
           </div>

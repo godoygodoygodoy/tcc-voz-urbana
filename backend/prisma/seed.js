@@ -27,7 +27,10 @@ const seed = async () => {
     });
   }
 
-  await prisma.usuario.update({ where: { id: user.id }, data: { nivel: "ADMIN" } });
+  await prisma.usuario.update({
+    where: { id: user.id },
+    data: { nivel: "ADMIN", emailVerificado: true, tokenVerificacao: null, tokenVerificacaoExpira: null }
+  });
 
   await prisma.admin.upsert({
     where: { usuarioId: user.id },
