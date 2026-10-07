@@ -32,10 +32,7 @@ const LoginPage = () => {
       toast.success(t('loginSuccess'));
       navigate('/');
     } catch (error) {
-      if (error.response?.data?.code === 'EMAIL_NOT_VERIFIED') {
-        navigate(`/verify-email?email=${encodeURIComponent(error.response.data.email || formData.email)}`);
-        return;
-      }
+      // O redirecionamento para verificacao de e-mail foi mantido como legado, mas desativado.
       toast.error(error.response?.data?.error || 'Erro ao fazer login');
     } finally {
       setLoading(false);

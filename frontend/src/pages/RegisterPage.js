@@ -44,7 +44,7 @@ const RegisterPage = () => {
         username: formData.username.replace(/^@/, '').trim(),
       });
       toast.success(t('registerSuccess'));
-      navigate(`/verify-email?email=${encodeURIComponent(formData.email)}`);
+      navigate('/');
     } catch (error) {
       toast.error(error.response?.data?.error || t('registerError'));
     } finally {
