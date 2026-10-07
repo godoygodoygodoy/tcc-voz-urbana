@@ -3,24 +3,25 @@ import { prisma } from "../src/config/prisma.js";
 import { hashPassword } from "../src/utils/password.js";
 
 const categories = [
-  "Asfalto",
-  "Iluminacao",
-  "Limpeza",
-  "Lixo",
-  "Sinalizacao",
-  "Acessibilidade",
-  "Vegetação",
-  "Furtos e roubos",
-  "Acidentes de trânsito",
-  "Outros"
+  { nome: "Asfalto", icone: "⚫", cor: "#4B5563" },
+  { nome: "Lixo", icone: "🟢", cor: "#166534" },
+  { nome: "Vegetação", icone: "🌿", cor: "#22C55E" },
+  { nome: "Iluminação", icone: "💡", cor: "#FACC15" },
+  { nome: "Sinalização", icone: "🔵", cor: "#2563EB" },
+  { nome: "Saneamento", icone: "🩵", cor: "#06B6D4" },
+  { nome: "Área com grande quantidade de furto", icone: "🟣", cor: "#7C3AED" },
+  { nome: "Acidentes de carros", icone: "🔴", cor: "#DC2626" },
+  { nome: "Outros", icone: "⚪", cor: "#6B7280" },
+  { nome: "Limpeza", icone: "🧹", cor: "#15803D" },
+  { nome: "Acessibilidade", icone: "♿", cor: "#0EA5E9" }
 ];
 
 const seed = async () => {
-  for (const nome of categories) {
+  for (const category of categories) {
     await prisma.categoria.upsert({
-      where: { nome },
-      update: {},
-      create: { nome }
+      where: { nome: category.nome },
+      update: { icone: category.icone, cor: category.cor },
+      create: category
     });
   }
 

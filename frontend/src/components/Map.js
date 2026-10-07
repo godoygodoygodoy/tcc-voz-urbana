@@ -275,7 +275,7 @@ const Map = ({
         )}
         {validProblems.map((problem) => {
           const point = toPoint(problem);
-          const markerColor = getPurpleTone(problem.category?.name || problem.category?.id || problem.id);
+          const markerColor = problem.category?.color || getPurpleTone(problem.category?.name || problem.category?.id || problem.id);
 
           return (
             <Marker

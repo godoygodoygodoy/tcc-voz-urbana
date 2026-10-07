@@ -10,11 +10,13 @@ const router = express.Router();
 router.post(
   "/categories",
   asyncHandler(async (req, res) => {
-    const { name, description, color, icon } = req.body;
+    const { name, color, icon } = req.body;
 
     const category = await prisma.categoria.create({
       data: {
-        nome: name
+        nome: name,
+        cor: color,
+        icone: icon
       }
     });
 

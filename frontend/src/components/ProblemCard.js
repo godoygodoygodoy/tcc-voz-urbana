@@ -12,7 +12,7 @@ const ProblemCard = ({ problem }) => {
   const navigate = useNavigate();
   const { t } = useI18n();
 
-  const categoryColor = getPurpleTone(problem.category?.name || problem.category?.id || problem.id);
+  const categoryColor = problem.category?.color || getPurpleTone(problem.category?.name || problem.category?.id || problem.id);
 
   return (
     <motion.article

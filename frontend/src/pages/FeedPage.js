@@ -92,7 +92,7 @@ const FeedPage = () => {
 
         {loading ? <div className="py-20 text-center text-white/60">{t('loadingPosts')}</div> : filteredPosts.length === 0 ? <div className="rounded-3xl border border-white/10 bg-white/6 py-20 text-center text-white/60">{t('noPosts')}</div> : <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
           {filteredPosts.map((post) => {
-            const color = getPurpleTone(post.category?.name || post.category?.id || post.id);
+            const color = post.category?.color || getPurpleTone(post.category?.name || post.category?.id || post.id);
             return <article key={post.id} className="overflow-hidden rounded-3xl border border-white/10 bg-[#202326] shadow-[0_20px_60px_rgba(0,0,0,0.22)] transition duration-300 hover:-translate-y-1 hover:border-violet-300/35">
               {post.images?.[0]?.url ? <Link to={`/problem/${post.id}`} className="block h-56 overflow-hidden"><img src={mediaUrl(post.images[0].url)} alt={post.title} className="h-full w-full object-cover transition duration-500 hover:scale-105" /></Link> : <div className="flex h-56 items-center justify-center bg-[radial-gradient(circle_at_center,rgba(124,58,237,0.35),transparent_60%)]"><ImageIcon className="h-12 w-12 text-white/25" /></div>}
               <div className="p-5">

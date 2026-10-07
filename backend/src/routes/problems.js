@@ -43,7 +43,12 @@ const serializeProblem = (problem) => ({
   address: problem.endereco,
   createdAt: problem.dataCriacao,
   category: problem.categoria
-    ? { id: problem.categoria.id, name: problem.categoria.nome }
+    ? {
+      id: problem.categoria.id,
+      name: problem.categoria.nome,
+      icon: problem.categoria.icone,
+      color: problem.categoria.cor
+    }
     : null,
   author: problem.usuario ? { id: problem.usuario.id, name: problem.usuario.nome } : null,
   images: problem.imagens || [],

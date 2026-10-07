@@ -35,6 +35,8 @@ model Usuario {
 model Categoria {
   id        String     @id @default(uuid()) @db.Char(36)
   nome      String     @unique @db.VarChar(80)
+  icone     String?    @db.VarChar(10)
+  cor       String?    @db.VarChar(7)
   problemas Problema[]
 
   @@map("categorias")
