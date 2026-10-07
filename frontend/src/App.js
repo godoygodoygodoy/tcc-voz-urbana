@@ -37,6 +37,7 @@ function App() {
         <Routes>
           {/* Landing page - sem header customizado, ela tem seu próprio */}
           <Route path="/" element={<LandingPage />} />
+          <Route path="/contato" element={<Navigate to="/#contato" replace />} />
 
           {/* Outras rotas com header */}
           <Route

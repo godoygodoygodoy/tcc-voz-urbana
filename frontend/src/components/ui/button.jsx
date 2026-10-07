@@ -1,5 +1,5 @@
 export function Button({ children, variant = 'default', size = 'md', className = '', ...props }) {
-  const baseClasses = 'font-semibold transition-all active:scale-95';
+  const baseClasses = 'font-semibold transition-[background-color,border-color,color,box-shadow]';
   
   const variants = {
     default: 'bg-violet-600 text-white hover:bg-violet-700',

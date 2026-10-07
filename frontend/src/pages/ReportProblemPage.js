@@ -3,8 +3,10 @@ import { useNavigate } from 'react-router-dom';
 import { problemsAPI, categoriesAPI } from '../services/api';
 import { toast } from 'react-toastify';
 import Map from '../components/Map';
+import { useI18n } from '../i18n';
 
 const ReportProblemPage = () => {
+  const { t } = useI18n();
   const [formData, setFormData] = useState({
     title: '',
     description: '',
@@ -26,7 +28,7 @@ const ReportProblemPage = () => {
         const res = await categoriesAPI.list();
         setCategories(res.data);
       } catch (error) {
-        toast.error('Erro ao carregar categorias');
+        toast.error(t('reportError'));
       } finally {
         setLoadingCategories(false);
       }
@@ -47,7 +49,7 @@ const ReportProblemPage = () => {
     }
 
     fetchCategories();
-  }, []);
+  }, [t]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -89,7 +91,7 @@ const ReportProblemPage = () => {
     e.preventDefault();
 
     if (!formData.title || !formData.description || !formData.categoryId) {
-      toast.error('Preencha todos os campos obrigatórios');
+      toast.error(t('requiredFields'));
       return;
     }
 
@@ -107,10 +109,10 @@ const ReportProblemPage = () => {
       images.forEach((file) => payload.append('images', file));
 
       await problemsAPI.create(payload);
-      toast.success('Problema reportado com sucesso!');
+      toast.success(t('reportSuccess'));
       navigate('/');
     } catch (error) {
-      toast.error(error.response?.data?.error || 'Erro ao reportar problema');
+      toast.error(error.response?.data?.error || t('reportError'));
     } finally {
       setLoading(false);
     }
@@ -120,14 +122,14 @@ const ReportProblemPage = () => {
     <div className="min-h-screen bg-gray-50 py-8">
       <div className="container mx-auto px-4">
         <div className="max-w-2xl mx-auto bg-white rounded-lg shadow-md p-8">
-          <h1 className="text-3xl font-bold mb-2">Reportar Problema</h1>
-          <p className="text-gray-600 mb-8">Ajude a melhorar a cidade reportando um problema urbano</p>
+          <h1 className="text-3xl font-bold mb-2">{t('problemReport')}</h1>
+          <p className="text-gray-600 mb-8">{t('reportIntro')}</p>
 
           <form onSubmit={handleSubmit} className="space-y-6">
             <div>
-              <label className="block text-sm font-semibold mb-2">Categoria *</label>
+              <label className="block text-sm font-semibold mb-2">{t('category')} *</label>
               {loadingCategories ? (
-                <p className="text-gray-600">Carregando categorias...</p>
+                <p className="text-gray-600">{t('loadingCategories')}</p>
               ) : (
                 <select
                   name="categoryId"
@@ -136,7 +138,7 @@ const ReportProblemPage = () => {
                   required
                   className="w-full border rounded-lg p-3"
                 >
-                  <option value="">Selecione uma categoria</option>
+                  <option value="">{t('selectCategory')}</option>
                   {categories.map((cat) => (
                     <option key={cat.id} value={cat.id}>
                       {cat.name}
@@ -147,7 +149,7 @@ const ReportProblemPage = () => {
             </div>
 
             <div>
-              <label className="block text-sm font-semibold mb-2">Título do Problema *</label>
+              <label className="block text-sm font-semibold mb-2">{t('problemTitle')} *</label>
               <input
                 type="text"
                 name="title"
@@ -155,12 +157,12 @@ const ReportProblemPage = () => {
                 onChange={handleChange}
                 required
                 className="w-full border rounded-lg p-3"
-                placeholder="Ex: Buraco na rua principal"
+                placeholder={t('problemTitlePlaceholder')}
               />
             </div>
 
             <div>
-              <label className="block text-sm font-semibold mb-2">Descrição Detalhada *</label>
+              <label className="block text-sm font-semibold mb-2">{t('detailedDescription')} *</label>
               <textarea
                 name="description"
                 value={formData.description}
@@ -168,25 +170,25 @@ const ReportProblemPage = () => {
                 required
                 className="w-full border rounded-lg p-3"
                 rows="5"
-                placeholder="Descreva o problema em detalhes..."
+                placeholder={t('descriptionPlaceholder')}
               />
             </div>
 
             <div>
-              <label className="block text-sm font-semibold mb-2">Endereço</label>
+              <label className="block text-sm font-semibold mb-2">{t('address')}</label>
               <input
                 type="text"
                 name="address"
                 value={formData.address}
                 onChange={handleChange}
                 className="w-full border rounded-lg p-3"
-                placeholder="Rua, número, bairro..."
+                placeholder={t('addressPlaceholder')}
               />
             </div>
 
             <div>
-              <label className="block text-sm font-semibold mb-2">Localização no mapa</label>
-              <p className="mb-3 text-sm text-gray-600">Clique no mapa ou arraste o marcador para ajustar o local.</p>
+              <label className="block text-sm font-semibold mb-2">{t('mapLocation')}</label>
+              <p className="mb-3 text-sm text-gray-600">{t('mapLocationHint')}</p>
               <Map
                 problems={[]}
                 height="320px"
@@ -198,7 +200,7 @@ const ReportProblemPage = () => {
             </div>
 
             <div>
-              <label className="block text-sm font-semibold mb-2">Imagens (opcional)</label>
+              <label className="block text-sm font-semibold mb-2">{t('imagesOptional')}</label>
               <input
                 type="file"
                 accept="image/*"
@@ -227,7 +229,7 @@ const ReportProblemPage = () => {
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-semibold mb-2">Latitude</label>
+                <label className="block text-sm font-semibold mb-2">{t('latitude')}</label>
                 <input
                   type="number"
                   name="latitude"
@@ -239,7 +241,7 @@ const ReportProblemPage = () => {
                 />
               </div>
               <div>
-                <label className="block text-sm font-semibold mb-2">Longitude</label>
+                <label className="block text-sm font-semibold mb-2">{t('longitude')}</label>
                 <input
                   type="number"
                   name="longitude"
@@ -257,7 +259,7 @@ const ReportProblemPage = () => {
               disabled={loading}
               className="w-full bg-purple-600 text-white font-semibold py-3 rounded-lg hover:bg-purple-700 disabled:bg-gray-400"
             >
-              {loading ? 'Reportando...' : 'Reportar Problema'}
+              {loading ? t('reportLoading') : t('problemReport')}
             </button>
           </form>
         </div>

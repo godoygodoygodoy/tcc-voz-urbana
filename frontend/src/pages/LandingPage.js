@@ -29,6 +29,7 @@ import { getPurpleTone } from '../utils/theme';
 import { useAuthStore } from '../store';
 import AccessMenu from '../components/AccessMenu';
 import { useI18n } from '../i18n';
+import PigeonLogo from '../components/PigeonLogo';
 
 const fallbackCategories = [
   { id: 'asfalto', name: 'Asfalto' },
@@ -239,7 +240,7 @@ export default function LandingPage() {
       <header className="sticky top-0 z-50 border-b border-white/10 bg-black/55 backdrop-blur-2xl">
         <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-4 sm:px-6 lg:px-8">
           <Link to="/" className="group flex items-center gap-3">
-            <img src="/branding/mascote-voz-urbana.png" alt="Voz Urbana" className="h-11 w-11 bg-transparent object-contain drop-shadow-[0_0_8px_rgba(168,85,247,0.55)] transition-transform duration-300 group-hover:scale-105" />
+            <PigeonLogo className="h-11 w-11 bg-transparent object-contain drop-shadow-[0_0_8px_rgba(168,85,247,0.55)] transition-transform duration-300 group-hover:scale-105" />
             <img src="/branding/voz-urbana-texto.png" alt="Voz Urbana" className="h-10 w-auto max-w-[190px] object-contain" />
           </Link>
 
@@ -473,7 +474,7 @@ export default function LandingPage() {
           <div>
             <p className="text-xs font-semibold uppercase tracking-[0.32em] text-white/40">Feed</p>
             <h3 className="mt-3 text-4xl font-black text-white sm:text-5xl">Identificações recentes</h3>
-            <p className="mt-4 max-w-2xl text-white/65">Os dados vêm da API. Quando ela não responde, a página continua viva com os registros de demonstração.</p>
+            <p className="mt-4 max-w-2xl text-white/65">{t('feedFallback')}</p>
           </div>
           <Link to="/map" className="inline-flex items-center gap-2 text-sm font-semibold text-violet-200 transition hover:text-white">
             Ver tudo no mapa
@@ -483,9 +484,9 @@ export default function LandingPage() {
 
         <div className="mt-8">
           {loadingFeed ? (
-            <div className="glass-panel rounded-[1.8rem] p-8 text-center text-white/70">Carregando problemas...</div>
+            <div className="glass-panel rounded-[1.8rem] p-8 text-center text-white/70">{t('loadingProblems')}</div>
           ) : recentProblems.length === 0 ? (
-            <div className="glass-panel rounded-[1.8rem] p-8 text-center text-white/70">Nenhum problema encontrado no momento.</div>
+            <div className="glass-panel rounded-[1.8rem] p-8 text-center text-white/70">{t('noProblems')}</div>
           ) : (
             <motion.div className="grid gap-6 md:grid-cols-3" variants={stagger}>
               {recentProblems.map((problem) => (
@@ -498,7 +499,7 @@ export default function LandingPage() {
         </div>
       </motion.section>
 
-      <section className="bg-[#0b1020] py-16">
+      <section className="bg-[#160d25] py-16">
         <div className="mx-auto grid max-w-7xl gap-6 px-4 sm:grid-cols-2 lg:grid-cols-4 sm:px-6 lg:px-8">
           {stats.map((item) => (
             <Card key={item.label} className="glass-panel rounded-[1.6rem] border-white/10 bg-white/6 text-white">
@@ -527,7 +528,7 @@ export default function LandingPage() {
             }}
           >
             <CardContent className="p-10 sm:p-12">
-              <p className="text-xs font-semibold uppercase tracking-[0.32em] text-white/55">Contexto</p>
+              <p className="text-xs font-semibold uppercase tracking-[0.32em] text-white/55">{t('context')}</p>
               <h3 className="mt-4 max-w-xl text-4xl font-black leading-tight sm:text-5xl">
                 JUNTOS, PODEMOS TRANSFORMAR A NOSSA CIDADE
               </h3>
@@ -540,21 +541,20 @@ export default function LandingPage() {
           {!user && <Card className="glass-panel rounded-[2rem] border-white/10 bg-white/6 text-white shadow-[0_24px_70px_rgba(0,0,0,0.26)]">
             <CardContent className="p-8 sm:p-10 space-y-5">
               <div>
-                <p className="text-xs font-semibold uppercase tracking-[0.32em] text-white/45">Acesso rápido</p>
-                <h3 className="mt-3 text-3xl font-black">Criar conta</h3>
+                <p className="text-xs font-semibold uppercase tracking-[0.32em] text-white/45">{t('quickAccess')}</p>
+                <h3 className="mt-3 text-3xl font-black">{t('createAccount')}</h3>
               </div>
 
               <div className="grid gap-4 md:grid-cols-2">
-                <input className="rounded-2xl border border-white/10 bg-black/20 p-3 text-white placeholder:text-white/35 outline-none transition focus:border-violet-300/60" placeholder="Nome" />
-                <input className="rounded-2xl border border-white/10 bg-black/20 p-3 text-white placeholder:text-white/35 outline-none transition focus:border-violet-300/60" placeholder="Email" />
-                <input className="rounded-2xl border border-white/10 bg-black/20 p-3 text-white placeholder:text-white/35 outline-none transition focus:border-violet-300/60" placeholder="CPF" />
-                <input className="rounded-2xl border border-white/10 bg-black/20 p-3 text-white placeholder:text-white/35 outline-none transition focus:border-violet-300/60" placeholder="Telefone" />
-                <input className="rounded-2xl border border-white/10 bg-black/20 p-3 text-white placeholder:text-white/35 outline-none transition focus:border-violet-300/60 md:col-span-2" placeholder="Senha" />
+                <input className="rounded-2xl border border-white/10 bg-black/20 p-3 text-white placeholder:text-white/35 outline-none transition focus:border-violet-300/60" placeholder={t('name')} />
+                <input className="rounded-2xl border border-white/10 bg-black/20 p-3 text-white placeholder:text-white/35 outline-none transition focus:border-violet-300/60" placeholder={t('email')} />
+                <input className="rounded-2xl border border-white/10 bg-black/20 p-3 text-white placeholder:text-white/35 outline-none transition focus:border-violet-300/60" placeholder={t('phone')} />
+                <input className="rounded-2xl border border-white/10 bg-black/20 p-3 text-white placeholder:text-white/35 outline-none transition focus:border-violet-300/60 md:col-span-2" placeholder={t('password')} />
               </div>
 
               <Link to="/register" className="block">
                 <Button className="w-full rounded-full bg-white px-6 py-4 text-base font-black text-zinc-950 hover:bg-violet-50">
-                  Criar conta
+                  {t('createAccount')}
                 </Button>
               </Link>
             </CardContent>
@@ -571,16 +571,16 @@ export default function LandingPage() {
         variants={fadeUp}
       >
         <div className="mb-8 max-w-2xl">
-          <p className="text-xs font-semibold uppercase tracking-[0.32em] text-white/40">Mapa</p>
-          <h3 className="mt-3 text-4xl font-black text-white sm:text-5xl">Problemas no mapa</h3>
-          <p className="mt-4 text-white/65">Clique em um marcador para destacar o problema abaixo do mapa.</p>
+          <p className="text-xs font-semibold uppercase tracking-[0.32em] text-white/40">{t('mapLabel')}</p>
+          <h3 className="mt-3 text-4xl font-black text-white sm:text-5xl">{t('mapProblems')}</h3>
+          <p className="mt-4 text-white/65">{t('mapSectionIntro')}</p>
         </div>
 
         <div className="grid gap-8 lg:grid-cols-[0.85fr_2fr]">
           <Card className="glass-panel rounded-[1.8rem] border-white/10 bg-white/6 text-white">
             <CardContent className="p-6 sm:p-7 space-y-3">
-              <h4 className="text-xl font-black">Categorias ativas</h4>
-              <p className="text-sm text-white/55">Legenda compacta para leitura rápida.</p>
+              <h4 className="text-xl font-black">{t('activeCategories')}</h4>
+              <p className="text-sm text-white/55">{t('legend')}</p>
               <div className="mt-4 grid gap-3">
                 {activeCategories.slice(0, 8).map((category, index) => (
                   <div key={category.id} className="flex items-center gap-3 rounded-2xl border border-white/8 bg-black/15 px-4 py-3">
@@ -592,7 +592,7 @@ export default function LandingPage() {
             </CardContent>
           </Card>
 
-          <Card className="overflow-hidden rounded-[2rem] border border-white/10 bg-[#020617] shadow-[0_24px_70px_rgba(0,0,0,0.4)]">
+          <Card className="overflow-hidden rounded-[2rem] border border-white/10 bg-[#120b20] shadow-[0_24px_70px_rgba(0,0,0,0.4)]">
             <CardContent className="p-4">
               <Map problems={recentProblems} onMarkerClick={setSelectedProblem} height="520px" />
             </CardContent>
@@ -603,14 +603,14 @@ export default function LandingPage() {
           <Card className="glass-panel rounded-[1.8rem] border-white/10 bg-white/6 text-white">
             <CardContent className="p-7 sm:p-8">
               <div className="flex items-center justify-between gap-4">
-                <h4 className="text-xl font-black">Problema selecionado</h4>
+                <h4 className="text-xl font-black">{t('selectedProblem')}</h4>
                 {selectedProblem && (
                   <button
                     type="button"
                     onClick={() => setSelectedProblem(null)}
                     className="text-sm font-semibold text-violet-200 transition hover:text-white"
                   >
-                    Limpar seleção
+                    {t('clearSelection')}
                   </button>
                 )}
               </div>
@@ -618,7 +618,7 @@ export default function LandingPage() {
                 {selectedProblem ? (
                   <ProblemCard problem={selectedProblem} />
                 ) : (
-                  <p className="text-white/65">Clique em um marcador para ver os detalhes aqui.</p>
+                  <p className="text-white/65">{t('clickMarkerShort')}</p>
                 )}
               </div>
             </CardContent>
@@ -696,7 +696,7 @@ export default function LandingPage() {
 
       <motion.section
         id="contato"
-        className="bg-[#090f1d] py-20"
+        className="bg-[#140b22] py-20"
         initial="hidden"
         whileInView="visible"
         viewport={{ once: true, amount: 0.18 }}
@@ -748,7 +748,7 @@ export default function LandingPage() {
       </motion.section>
 
       <footer className="border-t border-white/10 bg-black py-8 text-center text-sm text-white/55">
-        © Voz Urbana 2024 - Sua voz melhora a cidade
+        © Voz Urbana 2026 - Sua voz melhora a cidade
       </footer>
     </div>
   );

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { usersAPI, mediaUrl } from '../services/api';
 import { toast } from 'react-toastify';
 import { useAuthStore } from '../store';
+import { useI18n } from '../i18n';
 
 const ProfilePage = () => {
   const [profile, setProfile] = useState(null);
@@ -18,6 +19,7 @@ const ProfilePage = () => {
   const [crop, setCrop] = useState({ zoom: 1, x: 0, y: 0 });
   const [dragStart, setDragStart] = useState(null);
   const setUser = useAuthStore((state) => state.setUser);
+  const { t } = useI18n();
 
   useEffect(() => {
     const fetchProfile = async () => {
@@ -33,14 +35,14 @@ const ProfilePage = () => {
         });
       } catch (error) {
         if (error.response?.data?.code === 'EMAIL_NOT_VERIFIED') return;
-        toast.error('Erro ao carregar perfil');
+        toast.error(t('profileError'));
       } finally {
         setLoading(false);
       }
     };
 
     fetchProfile();
-  }, []);
+  }, [t]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -96,9 +98,9 @@ const ProfilePage = () => {
       setProfile((current) => ({ ...current, ...updatedProfile }));
       setFormData((current) => ({ ...current, avatar: updatedProfile.avatar || updatedProfile.fotoPerfil || '', avatarFile: null }));
       setUser({ ...useAuthStore.getState().user, ...updatedProfile });
-      toast.success('Perfil atualizado com sucesso!');
+      toast.success(t('profileUpdated'));
     } catch (error) {
-      toast.error(error.response?.data?.error || 'Erro ao atualizar perfil');
+      toast.error(error.response?.data?.error || t('profileError'));
     } finally {
       setSaving(false);
     }
@@ -107,7 +109,7 @@ const ProfilePage = () => {
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <p className="text-gray-600">Carregando...</p>
+        <p className="text-gray-600">{t('loading')}</p>
       </div>
     );
   }
@@ -116,11 +118,11 @@ const ProfilePage = () => {
     <div className="min-h-screen bg-[#1b1b20] py-8 text-white">
       <div className="container mx-auto px-4">
         <div className="max-w-2xl mx-auto rounded-3xl border border-white/10 bg-[#202026] shadow-xl p-8">
-          <h1 className="text-3xl font-bold mb-8">Meu Perfil</h1>
+          <h1 className="text-3xl font-bold mb-8">{t('profile')}</h1>
 
           <form onSubmit={handleSubmit} className="space-y-6">
             <div>
-              <label className="block text-sm font-semibold mb-2">Email</label>
+              <label className="block text-sm font-semibold mb-2">{t('accountEmail')}</label>
               <input
                 type="email"
                 value={profile?.email || ''}
@@ -130,7 +132,7 @@ const ProfilePage = () => {
             </div>
 
             <div>
-              <label className="block text-sm font-semibold mb-2">Nome de usuário</label>
+              <label className="block text-sm font-semibold mb-2">{t('username')}</label>
               <input
                 type="text"
                 name="username"
@@ -144,7 +146,7 @@ const ProfilePage = () => {
             </div>
 
             <div>
-              <label className="block text-sm font-semibold mb-2">Nome</label>
+              <label className="block text-sm font-semibold mb-2">{t('name')}</label>
               <input
                 type="text"
                 name="name"
@@ -155,7 +157,7 @@ const ProfilePage = () => {
             </div>
 
             <div>
-              <label className="block text-sm font-semibold mb-2">Foto de perfil</label>
+              <label className="block text-sm font-semibold mb-2">{t('profilePhoto')}</label>
               <div className="flex flex-col gap-4 sm:flex-row">
                 {formData.avatar ? (
                   <div
@@ -190,19 +192,19 @@ const ProfilePage = () => {
                   }} className="w-full rounded-lg border border-white/15 bg-[#17171b] p-3 text-sm" />
                   {formData.avatarFile && <>
                     <div>
-                      <label className="mb-1 block text-sm font-medium">Zoom</label>
+                      <label className="mb-1 block text-sm font-medium">{t('zoom')}</label>
                       <input type="range" min="1" max="3" step="0.01" value={crop.zoom} onChange={(event) => setCrop((current) => ({ ...current, zoom: Number(event.target.value) }))} className="w-full accent-violet-600" />
                     </div>
                     <p className="text-xs text-gray-500">Arraste a foto para reposicioná-la e use o controle para alterar o tamanho.</p>
                   </>}
                   <input type="url" name="avatar" value={formData.avatarFile ? '' : formData.avatar} onChange={handleChange} className="mt-2 w-full border rounded-lg p-3" placeholder="Ou use uma URL de imagem" />
-                  {formData.avatar && <button type="button" onClick={() => { setCrop({ zoom: 1, x: 0, y: 0 }); setFormData((current) => ({ ...current, avatar: '', avatarFile: null })); }} className="text-sm text-red-600">Remover foto</button>}
+                  {formData.avatar && <button type="button" onClick={() => { setCrop({ zoom: 1, x: 0, y: 0 }); setFormData((current) => ({ ...current, avatar: '', avatarFile: null })); }} className="text-sm text-red-600">{t('removePhoto')}</button>}
                 </div>
               </div>
             </div>
 
             <div>
-              <label className="block text-sm font-semibold mb-2">Telefone</label>
+              <label className="block text-sm font-semibold mb-2">{t('phone')}</label>
               <input
                 type="tel"
                 name="phone"
@@ -214,7 +216,7 @@ const ProfilePage = () => {
             </div>
 
             <div>
-              <label className="block text-sm font-semibold mb-2">Bio</label>
+              <label className="block text-sm font-semibold mb-2">{t('bio')}</label>
               <textarea
                 name="bio"
                 value={formData.bio}
@@ -226,7 +228,7 @@ const ProfilePage = () => {
             </div>
 
             <div>
-              <label className="block text-sm font-semibold mb-2">Papel</label>
+              <label className="block text-sm font-semibold mb-2">{t('role')}</label>
               <input
                 type="text"
                 value={profile?.role || ''}
@@ -241,7 +243,7 @@ const ProfilePage = () => {
               disabled={saving}
               className="w-full bg-purple-600 text-white font-semibold py-3 rounded-lg hover:bg-purple-700 disabled:bg-gray-400"
             >
-              {saving ? 'Salvando...' : 'Salvar Perfil'}
+              {saving ? t('saving') : t('saveProfile')}
             </button>
           </form>
         </div>

@@ -4,6 +4,7 @@ import { useAuthStore } from '../store';
 import { toast } from 'react-toastify';
 import { Card, CardContent } from '../components/ui/card';
 import { Button } from '../components/ui/button';
+import { useI18n } from '../i18n';
 
 const LoginPage = () => {
   const [formData, setFormData] = useState({
@@ -13,6 +14,7 @@ const LoginPage = () => {
   const [loading, setLoading] = useState(false);
   const { login } = useAuthStore();
   const navigate = useNavigate();
+  const { t } = useI18n();
 
   const handleChange = (e) => {
     setFormData({
@@ -27,10 +29,13 @@ const LoginPage = () => {
 
     try {
       await login({ email: formData.email, password: formData.password });
-      toast.success('Login bem-sucedido!');
+      toast.success(t('loginSuccess'));
       navigate('/');
     } catch (error) {
-      // O fluxo de verificacao de e-mail permanece disponivel como legado, sem bloquear o login.
+      if (error.response?.data?.code === 'EMAIL_NOT_VERIFIED') {
+        navigate(`/verify-email?email=${encodeURIComponent(error.response.data.email || formData.email)}`);
+        return;
+      }
       toast.error(error.response?.data?.error || 'Erro ao fazer login');
     } finally {
       setLoading(false);
@@ -39,37 +44,37 @@ const LoginPage = () => {
 
   return (
     <div className="min-h-screen bg-[#1b1b20] flex items-center justify-center py-12 px-4 text-white">
-      <Card className="rounded-3xl w-full max-w-md shadow-2xl">
+      <Card className="glass-panel rounded-3xl w-full max-w-md shadow-2xl">
         <CardContent className="p-10">
           <div className="text-center mb-8">
             <h1 className="text-4xl font-black mb-2">
               <span className="text-violet-600">VOZ</span> URBANA
             </h1>
-            <p className="text-white/60">Entrar na sua conta</p>
+            <p className="text-white/60">{t('loginTitle')}</p>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label className="block text-sm font-semibold mb-2">Email</label>
+              <label className="block text-sm font-semibold mb-2">{t('email')}</label>
               <input
                 type="email"
                 name="email"
                 value={formData.email}
                 onChange={handleChange}
-                placeholder="seu@email.com"
+                placeholder={t('emailPlaceholder')}
                 required
                 className="w-full rounded-xl border-2 border-white/10 p-3 focus:outline-none focus:border-violet-500"
               />
             </div>
 
             <div>
-              <label className="block text-sm font-semibold mb-2">Senha</label>
+              <label className="block text-sm font-semibold mb-2">{t('password')}</label>
               <input
                 type="password"
                 name="password"
                 value={formData.password}
                 onChange={handleChange}
-                placeholder="Sua senha"
+                placeholder={t('passwordPlaceholder')}
                 required
                 className="w-full rounded-xl border-2 border-white/10 p-3 focus:outline-none focus:border-violet-500"
               />
@@ -80,15 +85,15 @@ const LoginPage = () => {
               className="w-full rounded-2xl py-3 text-lg font-bold mt-6"
               disabled={loading}
             >
-              {loading ? 'Entrando...' : 'Entrar'}
+              {loading ? t('loginLoading') : t('login')}
             </Button>
           </form>
 
           <div className="text-center mt-6">
             <p className="text-white/60">
-              Não tem conta?{' '}
+              {t('noAccount')}{' '}
               <Link to="/register" className="text-violet-600 font-bold hover:underline">
-                Cadastre-se
+                {t('signUp')}
               </Link>
             </p>
           </div>

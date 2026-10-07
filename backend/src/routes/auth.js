@@ -38,7 +38,8 @@ router.post(
       return res.status(400).json({ error: error.details[0].message });
     }
 
-  const { name, email, password, username } = value;
+  const { name, password, username } = value;
+  const email = value.email.toLowerCase();
 
 const existingUser = await prisma.usuario.findUnique({
   where: { email }
@@ -156,7 +157,7 @@ router.get("/verify-email", asyncHandler(async (req, res) => {
 }));
 
 router.post("/resend-verification", asyncHandler(async (req, res) => {
-  const { email } = req.body;
+  const email = String(req.body.email || "").trim().toLowerCase();
   const user = await prisma.usuario.findUnique({ where: { email } });
   if (!user || user.emailVerificado) return res.json({ message: "Se a conta existir, um novo e-mail será enviado" });
 

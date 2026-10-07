@@ -31,8 +31,30 @@ input, textarea, select {
 }
 
 input::placeholder, textarea::placeholder { color: #9b96a6; }
-input:focus, textarea:focus, select:focus { outline: 2px solid rgba(139, 92, 246, 0.6); outline-offset: 1px; }
+input, textarea, select { transition: border-color 220ms ease, box-shadow 220ms ease, background-color 220ms ease; }
+input:focus, textarea:focus, select:focus { outline: 2px solid rgba(139, 92, 246, 0.6); outline-offset: 1px; box-shadow: 0 0 0 4px rgba(139, 92, 246, 0.12); }
 option { background: #202026; color: #f4f1fa; }
+
+button:not(:disabled) {
+  transition: transform 180ms ease, box-shadow 220ms ease, filter 220ms ease, background-color 220ms ease, border-color 220ms ease;
+  will-change: transform;
+}
+
+button:not(:disabled):hover {
+  transform: translateY(-2px);
+  filter: brightness(1.06);
+}
+
+button:not(:disabled):active {
+  transform: translateY(0) scale(0.97);
+  filter: brightness(0.98);
+}
+
+button:not(:disabled):focus-visible {
+  outline: 2px solid #c084fc;
+  outline-offset: 3px;
+  box-shadow: 0 0 0 5px rgba(192, 132, 252, 0.16);
+}
 
 html {
   scroll-behavior: auto;
@@ -65,17 +87,17 @@ code {
 .urban-map {
   border-radius: 1.5rem;
   overflow: hidden;
-  background: #020617;
-  box-shadow: 0 24px 60px rgba(2, 6, 23, 0.28);
+  background: #120b20;
+  box-shadow: 0 24px 60px rgba(18, 11, 32, 0.28);
 }
 
 .urban-map .leaflet-control-zoom {
   border: none;
-  box-shadow: 0 16px 30px rgba(2, 6, 23, 0.25);
+  box-shadow: 0 16px 30px rgba(18, 11, 32, 0.25);
 }
 
 .urban-map .leaflet-control-zoom a {
-  background: rgba(15, 23, 42, 0.88);
+  background: rgba(28, 15, 45, 0.9);
   color: #fff;
   border: none;
 }
@@ -86,9 +108,9 @@ code {
 
 .urban-map .leaflet-popup-content-wrapper,
 .urban-map .leaflet-popup-tip {
-  background: rgba(15, 23, 42, 0.96);
+  background: rgba(22, 11, 36, 0.96);
   color: #fff;
-  box-shadow: 0 16px 40px rgba(2, 6, 23, 0.45);
+  box-shadow: 0 16px 40px rgba(18, 11, 32, 0.45);
 }
 
 .urban-map .leaflet-popup-content {
@@ -171,14 +193,14 @@ code {
   background-image:
     linear-gradient(rgba(6, 7, 11, 0.76), rgba(6, 7, 11, 0.68)),
     radial-gradient(circle at 20% 20%, rgba(124, 58, 237, 0.2), transparent 30%),
-    radial-gradient(circle at 80% 25%, rgba(14, 165, 233, 0.16), transparent 24%),
+    radial-gradient(circle at 80% 25%, rgba(168, 85, 247, 0.16), transparent 24%),
     url('https://images.unsplash.com/photo-1477959858617-67f85cf4f1df?q=80&w=1800&auto=format&fit=crop');
   background-size: cover;
   background-position: center;
 }
 
 .glass-panel {
-  background: rgba(15, 23, 42, 0.55);
+  background: rgba(31, 16, 48, 0.58);
   border: 1px solid rgba(255, 255, 255, 0.08);
   backdrop-filter: blur(22px);
   animation: panelReveal 0.75s cubic-bezier(0.22, 1, 0.36, 1) both;
@@ -239,9 +261,14 @@ code {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .glass-panel {
+  .glass-panel, button, input, textarea, select {
     animation: none;
     transition: none;
+  }
+
+  button:not(:disabled):hover, button:not(:disabled):active {
+    transform: none;
+    filter: none;
   }
 }
 
