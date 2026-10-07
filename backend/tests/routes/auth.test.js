@@ -105,7 +105,6 @@ describe("Auth Routes", () => {
         password: "password123",
         username: "test.user"
       });
-      await prisma.usuario.update({ where: { email: "test@example.com" }, data: { emailVerificado: true } });
     });
 
     it("deve fazer login com sucesso", async () => {
@@ -187,8 +186,6 @@ describe("Auth Routes", () => {
           password: "password123",
           username: "test.user"
         });
-
-      await prisma.usuario.update({ where: { email: "test@example.com" }, data: { emailVerificado: true } });
 
       token = registerResponse.body.token;
       user = registerResponse.body.user;

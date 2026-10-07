@@ -20,12 +20,7 @@ api.interceptors.request.use((config) => {
 api.interceptors.response.use(
   (response) => response,
   (error) => {
-    if (error.response?.status === 403 && error.response?.data?.code === 'EMAIL_NOT_VERIFIED') {
-      localStorage.removeItem('token');
-      localStorage.removeItem('user');
-      const email = error.response.data.email || '';
-      window.location.href = `/verify-email?email=${encodeURIComponent(email)}`;
-    }
+    // Redirecionamento por verificacao de e-mail mantido como legado, mas desativado.
     if (error.response?.status === 401) {
       localStorage.removeItem('token');
       localStorage.removeItem('user');
@@ -39,8 +34,8 @@ api.interceptors.response.use(
 export const authAPI = {
   register: (data) => api.post('/auth/register', data),
   login: (data) => api.post('/auth/login', data),
-  verifyEmail: (token) => api.get('/auth/verify-email', { params: { token } }),
-  resendVerification: (email) => api.post('/auth/resend-verification', { email }),
+  // verifyEmail: (token) => api.get('/auth/verify-email', { params: { token } }),
+  // resendVerification: (email) => api.post('/auth/resend-verification', { email }),
 };
 
 // Problems

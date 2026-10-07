@@ -4,17 +4,17 @@ import Joi from "joi";
 import { prisma } from "../config/prisma.js";
 import { hashPassword, comparePassword } from "../utils/password.js";
 import { asyncHandler } from "../middlewares/errorHandler.js";
-import crypto from "crypto";
-import { sendVerificationEmail } from "../utils/email.js";
+// Verificacao de e-mail mantida como legado e desativada para o fluxo atual.
+// import crypto from "crypto";
+// import { sendVerificationEmail } from "../utils/email.js";
 
 const router = express.Router();
 
-const dispatchVerificationEmail = ({ email, name, token }) => {
-  // Account creation should not wait for an external SMTP connection.
-  void sendVerificationEmail({ email, name, token }).catch((error) => {
-    console.error("Verification email delivery failed:", error.message);
-  });
-};
+// const dispatchVerificationEmail = ({ email, name, token }) => {
+//   void sendVerificationEmail({ email, name, token }).catch((error) => {
+//     console.error("Verification email delivery failed:", error.message);
+//   });
+// };
 
 // Validação
 const registerSchema = Joi.object({
@@ -55,16 +55,13 @@ if (existingUsername) {
   return res.status(409).json({ error: "Este @ já está em uso" });
 }
     const senhaHash = await hashPassword(password);
-    const tokenVerificacao = crypto.randomBytes(32).toString("hex");
-
     const user = await prisma.usuario.create({
       data: {
         nome: name,
         email,
         username,
         senhaHash,
-        tokenVerificacao,
-        tokenVerificacaoExpira: new Date(Date.now() + 24 * 60 * 60 * 1000)
+        emailVerificado: true
       },
       select: {
         id: true,
@@ -77,7 +74,7 @@ if (existingUsername) {
       }
     });
 
-    dispatchVerificationEmail({ email: user.email, name: user.nome, token: tokenVerificacao });
+    // dispatchVerificationEmail({ email: user.email, name: user.nome, token: tokenVerificacao });
 
     const token = jwt.sign(
       { id: user.id, email: user.email },
@@ -117,13 +114,7 @@ router.post(
       return res.status(401).json({ error: "Credenciais inválidas" });
     }
 
-    if (!user.emailVerificado) {
-      return res.status(403).json({
-        error: "Confirme seu e-mail antes de entrar na conta",
-        code: "EMAIL_NOT_VERIFIED",
-        email: user.email
-      });
-    }
+    // A verificacao de e-mail permanece disponivel como legado, mas nao bloqueia o login.
 
     const token = jwt.sign(
       { id: user.id, email: user.email },
@@ -146,6 +137,7 @@ router.post(
   })
 );
 
+/* Legado: fluxo de verificacao preservado, mas desativado no deploy atual.
 router.get("/verify-email", asyncHandler(async (req, res) => {
   const { token } = req.query;
   if (!token) return res.status(400).json({ error: "Token de verificação ausente" });
@@ -185,5 +177,6 @@ router.post("/resend-verification", asyncHandler(async (req, res) => {
     });
   }
 }));
+*/
 
 export default router;

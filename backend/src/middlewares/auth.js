@@ -12,16 +12,10 @@ export const authMiddleware = async (req, res, next) => {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
     const user = await prisma.usuario.findUnique({
       where: { id: decoded.id },
-      select: { email: true, emailVerificado: true }
+      select: { email: true }
     });
     if (!user) return res.status(401).json({ error: "Conta não encontrada" });
-    if (!user.emailVerificado) {
-      return res.status(403).json({
-        error: "Confirme seu e-mail para acessar a conta",
-        code: "EMAIL_NOT_VERIFIED",
-        email: user.email
-      });
-    }
+    // A verificacao de e-mail foi mantida no schema como legado e nao bloqueia acesso.
     req.userId = decoded.id;
     req.userRole = decoded.role;
 

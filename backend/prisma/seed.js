@@ -2,7 +2,18 @@ import "dotenv/config";
 import { prisma } from "../src/config/prisma.js";
 import { hashPassword } from "../src/utils/password.js";
 
-const categories = ["Asfalto", "Iluminacao", "Limpeza", "Sinalizacao", "Acessibilidade"];
+const categories = [
+  "Asfalto",
+  "Iluminacao",
+  "Limpeza",
+  "Lixo",
+  "Sinalizacao",
+  "Acessibilidade",
+  "Vegetação",
+  "Furtos e roubos",
+  "Acidentes de trânsito",
+  "Outros"
+];
 
 const seed = async () => {
   for (const nome of categories) {

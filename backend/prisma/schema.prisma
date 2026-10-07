@@ -17,6 +17,7 @@ model Usuario {
   telefone               String?               @db.VarChar(30)
   bio                    String?               @db.Text
   nivel                  String                @default("USUARIO") @db.VarChar(20)
+  // Campos legados preservados para futura reativacao da verificacao de e-mail.
   emailVerificado        Boolean               @default(false) @map("email_verificado")
   tokenVerificacao       String?               @unique @map("token_verificacao") @db.VarChar(100)
   tokenVerificacaoExpira DateTime?             @map("token_verificacao_expira")

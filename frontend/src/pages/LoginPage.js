@@ -30,10 +30,7 @@ const LoginPage = () => {
       toast.success('Login bem-sucedido!');
       navigate('/');
     } catch (error) {
-      if (error.response?.data?.code === 'EMAIL_NOT_VERIFIED') {
-        navigate(`/verify-email?email=${encodeURIComponent(error.response.data.email || formData.email)}`);
-        return;
-      }
+      // O fluxo de verificacao de e-mail permanece disponivel como legado, sem bloquear o login.
       toast.error(error.response?.data?.error || 'Erro ao fazer login');
     } finally {
       setLoading(false);
