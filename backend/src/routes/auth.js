@@ -164,8 +164,8 @@ router.post(
     await prisma.usuario.update({
       where: { id: user.id },
       data: {
-        senhaResetTokenHash: tokenHash,
-        senhaResetExpira: new Date(Date.now() + 60 * 60 * 1000)
+        tokenVerificacao: tokenHash,
+        tokenVerificacaoExpira: new Date(Date.now() + 60 * 60 * 1000)
       }
     });
 
@@ -187,8 +187,8 @@ router.post(
     if (error) return res.status(400).json({ error: error.details[0].message });
 
     const tokenHash = crypto.createHash("sha256").update(value.token).digest("hex");
-    const user = await prisma.usuario.findUnique({ where: { senhaResetTokenHash: tokenHash } });
-    if (!user || !user.senhaResetExpira || user.senhaResetExpira < new Date()) {
+    const user = await prisma.usuario.findUnique({ where: { tokenVerificacao: tokenHash } });
+    if (!user || !user.tokenVerificacaoExpira || user.tokenVerificacaoExpira < new Date()) {
       return res.status(400).json({ error: "Link de redefinição inválido ou expirado." });
     }
 
@@ -196,8 +196,8 @@ router.post(
       where: { id: user.id },
       data: {
         senhaHash: await hashPassword(value.password),
-        senhaResetTokenHash: null,
-        senhaResetExpira: null
+        tokenVerificacao: null,
+        tokenVerificacaoExpira: null
       }
     });
 
