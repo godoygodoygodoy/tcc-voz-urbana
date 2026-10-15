@@ -173,7 +173,7 @@ router.post(
       await sendPasswordResetEmail({ email: user.email, name: user.nome, token: resetToken });
     } catch (emailError) {
       console.error("Falha ao enviar redefinição de senha:", emailError.message);
-      return res.status(502).json({ error: "Não foi possível enviar o e-mail agora. Tente novamente em instantes." });
+      return res.status(503).json({ error: "O serviço de e-mail está temporariamente indisponível. Tente novamente em instantes." });
     }
 
     return res.json({ message });

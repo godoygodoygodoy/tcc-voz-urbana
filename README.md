@@ -45,7 +45,7 @@ Publique cada parte como um servico independente:
 
 - **Backend no Render**: Root Directory `backend`, Build Command `npm ci && npx prisma generate && npx prisma migrate deploy && npm run prisma:seed`, Start Command `npm start` e Health Check `/api/health`.
 - **Frontend na Vercel**: Root Directory `frontend`, Build Command `npm run build`, Output Directory `build` e `REACT_APP_API_URL` apontando para `https://SEU-BACKEND.onrender.com/api`.
-- No backend, defina `CORS_ORIGIN` e `FRONTEND_URL` com a URL publica da Vercel. Use um MySQL gerenciado e nunca publique arquivos `.env`.
+- No backend, defina `CORS_ORIGIN` e `FRONTEND_URL` com a URL publica da Vercel. Para recuperação de senha, configure `SMTP_USER`, `SMTP_PASS` e `SMTP_FROM` no Render. Use um MySQL gerenciado e nunca publique arquivos `.env`.
 
 ### 1. Configurar Banco de Dados
 
@@ -131,6 +131,12 @@ NODE_ENV=development
 JWT_SECRET=your_secret_key
 JWT_EXPIRE=7d
 CORS_ORIGIN=http://localhost:3000,http://192.168.0.100:3000
+FRONTEND_URL=http://localhost:3000
+SMTP_HOST=smtp.gmail.com
+SMTP_PORT=587
+SMTP_USER=seu-email@gmail.com
+SMTP_PASS=sua-senha-de-app
+SMTP_FROM=seu-email@gmail.com
 ADMIN_EMAIL=admin@vozurbana.local
 ADMIN_PASSWORD=troque-esta-senha
 MAX_FILE_SIZE=5242880
