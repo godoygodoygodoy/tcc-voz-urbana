@@ -27,11 +27,27 @@ import { adminMiddleware } from "./middlewares/auth.js";
 
 const app = express();
 
+const corsOrigins = [process.env.CORS_ORIGIN, process.env.FRONTEND_URL]
+  .filter(Boolean)
+  .flatMap((origins) => origins.split(","))
+  .map((origin) => origin.trim())
+  .filter(Boolean);
+
+if (corsOrigins.length === 0) {
+  corsOrigins.push("http://localhost:3000");
+}
+
 // Middleware de segurança e parsing
 app.use(helmet());
 app.use(
   cors({
-    origin: process.env.CORS_ORIGIN || "http://localhost:3000",
+    origin: (origin, callback) => {
+      if (!origin || corsOrigins.includes(origin)) {
+        return callback(null, true);
+      }
+
+      return callback(null, false);
+    },
     credentials: true
   })
 );

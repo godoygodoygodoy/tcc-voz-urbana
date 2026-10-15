@@ -33,13 +33,13 @@ const AdminDashboard = () => {
   }
 
   const StatCard = ({ icon: Icon, title, value, color }) => (
-    <div className="bg-white rounded-lg shadow-md p-6">
+    <div className="site-stat-card rounded-2xl shadow-md p-6">
       <div className="flex items-center gap-4">
         <div className={`p-4 rounded-full ${color}`}>
           <Icon size={24} className="text-white" />
         </div>
         <div>
-          <p className="text-gray-600 text-sm">{title}</p>
+          <p className="site-muted text-sm">{title}</p>
           <p className="text-3xl font-bold">{value}</p>
         </div>
       </div>
@@ -47,7 +47,7 @@ const AdminDashboard = () => {
   );
 
   return (
-    <div className="min-h-screen bg-[#1b1d1f] py-8 text-white">
+    <div className="site-page min-h-screen py-8 text-white">
       <div className="container mx-auto px-4">
         <h1 className="mb-8 text-3xl font-black">{t('adminDashboard')}</h1>
 
@@ -84,7 +84,7 @@ const AdminDashboard = () => {
           />
         </div>
 
-        <div className="mt-12 rounded-3xl border border-white/10 bg-white/6 p-8 shadow-[0_24px_70px_rgba(0,0,0,0.18)] backdrop-blur-xl">
+        <div className="site-panel mt-12 rounded-3xl p-8 shadow-[0_24px_70px_rgba(0,0,0,0.18)]">
           <h2 className="text-2xl font-bold mb-4">{t('summary')}</h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div className="p-4 border-l-4 border-violet-500">

@@ -123,6 +123,33 @@ describe("Auth Routes", () => {
       expect(response.body.user).not.toHaveProperty("senhaHash");
     });
 
+    it("deve manter ativos os tokens de logins feitos em dispositivos diferentes", async () => {
+      const credentials = {
+        email: "test@example.com",
+        password: "password123"
+      };
+
+      const firstLogin = await request(app)
+        .post("/api/auth/login")
+        .send(credentials)
+        .expect(200);
+      const secondLogin = await request(app)
+        .post("/api/auth/login")
+        .send(credentials)
+        .expect(200);
+
+      expect(secondLogin.body.token).not.toBe(firstLogin.body.token);
+
+      await request(app)
+        .get("/api/users/me")
+        .set("Authorization", `Bearer ${firstLogin.body.token}`)
+        .expect(200);
+      await request(app)
+        .get("/api/users/me")
+        .set("Authorization", `Bearer ${secondLogin.body.token}`)
+        .expect(200);
+    });
+
     it("deve retornar erro 401 com email inválido", async () => {
       const response = await request(app)
         .post("/api/auth/login")

@@ -30,6 +30,7 @@ import { useAuthStore } from '../store';
 import AccessMenu from '../components/AccessMenu';
 import { useI18n } from '../i18n';
 import PigeonLogo from '../components/PigeonLogo';
+import SiteMenu from '../components/SiteMenu';
 
 const fallbackCategories = [
   { id: 'asfalto', name: 'Asfalto' },
@@ -238,19 +239,12 @@ export default function LandingPage() {
   return (
     <div className="min-h-screen bg-[#1b1d1f] text-white">
       <header className="sticky top-0 z-50 border-b border-white/10 bg-black/55 backdrop-blur-2xl">
-        <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-4 sm:px-6 lg:px-8">
+        <div className="site-header-inner mx-auto flex max-w-7xl items-center justify-between px-4 py-4 sm:px-6 lg:px-8">
+          <SiteMenu />
           <Link to="/" className="group flex items-center gap-3">
             <PigeonLogo className="h-11 w-11 bg-transparent object-contain drop-shadow-[0_0_8px_rgba(168,85,247,0.55)] transition-transform duration-300 group-hover:scale-105" />
             <img src="/branding/voz-urbana-texto.png" alt="Voz Urbana" className="h-10 w-auto max-w-[190px] object-contain" />
           </Link>
-
-          <nav className="hidden items-center gap-7 text-sm font-medium text-white/70 lg:flex">
-            <a href="#como" className="transition-colors hover:text-white">{t('navHow')}</a>
-            <a href="#mapa" className="transition-colors hover:text-white">{t('navMap')}</a>
-            <Link to="/feed" className="transition-colors hover:text-white">{t('navFeed')}</Link>
-            <a href="#sobre" className="transition-colors hover:text-white">{t('navAbout')}</a>
-            <a href="#contato" className="transition-colors hover:text-white">{t('navContact')}</a>
-          </nav>
 
           <AccessMenu authenticated={Boolean(user)} user={user} onLogout={logout} />
         </div>

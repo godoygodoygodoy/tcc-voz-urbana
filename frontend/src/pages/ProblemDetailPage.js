@@ -74,16 +74,16 @@ const ProblemDetailPage = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <p className="text-gray-600">{t('loading')}</p>
+      <div className="site-page min-h-screen flex items-center justify-center text-white">
+        <p className="site-muted">{t('loading')}</p>
       </div>
     );
   }
 
   if (!problem) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <p className="text-gray-600">{t('problemNotFound')}</p>
+      <div className="site-page min-h-screen flex items-center justify-center text-white">
+        <p className="site-muted">{t('problemNotFound')}</p>
       </div>
     );
   }
@@ -99,16 +99,16 @@ const ProblemDetailPage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
+    <div className="site-page min-h-screen py-8 text-white">
       <div className="container mx-auto px-4">
-        <div className="bg-white rounded-lg shadow-md overflow-hidden">
+        <div className="site-detail overflow-hidden rounded-3xl shadow-md">
           {/* Imagens */}
           {problem.images?.length > 0 && (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-6 bg-gray-100">
+            <div className="site-detail-gallery grid grid-cols-1 md:grid-cols-2 gap-4 p-6">
               {problem.images.map((img) => (
-                <div key={img.id} className="bg-gray-200 rounded-lg overflow-hidden">
+                <div key={img.id} className="site-detail-image rounded-lg overflow-hidden">
                   <img src={mediaUrl(img.url)} alt={problem.title} className="w-full h-64 object-cover" />
-                  <p className="px-3 py-2 text-xs font-semibold text-gray-600">{img.tipo === 'DEPOIS' ? t('after') : t('before')}</p>
+                  <p className="site-muted px-3 py-2 text-xs font-semibold">{img.tipo === 'DEPOIS' ? t('after') : t('before')}</p>
                 </div>
               ))}
             </div>
@@ -124,33 +124,33 @@ const ProblemDetailPage = () => {
                     {problem.status}
                   </span>
                 </div>
-                <p className="text-gray-600">{problem.description}</p>
+                <p className="site-muted">{problem.description}</p>
               </div>
             </div>
 
             {/* Info */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6 p-4 bg-gray-50 rounded-lg">
+            <div className="site-detail-info grid grid-cols-1 md:grid-cols-3 gap-4 mb-6 p-4 rounded-lg">
               <div className="flex items-center gap-3">
                 <FiMapPin className="text-purple-600" />
                 <div>
-                  <p className="text-xs text-gray-600">{t('address')}</p>
-                  <p className="font-semibold">{problem.address || t('locationNotSpecified')}</p>
+                  <p className="site-muted text-xs">{t('address')}</p>
+                  <p className="font-semibold text-white">{problem.address || t('locationNotSpecified')}</p>
                 </div>
               </div>
 
               <div className="flex items-center gap-3">
                 <FiUser className="text-purple-600" />
                 <div>
-                  <p className="text-xs text-gray-600">{t('reportedBy')}</p>
-                  <p className="font-semibold">{problem.author?.name}</p>
+                  <p className="site-muted text-xs">{t('reportedBy')}</p>
+                  <p className="font-semibold text-white">{problem.author?.name}</p>
                 </div>
               </div>
 
               <div className="flex items-center gap-3">
                 <FiCalendar className="text-purple-600" />
                 <div>
-                  <p className="text-xs text-gray-600">{t('date')}</p>
-                  <p className="font-semibold">
+                  <p className="site-muted text-xs">{t('date')}</p>
+                  <p className="font-semibold text-white">
                     {formatDistanceToNow(new Date(problem.createdAt), { locale: ptBR, addSuffix: true })}
                   </p>
                 </div>
@@ -181,25 +181,25 @@ const ProblemDetailPage = () => {
               </div>
             </div>
 
-            <section className="mt-8 border-t pt-6">
+            <section id="comments" className="mt-8 border-t border-white/10 pt-6">
               <h2 className="text-xl font-bold mb-4">{t('comments')} ({comments.length})</h2>
               <form onSubmit={handleComment} className="flex flex-col gap-3 sm:flex-row">
-                <input value={commentText} onChange={(event) => setCommentText(event.target.value)} placeholder={t('writeComment')} className="flex-1 rounded-lg border p-3" maxLength="1000" />
+                <input value={commentText} onChange={(event) => setCommentText(event.target.value)} placeholder={t('writeComment')} className="site-form-input flex-1 rounded-lg border p-3" maxLength="1000" />
                 <button disabled={commentLoading} className="rounded-lg bg-violet-600 px-5 py-3 font-semibold text-white disabled:opacity-50">{t('comment')}</button>
               </form>
               <div className="mt-5 space-y-4">
-                {comments.length === 0 ? <p className="text-gray-500">{t('noComments')}</p> : comments.map((comment) => (
-                  <article key={comment.id} className="rounded-lg bg-gray-50 p-4">
-                    <div className="flex items-center justify-between gap-3"><strong>{comment.usuario?.username ? `@${comment.usuario.username}` : comment.usuario?.nome}</strong><span className="text-xs text-gray-500">{formatDistanceToNow(new Date(comment.dataCriacao), { locale: ptBR, addSuffix: true })}</span></div>
-                    <p className="mt-2 text-gray-700">{comment.texto}</p>
+                {comments.length === 0 ? <p className="site-muted">{t('noComments')}</p> : comments.map((comment) => (
+                  <article key={comment.id} className="site-comment rounded-lg p-4">
+                    <div className="flex items-center justify-between gap-3"><strong>{comment.usuario?.username ? `@${comment.usuario.username}` : comment.usuario?.nome}</strong><span className="site-muted text-xs">{formatDistanceToNow(new Date(comment.dataCriacao), { locale: ptBR, addSuffix: true })}</span></div>
+                    <p className="mt-2 text-white/70">{comment.texto}</p>
                   </article>
                 ))}
               </div>
             </section>
 
-            {problem.updates?.length > 0 && <section className="mt-8 border-t pt-6">
+            {problem.updates?.length > 0 && <section className="mt-8 border-t border-white/10 pt-6">
               <h2 className="text-xl font-bold mb-4">{t('updates')}</h2>
-              <div className="space-y-3">{problem.updates.map((update) => <div key={update.id} className="border-l-4 border-violet-500 bg-violet-50 p-4"><p className="font-semibold">{update.status || t('update')}</p><p className="mt-1 text-gray-700">{update.texto}</p></div>)}</div>
+              <div className="space-y-3">{problem.updates.map((update) => <div key={update.id} className="site-comment border-l-4 border-violet-500 p-4"><p className="font-semibold">{update.status || t('update')}</p><p className="mt-1 text-white/70">{update.texto}</p></div>)}</div>
             </section>}
           </div>
         </div>

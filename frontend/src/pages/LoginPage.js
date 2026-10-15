@@ -40,8 +40,8 @@ const LoginPage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[#1b1b20] flex items-center justify-center py-12 px-4 text-white">
-      <Card className="glass-panel rounded-3xl w-full max-w-md shadow-2xl">
+    <div className="site-auth-page min-h-screen flex items-center justify-center py-12 px-4 text-white">
+      <Card className="site-auth-card glass-panel rounded-3xl w-full max-w-md shadow-2xl">
         <CardContent className="p-10">
           <div className="text-center mb-8">
             <h1 className="text-4xl font-black mb-2">
@@ -60,7 +60,7 @@ const LoginPage = () => {
                 onChange={handleChange}
                 placeholder={t('emailPlaceholder')}
                 required
-                className="w-full rounded-xl border-2 border-white/10 p-3 focus:outline-none focus:border-violet-500"
+                className="site-form-input w-full rounded-xl border-2 border-white/10 p-3 focus:outline-none focus:border-violet-500"
               />
             </div>
 
@@ -73,7 +73,7 @@ const LoginPage = () => {
                 onChange={handleChange}
                 placeholder={t('passwordPlaceholder')}
                 required
-                className="w-full rounded-xl border-2 border-white/10 p-3 focus:outline-none focus:border-violet-500"
+                className="site-form-input w-full rounded-xl border-2 border-white/10 p-3 focus:outline-none focus:border-violet-500"
               />
             </div>
 

@@ -159,7 +159,7 @@ docker-compose down
 ### CORS error
 Certifique-se de que `CORS_ORIGIN` no backend aponta para seu frontend:
 ```
-CORS_ORIGIN=http://localhost:3000
+CORS_ORIGIN=http://localhost:3000,http://192.168.0.100:3000
 ```
 
 ### Mapa não carrega

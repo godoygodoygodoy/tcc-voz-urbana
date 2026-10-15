@@ -114,7 +114,7 @@ const HomePage = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-[#1b1d1f] text-white">
+    <div className="site-page min-h-screen text-white">
       {/* Hero Section */}
       <section className="border-b border-white/10 bg-[radial-gradient(circle_at_top_left,rgba(168,85,247,0.26),transparent_28%),linear-gradient(180deg,rgba(6,7,11,0.98),rgba(6,7,11,0.92))] py-12">
         <div className="container mx-auto px-4">
@@ -166,7 +166,7 @@ const HomePage = () => {
 
       {/* Filtros */}
       <section className="container mx-auto px-4 py-8">
-        <div className="rounded-3xl border border-white/10 bg-white/6 p-6 mb-8 shadow-[0_24px_70px_rgba(0,0,0,0.18)] backdrop-blur-xl">
+        <div className="site-panel rounded-3xl p-6 mb-8 shadow-[0_24px_70px_rgba(0,0,0,0.18)]">
           <h2 className="mb-4 flex items-center gap-2 text-xl font-bold text-white">
             <FiFilter /> {t('filters')}
           </h2>
@@ -241,7 +241,7 @@ const HomePage = () => {
             <p className="text-white/70">{t('loadingProblems')}</p>
           </div>
         ) : problems.length === 0 ? (
-          <div className="rounded-3xl border border-white/10 bg-white/6 py-12 text-center">
+          <div className="site-panel rounded-3xl py-12 text-center">
             <p className="text-white/70">{t('noProblems')}</p>
           </div>
         ) : (
@@ -252,7 +252,7 @@ const HomePage = () => {
           </div>
         )}
 
-        <div className="mt-8 rounded-3xl border border-white/10 bg-white/6 p-6 shadow-[0_24px_70px_rgba(0,0,0,0.18)] backdrop-blur-xl">
+        <div className="site-panel mt-8 rounded-3xl p-6 shadow-[0_24px_70px_rgba(0,0,0,0.18)]">
           <div className="flex items-center justify-between gap-4 mb-4">
             <h2 className="text-xl font-bold text-white">{t('selectedProblem')}</h2>
             {selectedProblem && (

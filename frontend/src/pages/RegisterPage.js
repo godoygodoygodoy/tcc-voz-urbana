@@ -53,8 +53,8 @@ const RegisterPage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[#1b1b20] flex items-center justify-center py-12 px-4 text-white">
-      <Card className="glass-panel rounded-3xl w-full max-w-md shadow-2xl">
+    <div className="site-auth-page min-h-screen flex items-center justify-center py-12 px-4 text-white">
+      <Card className="site-auth-card glass-panel rounded-3xl w-full max-w-md shadow-2xl">
         <CardContent className="p-10">
           <div className="text-center mb-8">
             <h1 className="text-4xl font-black mb-2">
@@ -73,7 +73,7 @@ const RegisterPage = () => {
                 onChange={handleChange}
                 placeholder={t('fullNamePlaceholder')}
                 required
-                className="w-full rounded-xl border-2 border-white/10 p-3 focus:outline-none focus:border-violet-500"
+                className="site-form-input w-full rounded-xl border-2 border-white/10 p-3 focus:outline-none focus:border-violet-500"
               />
             </div>
 
@@ -86,13 +86,13 @@ const RegisterPage = () => {
                 onChange={handleChange}
                 placeholder={t('emailPlaceholder')}
                 required
-                className="w-full rounded-xl border-2 border-white/10 p-3 focus:outline-none focus:border-violet-500"
+                className="site-form-input w-full rounded-xl border-2 border-white/10 p-3 focus:outline-none focus:border-violet-500"
               />
             </div>
 
             <div>
               <label className="block text-sm font-semibold mb-2">{t('username')}</label>
-              <div className="flex items-center border-2 rounded-xl focus-within:border-violet-600">
+              <div className="site-form-input flex items-center border-2 rounded-xl focus-within:border-violet-600">
                 <span className="pl-3 text-gray-500">@</span>
                 <input
                   type="text"
@@ -104,10 +104,10 @@ const RegisterPage = () => {
                   minLength="3"
                   maxLength="30"
                   pattern="[A-Za-z0-9._]+"
-                  className="w-full rounded-xl p-3 focus:outline-none"
+                  className="w-full rounded-xl bg-transparent p-3 text-white focus:outline-none"
                 />
               </div>
-              <p className="mt-1 text-xs text-gray-500">{t('usernameHint')}</p>
+              <p className="site-muted mt-1 text-xs">{t('usernameHint')}</p>
             </div>
 
             <div>
@@ -119,7 +119,7 @@ const RegisterPage = () => {
                 onChange={handleChange}
                 placeholder={t('minPassword')}
                 required
-                className="w-full rounded-xl border-2 border-white/10 p-3 focus:outline-none focus:border-violet-500"
+                className="site-form-input w-full rounded-xl border-2 border-white/10 p-3 focus:outline-none focus:border-violet-500"
               />
             </div>
 

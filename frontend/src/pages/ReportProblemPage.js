@@ -119,24 +119,24 @@ const ReportProblemPage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
+    <div className="site-page min-h-screen py-8 text-white">
       <div className="container mx-auto px-4">
-        <div className="max-w-2xl mx-auto bg-white rounded-lg shadow-md p-8">
+        <div className="site-panel max-w-2xl mx-auto rounded-3xl p-8">
           <h1 className="text-3xl font-bold mb-2">{t('problemReport')}</h1>
-          <p className="text-gray-600 mb-8">{t('reportIntro')}</p>
+          <p className="site-muted mb-8">{t('reportIntro')}</p>
 
           <form onSubmit={handleSubmit} className="space-y-6">
             <div>
               <label className="block text-sm font-semibold mb-2">{t('category')} *</label>
               {loadingCategories ? (
-                <p className="text-gray-600">{t('loadingCategories')}</p>
+                <p className="site-muted">{t('loadingCategories')}</p>
               ) : (
                 <select
                   name="categoryId"
                   value={formData.categoryId}
                   onChange={handleChange}
                   required
-                  className="w-full border rounded-lg p-3"
+                  className="site-form-input w-full border rounded-lg p-3"
                 >
                   <option value="">{t('selectCategory')}</option>
                   {categories.map((cat) => (
@@ -156,7 +156,7 @@ const ReportProblemPage = () => {
                 value={formData.title}
                 onChange={handleChange}
                 required
-                className="w-full border rounded-lg p-3"
+                className="site-form-input w-full border rounded-lg p-3"
                 placeholder={t('problemTitlePlaceholder')}
               />
             </div>
@@ -168,7 +168,7 @@ const ReportProblemPage = () => {
                 value={formData.description}
                 onChange={handleChange}
                 required
-                className="w-full border rounded-lg p-3"
+                className="site-form-input w-full border rounded-lg p-3"
                 rows="5"
                 placeholder={t('descriptionPlaceholder')}
               />
@@ -181,14 +181,14 @@ const ReportProblemPage = () => {
                 name="address"
                 value={formData.address}
                 onChange={handleChange}
-                className="w-full border rounded-lg p-3"
+                className="site-form-input w-full border rounded-lg p-3"
                 placeholder={t('addressPlaceholder')}
               />
             </div>
 
             <div>
               <label className="block text-sm font-semibold mb-2">{t('mapLocation')}</label>
-              <p className="mb-3 text-sm text-gray-600">{t('mapLocationHint')}</p>
+              <p className="site-muted mb-3 text-sm">{t('mapLocationHint')}</p>
               <Map
                 problems={[]}
                 height="320px"
@@ -206,7 +206,7 @@ const ReportProblemPage = () => {
                 accept="image/*"
                 multiple
                 onChange={handleFilesChange}
-                className="w-full"
+                  className="site-form-input w-full"
               />
 
               {previews.length > 0 && (
@@ -236,7 +236,7 @@ const ReportProblemPage = () => {
                   value={formData.latitude}
                   onChange={handleChange}
                   step="0.000001"
-                  className="w-full border rounded-lg p-3"
+                  className="site-form-input w-full border rounded-lg p-3"
                   placeholder="Ex: -15.7942"
                 />
               </div>
@@ -248,7 +248,7 @@ const ReportProblemPage = () => {
                   value={formData.longitude}
                   onChange={handleChange}
                   step="0.000001"
-                  className="w-full border rounded-lg p-3"
+                  className="site-form-input w-full border rounded-lg p-3"
                   placeholder="Ex: -47.8822"
                 />
               </div>
