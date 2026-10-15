@@ -54,3 +54,18 @@ export const sendNotificationEmail = async ({ email, name, title, message, link 
   });
   return true;
 };
+
+export const sendPasswordResetEmail = async ({ email, name, token }) => {
+  const transporter = createTransporter();
+  if (!transporter) throw new Error("O envio de e-mail não está configurado no servidor.");
+
+  const frontendUrl = process.env.FRONTEND_URL || "http://localhost:3000";
+  const resetUrl = `${frontendUrl}/reset-password?token=${encodeURIComponent(token)}`;
+  await transporter.sendMail({
+    from: process.env.SMTP_FROM || process.env.SMTP_USER,
+    to: email,
+    subject: "Redefina sua senha | Voz Urbana",
+    text: `Olá, ${name}! Redefina sua senha acessando: ${resetUrl}. Este link expira em 1 hora.`,
+    html: `<p>Olá, ${name}!</p><p>Redefina sua senha pelo link abaixo. Ele expira em 1 hora:</p><p><a href="${resetUrl}">${resetUrl}</a></p>`
+  });
+};

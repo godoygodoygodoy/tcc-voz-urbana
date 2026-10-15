@@ -75,6 +75,7 @@ const LoginPage = () => {
                 required
                 className="site-form-input w-full rounded-xl border-2 border-white/10 p-3 focus:outline-none focus:border-violet-500"
               />
+              <Link to="/forgot-password" className="mt-2 block text-right text-xs font-bold text-fuchsia-300 hover:text-white">Esqueci minha senha</Link>
             </div>
 
             <Button

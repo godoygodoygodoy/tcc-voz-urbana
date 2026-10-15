@@ -11,6 +11,8 @@ import { useAuthStore } from './store';
 import LandingPage from './pages/LandingPage';
 import HomePage from './pages/HomePage';
 import LoginPage from './pages/LoginPage';
+import ForgotPasswordPage from './pages/ForgotPasswordPage';
+import ResetPasswordPage from './pages/ResetPasswordPage';
 import RegisterPage from './pages/RegisterPage';
 import ProblemDetailPage from './pages/ProblemDetailPage';
 import ReportProblemPage from './pages/ReportProblemPage';
@@ -49,6 +51,8 @@ function App() {
                   <Route path="/map" element={<HomePage />} />
                   <Route path="/feed" element={<FeedPage />} />
                   <Route path="/login" element={user ? <Navigate to="/" /> : <LoginPage />} />
+                  <Route path="/forgot-password" element={user ? <Navigate to="/" /> : <ForgotPasswordPage />} />
+                  <Route path="/reset-password" element={user ? <Navigate to="/" /> : <ResetPasswordPage />} />
                   <Route path="/register" element={<RegisterPage />} />
                   {/* <Route path="/verify-email" element={<VerifyEmailPage />} /> */}
                   <Route path="/problem/:id" element={<ProblemDetailPage />} />

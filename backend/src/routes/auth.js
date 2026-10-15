@@ -1,9 +1,11 @@
 import express from "express";
+import crypto from "crypto";
 import jwt from "jsonwebtoken";
 import Joi from "joi";
 import { prisma } from "../config/prisma.js";
 import { hashPassword, comparePassword } from "../utils/password.js";
 import { asyncHandler } from "../middlewares/errorHandler.js";
+import { sendPasswordResetEmail } from "../utils/email.js";
 // Verificacao de e-mail mantida como legado e desativada para o fluxo atual.
 // import crypto from "crypto";
 // import { sendVerificationEmail } from "../utils/email.js";
@@ -27,6 +29,15 @@ const registerSchema = Joi.object({
 const loginSchema = Joi.object({
   email: Joi.string().email().required(),
   password: Joi.string().required()
+});
+
+const forgotPasswordSchema = Joi.object({
+  email: Joi.string().email().required()
+});
+
+const resetPasswordSchema = Joi.object({
+  token: Joi.string().length(64).required(),
+  password: Joi.string().min(6).required()
 });
 
 // Register
@@ -135,6 +146,62 @@ router.post(
       },
       token
     });
+  })
+);
+
+router.post(
+  "/forgot-password",
+  asyncHandler(async (req, res) => {
+    const { error, value } = forgotPasswordSchema.validate(req.body);
+    if (error) return res.status(400).json({ error: error.details[0].message });
+
+    const user = await prisma.usuario.findUnique({ where: { email: value.email.toLowerCase() } });
+    const message = "Se o e-mail estiver cadastrado, enviaremos um link para redefinir sua senha.";
+    if (!user) return res.json({ message });
+
+    const resetToken = crypto.randomBytes(32).toString("hex");
+    const tokenHash = crypto.createHash("sha256").update(resetToken).digest("hex");
+    await prisma.usuario.update({
+      where: { id: user.id },
+      data: {
+        senhaResetTokenHash: tokenHash,
+        senhaResetExpira: new Date(Date.now() + 60 * 60 * 1000)
+      }
+    });
+
+    try {
+      await sendPasswordResetEmail({ email: user.email, name: user.nome, token: resetToken });
+    } catch (emailError) {
+      console.error("Falha ao enviar redefinição de senha:", emailError.message);
+      return res.status(502).json({ error: "Não foi possível enviar o e-mail agora. Tente novamente em instantes." });
+    }
+
+    return res.json({ message });
+  })
+);
+
+router.post(
+  "/reset-password",
+  asyncHandler(async (req, res) => {
+    const { error, value } = resetPasswordSchema.validate(req.body);
+    if (error) return res.status(400).json({ error: error.details[0].message });
+
+    const tokenHash = crypto.createHash("sha256").update(value.token).digest("hex");
+    const user = await prisma.usuario.findUnique({ where: { senhaResetTokenHash: tokenHash } });
+    if (!user || !user.senhaResetExpira || user.senhaResetExpira < new Date()) {
+      return res.status(400).json({ error: "Link de redefinição inválido ou expirado." });
+    }
+
+    await prisma.usuario.update({
+      where: { id: user.id },
+      data: {
+        senhaHash: await hashPassword(value.password),
+        senhaResetTokenHash: null,
+        senhaResetExpira: null
+      }
+    });
+
+    return res.json({ message: "Senha redefinida com sucesso." });
   })
 );
 
