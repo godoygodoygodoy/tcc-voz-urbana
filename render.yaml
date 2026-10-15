@@ -1,37 +1,25 @@
 services:
   - type: web
     name: voz-urbana-backend
-    env: node
+    runtime: node
     rootDir: backend
-    buildCommand: npm ci && npx prisma generate && npx prisma migrate deploy && npm run prisma:seed
+    buildCommand: npm ci --include=dev && npm run prisma:generate
     startCommand: npm start
-    healthCheckPath: /api/health
+    healthCheckPath: /health
+    disk:
+      name: uploads
+      mountPath: /var/data/uploads
+      sizeGB: 1
     envVars:
+      - key: NODE_VERSION
+        value: 24.11.1
       - key: NODE_ENV
         value: production
-      - key: PORT
-        value: 10000
       - key: DATABASE_URL
         sync: false
       - key: JWT_SECRET
-        sync: false
-      - key: JWT_EXPIRE
-        value: 7d
-      - key: CORS_ORIGIN
-        sync: false
+        generateValue: true
       - key: FRONTEND_URL
         sync: false
-      - key: SMTP_HOST
-        value: smtp.gmail.com
-      - key: SMTP_PORT
-        value: 587
-      - key: SMTP_USER
-        sync: false
-      - key: SMTP_PASS
-        sync: false
-      - key: SMTP_FROM
-        sync: false
-      - key: ADMIN_EMAIL
-        sync: false
-      - key: ADMIN_PASSWORD
-        sync: false
+      - key: UPLOAD_DIR
+        value: /var/data/uploads

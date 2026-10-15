@@ -2,13 +2,13 @@ import express from "express";
 import path from "path";
 import fs from "fs";
 import multer from "multer";
-import { fileURLToPath } from "url";
+import { uploadsRoot } from "../config/uploads.js";
 import { prisma } from "../config/prisma.js";
 import { asyncHandler } from "../middlewares/errorHandler.js";
 import { authMiddleware } from "../middlewares/auth.js";
 
 // Preparar pasta de uploads
-const UPLOAD_DIR = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../../uploads/problems");
+const UPLOAD_DIR = path.join(uploadsRoot, "problems");
 if (!fs.existsSync(UPLOAD_DIR)) {
   fs.mkdirSync(UPLOAD_DIR, { recursive: true });
 }

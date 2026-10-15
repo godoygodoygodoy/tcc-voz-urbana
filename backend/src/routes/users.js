@@ -5,10 +5,10 @@ import { asyncHandler } from "../middlewares/errorHandler.js";
 import multer from "multer";
 import path from "path";
 import fs from "fs";
-import { fileURLToPath } from "url";
+import { uploadsRoot } from "../config/uploads.js";
 
 const router = express.Router();
-const profileUploadDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../../uploads/profiles");
+const profileUploadDir = path.join(uploadsRoot, "profiles");
 fs.mkdirSync(profileUploadDir, { recursive: true });
 const imageExtensions = { "image/jpeg": ".jpg", "image/png": ".png", "image/webp": ".webp", "image/gif": ".gif" };
 const profileUpload = multer({

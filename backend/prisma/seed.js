@@ -1,6 +1,7 @@
 import "dotenv/config";
 import { prisma } from "../src/config/prisma.js";
 import { hashPassword } from "../src/utils/password.js";
+import Joi from "joi";
 
 const categories = [
   { nome: "Asfalto", icone: "⚫", cor: "#4B5563" },
@@ -17,6 +18,16 @@ const categories = [
 ];
 
 const seed = async () => {
+  const email = process.env.ADMIN_EMAIL?.trim().toLowerCase();
+  if (Joi.string().email().required().validate(email).error) {
+    throw new Error("Defina ADMIN_EMAIL com um e-mail válido antes de executar o seed administrativo");
+  }
+  const existingUser = await prisma.usuario.findUnique({ where: { email } });
+  const password = process.env.ADMIN_PASSWORD;
+  if (!existingUser && (!password || password.trim().length < 12 || Buffer.byteLength(password, "utf8") > 72)) {
+    throw new Error("Defina ADMIN_PASSWORD com pelo menos 12 caracteres e no máximo 72 bytes para criar o administrador");
+  }
+  const senhaHash = existingUser ? undefined : await hashPassword(password);
   for (const category of categories) {
     await prisma.categoria.upsert({
       where: { nome: category.nome },
@@ -25,30 +36,39 @@ const seed = async () => {
     });
   }
 
-  const email = (process.env.ADMIN_EMAIL || "danielgodoy.txt@gmail.com").trim().toLowerCase();
-  let user = await prisma.usuario.findUnique({ where: { email } });
-  if (!user) {
-    const password = process.env.ADMIN_PASSWORD;
-    if (!password) throw new Error("Defina ADMIN_PASSWORD para criar a conta administrativa inexistente");
-    user = await prisma.usuario.create({
+  const permissions = {
+    nivel: "ADMIN",
+    emailVerificado: true,
+    tokenVerificacao: null,
+    tokenVerificacaoExpira: null
+  };
+  // Escrita aninhada: conta e permissões são persistidas na mesma transação.
+  if (!existingUser) {
+    await prisma.usuario.create({
       data: {
         nome: "Administrador",
         email,
-        senhaHash: await hashPassword(password)
+        senhaHash,
+        ...permissions,
+        admin: { create: { nivel: "SUPER_ADMIN" } }
+      }
+    });
+  } else {
+    // Reexecutar o seed promove a conta sem redefinir sua senha ou perfil.
+    await prisma.usuario.update({
+      where: { id: existingUser.id },
+      data: {
+        ...permissions,
+        admin: {
+          upsert: {
+            update: { nivel: "SUPER_ADMIN" },
+            create: { nivel: "SUPER_ADMIN" }
+          }
+        }
       }
     });
   }
-
-  await prisma.usuario.update({
-    where: { id: user.id },
-    data: { nivel: "ADMIN", emailVerificado: true, tokenVerificacao: null, tokenVerificacaoExpira: null }
-  });
-
-  await prisma.admin.upsert({
-    where: { usuarioId: user.id },
-    update: { nivel: "SUPER_ADMIN" },
-    create: { usuarioId: user.id, nivel: "SUPER_ADMIN" }
-  });
+  console.log("Conta administrativa configurada com acesso SUPER_ADMIN.");
 };
 
 seed()

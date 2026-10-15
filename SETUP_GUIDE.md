@@ -1,3 +1,5 @@
+> Guia legado: para instalação e publicação atuais (Vite, Hostinger, Render e MySQL), siga a seção [Deploy do README](README.md#deploy). Comandos abaixo podem refletir configurações anteriores.
+
 # 🚀 Iniciando VOZ URBANA - Guia de Configuração
 
 ## ✅ O que já está pronto:

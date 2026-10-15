@@ -32,120 +32,103 @@ Plataforma colaborativa para reportar, mapear e acompanhar soluções de problem
 
 ## 📋 Pré-requisitos
 
-- Node.js 16+
+- Node.js 24.11.1
 - MySQL 8+
 - Docker opcional
 - npm ou yarn
 
 ## 🚀 Como Executar
 
-## Deploy separado
+## Deploy
 
-Publique cada parte como um servico independente:
+Monorepositório: `frontend/` contém React 18 + Vite e `backend/` contém Express + Prisma 7 com adaptador MariaDB para MySQL. Instale dependências em cada diretório; a raiz não é um workspace npm. Use Node **24.11.1**, fixado nos arquivos `.node-version`. Não é necessário trocar o framework React.
 
-- **Backend no Render**: Root Directory `backend`, Build Command `npm ci && npx prisma generate && npx prisma migrate deploy && npm run prisma:seed`, Start Command `npm start` e Health Check `/api/health`.
-- **Frontend na Vercel**: Root Directory `frontend`, Build Command `npm run build`, Output Directory `build` e `REACT_APP_API_URL` apontando para `https://SEU-BACKEND.onrender.com/api`.
-- No backend, defina `CORS_ORIGIN` e `FRONTEND_URL` com a URL publica da Vercel. Para recuperação de senha, configure `SMTP_USER`, `SMTP_PASS` e `SMTP_FROM` no Render. Use um MySQL gerenciado e nunca publique arquivos `.env`.
+### Frontend / Hostinger
 
-### 1. Configurar Banco de Dados
+1. Em `frontend/`, execute `npm install` (ou `npm ci` para reproduzir o lockfile).
+2. Copie `.env.example` para `.env`. Para desenvolvimento: `VITE_API_URL=http://localhost:5000/api`, depois `npm run dev` (porta 3000).
+3. Antes do build de produção, defina `VITE_API_URL=https://SEU-BACKEND.onrender.com/api` em `.env.production.local` ou no ambiente do processo.
+4. Execute `npm run build`. Envie **o conteúdo de `frontend/dist/`** para `public_html/`, incluindo o arquivo oculto `.htaccess`. Esta configuração assume hospedagem na raiz do domínio.
+5. Use `npm run preview` para conferir o resultado localmente.
 
-Instale o MySQL localmente, crie o banco `voz_urbana` e configure a senha no `backend/.env`.
+Variáveis Vite são incorporadas ao JavaScript durante o build. Alterar uma variável na Hostinger depois não altera o bundle: gere e envie novo build. Não publique arquivos `.env`.
 
-### 2. Backend
+O projeto usa **React Router com BrowserRouter**, preservado. A hospedagem precisa de fallback para `index.html` em rotas SPA. O `.htaccess` incluído faz isso em Apache/LiteSpeed com mod_rewrite; em outro servidor configure o equivalente. Teste acesso direto e atualização em `/login` e outras rotas internas.
+
+| Variável | Configuração |
+| --- | --- |
+| VITE_API_URL | Obrigatória no build; URL HTTPS pública do backend, terminando em `/api` |
+| VITE_GOOGLE_MAPS_KEY | Opcional, somente para o componente Google Maps; chave pública restrita por domínio e API no Google Cloud |
+
+Nunca coloque senhas, JWT_SECRET ou tokens privados em VITE_*. Geolocalização exige HTTPS em produção. Mapas, fontes e algumas imagens dependem de serviços externos já utilizados pelo projeto.
+
+### Backend / Render
+
+Instalação local: em `backend/`, execute `npm install`, copie `.env.example` para `.env`, preencha os valores e execute `npm run prisma:generate`. Desenvolvimento: `npm run dev`. Produção: `npm start`, que executa `node src/server.js` sem nodemon.
+
+Crie um Web Service Node vinculado ao repositório GitHub:
+
+| Campo | Valor exato |
+| --- | --- |
+| Root Directory | `backend` |
+| Build Command | `npm ci --include=dev && npm run prisma:generate` |
+| Start Command | `npm start` |
+| Health Check Path | `/health` |
+| Node | `24.11.1` |
+
+Selecione a branch e habilite auto-deploy se desejar publicar novos commits automaticamente. `render.yaml` contém a configuração base. A aplicação escuta em `0.0.0.0` usando `PORT` fornecida pelo Render (fallback local 5000). A inicialização exige conexão com o banco. `/api/health` permanece disponível por compatibilidade.
+
+| Variável | Uso |
+| --- | --- |
+| NODE_ENV | `production` |
+| NODE_VERSION | `24.11.1` |
+| PORT | Fornecida pelo Render |
+| DATABASE_URL | `mysql://usuario:senha@host:3306/banco`; codifique caracteres especiais das credenciais |
+| JWT_SECRET | Segredo aleatório forte com pelo menos 32 caracteres; o Blueprint pode gerar |
+| JWT_EXPIRE | Opcional; padrão `7d` |
+| FRONTEND_URL | Origem HTTPS da Hostinger, sem caminho ou barra final |
+| CORS_ORIGIN | Opcional; origens adicionais exatas, separadas por vírgula, como domínio com www |
+| UPLOAD_DIR | `/var/data/uploads`; exige disco persistente montado nesse caminho |
+| MAX_FILE_SIZE | Opcional; limite por foto de problema, padrão 5242880 bytes |
+| DATABASE_SSL | `true` se o banco exigir TLS |
+| DATABASE_SSL_CA | Caminho para certificado CA PEM, se necessário |
+| SMTP_HOST / SMTP_PORT | Servidor SMTP; padrões `smtp.gmail.com` / `587` |
+| SMTP_USER / SMTP_PASS / SMTP_FROM | Configurar para recuperação de senha por email |
+| SEND_NOTIFICATION_EMAIL | Opcional; `true` para emails de notificações |
+| ADMIN_EMAIL / ADMIN_PASSWORD | Apenas para seed administrativo manual |
+
+CORS permite localhost:3000 em desenvolvimento e as origens explicitamente configuradas. Produção não libera localhost automaticamente. Não use `*` com credenciais. `trust proxy` considera um salto para o proxy do Render; reavalie se adicionar outros proxies.
+
+**Uploads:** fotos e avatares são gravados em disco. Configure um disco persistente no Render (plano compatível, pago). O Blueprint declara 1 GB em `/var/data/uploads`. Sem persistência, arquivos somem em reinicializações/deploys. Faça backup e monitore espaço. Transfira separadamente os uploads locais que quiser preservar. URLs `/uploads` continuam iguais.
+
+Configure SMTP com um provedor e porta permitidos pelo plano do Render e teste recuperação de senha. Variáveis SMTP vazias não habilitam envio.
+
+### Banco
+
+O banco é **MySQL externo**, acessado por Prisma 7 e `@prisma/adapter-mariadb`. `DATABASE_URL` é a fonte principal para runtime e CLI. As variáveis antigas `DATABASE_HOST`, `DATABASE_PORT`, `DATABASE_USER`, `DATABASE_PASSWORD`, `DATABASE_NAME` continuam como alternativa local somente quando DATABASE_URL estiver ausente.
+
+Para o Docker local opcional, copie `.env.example` da raiz para `.env` e defina `MYSQL_ROOT_PASSWORD` antes de iniciar o Compose. A porta fica acessível apenas em 127.0.0.1. Essa variável inicializa volumes novos; mudar seu valor não troca a senha de um banco existente. Não remova volumes para trocar credenciais.
+
+Libere acesso de rede do Render no provedor MySQL. Para TLS, configure `DATABASE_SSL=true` no runtime e `?sslaccept=strict` na DATABASE_URL para a CLI. Se o provedor exigir CA privada, configure DATABASE_SSL_CA e `&sslcert=/caminho/ca.pem` na URL. Não desabilite validação de certificado. Outros parâmetros específicos da CLI na URL não são automaticamente opções do driver MariaDB.
+
+Antes da primeira inicialização, faça backup e execute em ambiente confiável com acesso ao banco de produção:
 
 ```bash
 cd backend
-
-# Instalar dependências
-npm install
-
-# Copiar e configurar variáveis de ambiente
-cp .env.example .env
-
-# Criar tabelas e dados iniciais
-npx prisma migrate deploy
-npm run prisma:seed
-
-# Iniciar servidor (modo desenvolvimento)
-npm run dev
+npm ci --include=dev
+npm run prisma:generate
+npm run prisma:deploy
 ```
 
-O servidor estará disponível em `http://localhost:5000`
+O último comando executa `prisma migrate deploy`. **Não foi executado nesta auditoria.** Para banco existente criado fora das migrations, revise e faça baseline antes; não use reset nem db push para contornar erros. Em planos compatíveis, configure migrations como Pre-Deploy Command depois dessa revisão. O build apenas gera o cliente Prisma.
 
-### 3. Frontend
+Seed opcional: `npm run prisma:seed`. Ele atualiza categorias e promove ADMIN_EMAIL a SUPER_ADMIN. Execute somente intencionalmente, com ADMIN_EMAIL explícito e ADMIN_PASSWORD se for criar a conta; remova essas variáveis depois. Não há mais seed automático no build.
 
-```bash
-cd frontend
+Para criar a conta com acesso administrativo completo, configure `ADMIN_EMAIL` com um email válido e `ADMIN_PASSWORD` com uma senha exclusiva de pelo menos 12 caracteres (máximo 72 bytes) no ambiente do backend. Após aplicar as migrations, execute `npm run prisma:seed` em `backend/` e faça login com essas credenciais. A conta recebe `Usuario.nivel=ADMIN`, email verificado e vínculo `Admin.nivel=SUPER_ADMIN`, permitindo acesso ao painel e a todas as funcionalidades administrativas existentes. Conta e permissões são gravadas atomicamente. Se o email já existir, o seed promove essa conta e preserva sua senha e perfil; não redefine a senha ao ser reexecutado.
 
-# Instalar dependências
-npm install
+**Testes existentes:** a suíte Jest limpa tabelas do banco configurado. Não execute `npm test` contra produção ou dados locais importantes. Prepare um banco de testes isolado; algumas fixtures ainda contêm campos legados.
 
-# Copiar e configurar variáveis de ambiente
-cp .env.example .env
-
-# Iniciar aplicação
-npm start
-```
-
-A aplicação estará disponível em `http://localhost:3000`
-
-## 📁 Estrutura do Projeto
-
-```
-tcc/
-├── backend/
-│   ├── src/
-│   │   ├── models/          # Modelos do Sequelize
-│   │   ├── routes/          # Rotas da API
-│   │   ├── middlewares/     # Middlewares
-│   │   ├── config/          # Configurações
-│   │   └── server.js        # Entrada do servidor
-│   ├── package.json
-│   └── .env.example
-├── frontend/
-│   ├── src/
-│   │   ├── components/      # Componentes React
-│   │   ├── pages/           # Páginas
-│   │   ├── services/        # Serviços API
-│   │   ├── store/           # Zustand stores
-│   │   ├── App.js
-│   │   └── index.js
-│   ├── public/
-│   ├── package.json
-│   └── .env.example
-└── docker-compose.yml
-```
-
-## 🔑 Variáveis de Ambiente
-
-### Backend (.env)
-```
-DATABASE_URL=mysql://root:SUA_SENHA@localhost:3306/voz_urbana
-DATABASE_HOST=localhost
-DATABASE_PORT=3306
-DATABASE_USER=root
-DATABASE_PASSWORD=SUA_SENHA
-DATABASE_NAME=voz_urbana
-PORT=5000
-NODE_ENV=development
-JWT_SECRET=your_secret_key
-JWT_EXPIRE=7d
-CORS_ORIGIN=http://localhost:3000,http://192.168.0.100:3000
-FRONTEND_URL=http://localhost:3000
-SMTP_HOST=smtp.gmail.com
-SMTP_PORT=587
-SMTP_USER=seu-email@gmail.com
-SMTP_PASS=sua-senha-de-app
-SMTP_FROM=seu-email@gmail.com
-ADMIN_EMAIL=admin@vozurbana.local
-ADMIN_PASSWORD=troque-esta-senha
-MAX_FILE_SIZE=5242880
-```
-
-### Frontend (.env)
-```
-REACT_APP_API_URL=https://voz-urbana-api.onrender.com/api
-```
+Referências: [Vite](https://vite.dev/guide/), [deploys Render](https://render.com/docs/deploys), [discos persistentes Render](https://render.com/docs/disks).
 
 ## 📚 API Endpoints
 

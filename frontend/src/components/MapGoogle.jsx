@@ -11,7 +11,7 @@ const toPoint = (problem) => {
 };
 
 const MapGoogle = ({ problems = [], onMarkerClick, height = '500px', className = '' }) => {
-  const apiKey = process.env.REACT_APP_GOOGLE_MAPS_KEY;
+  const apiKey = import.meta.env.VITE_GOOGLE_MAPS_KEY;
   const { isLoaded, loadError } = useLoadScript({ googleMapsApiKey: apiKey });
   const [active, setActive] = useState(null);
   const points = useMemo(
@@ -29,7 +29,7 @@ const MapGoogle = ({ problems = [], onMarkerClick, height = '500px', className =
 
   if (!apiKey) {
     return (
-      <div className={`p-4 bg-yellow-50 text-yellow-800 rounded ${className}`}>Chave do Google Maps não encontrada. Defina `REACT_APP_GOOGLE_MAPS_KEY`.</div>
+      <div className={`p-4 bg-yellow-50 text-yellow-800 rounded ${className}`}>Mapa temporariamente indisponível.</div>
     );
   }
 

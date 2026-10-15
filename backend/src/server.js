@@ -1,3 +1,4 @@
+import "./config/environment.js";
 import express from "express";
 import cors from "cors";
 import helmet from "helmet";
@@ -26,6 +27,7 @@ import { authMiddleware } from "./middlewares/auth.js";
 import { adminMiddleware } from "./middlewares/auth.js";
 
 const app = express();
+if (process.env.NODE_ENV === "production") app.set("trust proxy", 1);
 
 const corsOrigins = [process.env.CORS_ORIGIN, process.env.FRONTEND_URL]
   .filter(Boolean)
@@ -33,7 +35,7 @@ const corsOrigins = [process.env.CORS_ORIGIN, process.env.FRONTEND_URL]
   .map((origin) => origin.trim())
   .filter(Boolean);
 
-if (corsOrigins.length === 0) {
+if (process.env.NODE_ENV !== "production") {
   corsOrigins.push("http://localhost:3000");
 }
 
@@ -57,7 +59,13 @@ app.use("/api/", rateLimit({ windowMs: 15 * 60 * 1000, max: 300, standardHeaders
 
 // Servir arquivos estáticos
 const uploadsRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../uploads");
-app.use("/uploads", express.static(uploadsRoot));
+app.use("/uploads", (req, res, next) => {
+  res.setHeader("Cross-Origin-Resource-Policy", "cross-origin");
+  next();
+}, express.static(uploadsRoot));
+
+// Health check independente do limite da API
+app.get("/health", (req, res) => res.json({ status: "ok" }));
 
 // Health check
 app.get("/api/health", (req, res) => {
@@ -85,6 +93,7 @@ app.use((req, res) => {
 app.use(errorHandler);
 
 const PORT = process.env.PORT || 5000;
+let server;
 
 // Conectar ao banco e iniciar servidor
 (async () => {
@@ -92,7 +101,7 @@ const PORT = process.env.PORT || 5000;
     await prisma.$connect();
     console.log("✅ Conectado ao banco de dados MySQL via Prisma");
 
-    app.listen(PORT, () => {
+    server = app.listen(PORT, "0.0.0.0", () => {
       console.log(`🚀 Servidor rodando em http://localhost:${PORT}`);
       console.log(`Ambiente: ${process.env.NODE_ENV}`);
     });
@@ -104,10 +113,15 @@ const PORT = process.env.PORT || 5000;
 })();
 
 // Graceful shutdown
-process.on("SIGINT", async () => {
+const shutdown = async () => {
+  const timeout = setTimeout(() => process.exit(1), 10000);
+  timeout.unref();
+  if (server) await new Promise((resolve) => server.close(resolve));
   console.log("\n🔌 Desconectando do banco de dados...");
   await prisma.$disconnect();
   process.exit(0);
-});
+};
+process.on("SIGINT", shutdown);
+process.on("SIGTERM", shutdown);
 
 export default app;

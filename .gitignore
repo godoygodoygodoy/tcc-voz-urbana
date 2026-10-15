@@ -26,3 +26,8 @@ out/
 
 # Uploads
 uploads/
+
+# Outras configurações privadas e logs
+.env.*
+!.env.example
+*.log

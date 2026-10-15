@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_URL = process.env.REACT_APP_API_URL || 'https://voz-urbana-api.onrender.com/api';
+const API_URL = (import.meta.env.VITE_API_URL || (import.meta.env.DEV ? 'http://localhost:5000/api' : '')).replace(/\/$/, '');
 export const mediaUrl = (url) => (!url || /^(https?:|blob:|data:)/i.test(url) ? url : `${API_URL.replace(/\/api\/?$/, '')}${url.startsWith('/') ? '' : '/'}${url}`);
 
 const api = axios.create({
