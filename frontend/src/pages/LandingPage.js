@@ -31,6 +31,8 @@ import AccessMenu from '../components/AccessMenu';
 import { useI18n } from '../i18n';
 import PigeonLogo from '../components/PigeonLogo';
 import SiteMenu from '../components/SiteMenu';
+import LandingHero from '../components/LandingHero';
+import AmbientContour from '../components/AmbientContour';
 
 const fallbackCategories = [
   { id: 'asfalto', name: 'Asfalto' },
@@ -237,7 +239,7 @@ export default function LandingPage() {
   ];
 
   return (
-    <div className="min-h-screen bg-[#1b1d1f] text-white">
+    <div className="landing-page min-h-screen bg-[#1b1d1f] text-white">
       <header className="sticky top-0 z-50 border-b border-white/10 bg-black/55 backdrop-blur-2xl">
         <div className="site-header-inner mx-auto flex max-w-7xl items-center justify-between px-4 py-4 sm:px-6 lg:px-8">
           <SiteMenu />
@@ -250,7 +252,16 @@ export default function LandingPage() {
         </div>
       </header>
 
-      <section id="inicio" ref={heroRef} className="hero-grid relative overflow-hidden">
+      <LandingHero
+        user={user}
+        t={t}
+        heroMetrics={heroMetrics}
+        quickActions={quickActions}
+        stats={stats}
+        recentProblems={recentProblems}
+      />
+
+      <section id="legacy-inicio" ref={heroRef} className="legacy-hero hero-grid relative overflow-hidden">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(124,58,237,0.28),transparent_30%),radial-gradient(circle_at_80%_10%,rgba(168,85,247,0.18),transparent_24%),linear-gradient(180deg,rgba(6,7,11,0.72),rgba(6,7,11,0.92))]" />
         <div className="absolute inset-0 opacity-25" style={{ backgroundImage: 'linear-gradient(rgba(255,255,255,0.035) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.035) 1px, transparent 1px)', backgroundSize: '72px 72px' }} />
 
@@ -412,12 +423,13 @@ export default function LandingPage() {
 
       <motion.section
         id="como"
-        className="mx-auto max-w-7xl px-4 py-20 sm:px-6 lg:px-8"
+        className="landing-chapter landing-chapter--flow mx-auto max-w-7xl px-4 py-20 sm:px-6 lg:px-8"
         initial="hidden"
         whileInView="visible"
         viewport={{ once: true, amount: 0.18 }}
         variants={fadeUp}
       >
+        <AmbientContour variant="violet" />
         <div className="mb-10 max-w-2xl">
           <p className="text-xs font-semibold uppercase tracking-[0.32em] text-white/40">Fluxo</p>
           <h3 className="mt-3 text-4xl font-black text-white sm:text-5xl">Como funciona?</h3>
@@ -458,7 +470,7 @@ export default function LandingPage() {
       </motion.section>
 
       <motion.section
-        className="mx-auto max-w-7xl px-4 pb-20 sm:px-6 lg:px-8"
+        className="landing-chapter landing-chapter--feed mx-auto max-w-7xl px-4 pb-20 sm:px-6 lg:px-8"
         initial="hidden"
         whileInView="visible"
         viewport={{ once: true, amount: 0.2 }}
@@ -493,7 +505,7 @@ export default function LandingPage() {
         </div>
       </motion.section>
 
-      <section className="bg-[#160d25] py-16">
+      <section className="landing-stats-band bg-[#160d25] py-16">
         <div className="mx-auto grid max-w-7xl gap-6 px-4 sm:grid-cols-2 lg:grid-cols-4 sm:px-6 lg:px-8">
           {stats.map((item) => (
             <Card key={item.label} className="glass-panel rounded-[1.6rem] border-white/10 bg-white/6 text-white">
@@ -507,12 +519,13 @@ export default function LandingPage() {
       </section>
 
       <motion.section
-        className="mx-auto max-w-7xl px-4 py-20 sm:px-6 lg:px-8"
+        className="landing-chapter landing-chapter--context mx-auto max-w-7xl px-4 py-20 sm:px-6 lg:px-8"
         initial="hidden"
         whileInView="visible"
         viewport={{ once: true, amount: 0.16 }}
         variants={fadeUp}
       >
+        <AmbientContour variant="plum" />
         <div className="grid gap-8 lg:grid-cols-[1fr_0.95fr]">
           <Card
             className="overflow-hidden rounded-[2rem] border-white/10 bg-cover text-white shadow-[0_24px_70px_rgba(0,0,0,0.35)]"
@@ -558,7 +571,7 @@ export default function LandingPage() {
 
       <motion.section
         id="mapa"
-        className="mx-auto max-w-7xl px-4 py-20 sm:px-6 lg:px-8"
+        className="landing-chapter landing-chapter--map mx-auto max-w-7xl px-4 py-20 sm:px-6 lg:px-8"
         initial="hidden"
         whileInView="visible"
         viewport={{ once: true, amount: 0.18 }}
@@ -645,12 +658,13 @@ export default function LandingPage() {
 
       <motion.section
         id="sobre"
-        className="mx-auto max-w-7xl px-4 py-20 sm:px-6 lg:px-8"
+        className="landing-chapter landing-chapter--about mx-auto max-w-7xl px-4 py-20 sm:px-6 lg:px-8"
         initial="hidden"
         whileInView="visible"
         viewport={{ once: true, amount: 0.18 }}
         variants={fadeUp}
       >
+        <AmbientContour variant="lilac" />
         <div className="grid gap-8 lg:grid-cols-2 lg:items-center">
           <div>
             <p className="text-xs font-semibold uppercase tracking-[0.32em] text-white/40">Sobre</p>
@@ -690,12 +704,13 @@ export default function LandingPage() {
 
       <motion.section
         id="contato"
-        className="bg-[#140b22] py-20"
+        className="landing-contact bg-[#140b22] py-20"
         initial="hidden"
         whileInView="visible"
         viewport={{ once: true, amount: 0.18 }}
         variants={fadeUp}
       >
+        <AmbientContour variant="contact" />
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="mb-8 max-w-2xl">
             <p className="text-xs font-semibold uppercase tracking-[0.32em] text-white/40">Contato</p>

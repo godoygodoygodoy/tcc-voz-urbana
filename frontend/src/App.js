@@ -24,6 +24,7 @@ import FeedPage from './pages/FeedPage';
 // Components
 import Header from './components/Header';
 import ProtectedRoute from './components/ProtectedRoute';
+import ReactiveAtmosphere from './components/ReactiveAtmosphere';
 
 function App() {
   const { user } = useAuthStore();
@@ -36,6 +37,7 @@ function App() {
   return (
     <Router>
       <div>
+        <ReactiveAtmosphere />
         <Routes>
           {/* Landing page - sem header customizado, ela tem seu próprio */}
           <Route path="/" element={<LandingPage />} />

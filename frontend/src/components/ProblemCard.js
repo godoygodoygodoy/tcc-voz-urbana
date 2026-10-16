@@ -19,8 +19,8 @@ const ProblemCard = ({ problem }) => {
       role="button"
       tabIndex={0}
       aria-label={`${t('openProblem')} ${problem.title}`}
-      className="group relative overflow-hidden rounded-[1.75rem] border border-white/10 bg-[#17191b] shadow-[0_18px_50px_rgba(0,0,0,0.28)] outline-none"
-      style={{ transformStyle: 'preserve-3d' }}
+      className="urban-card group relative overflow-hidden rounded-[1.75rem] border border-white/10 bg-[#17191b] shadow-[0_18px_50px_rgba(0,0,0,0.28)] outline-none"
+      style={{ '--card-accent': categoryColor, transformStyle: 'preserve-3d' }}
       onClick={() => navigate(`/problem/${problem.id}`)}
       onKeyDown={(event) => {
         if (event.key === 'Enter' || event.key === ' ') {

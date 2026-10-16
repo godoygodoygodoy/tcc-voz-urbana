@@ -116,7 +116,7 @@ const HomePage = () => {
   return (
     <div className="site-page min-h-screen text-white">
       {/* Hero Section */}
-      <section className="border-b border-white/10 bg-[radial-gradient(circle_at_top_left,rgba(168,85,247,0.26),transparent_28%),linear-gradient(180deg,rgba(6,7,11,0.98),rgba(6,7,11,0.92))] py-12">
+      <section className="map-page-hero border-b border-white/10 bg-[radial-gradient(circle_at_top_left,rgba(168,85,247,0.26),transparent_28%),linear-gradient(180deg,rgba(6,7,11,0.98),rgba(6,7,11,0.92))] py-12">
         <div className="container mx-auto px-4">
           <p className="text-xs font-semibold uppercase tracking-[0.32em] text-white/40">{t('mapProblems')}</p>
           <h1 className="mt-2 text-4xl font-black text-white">VOZ URBANA</h1>
@@ -127,7 +127,7 @@ const HomePage = () => {
       </section>
 
       {/* Mapa */}
-      <section className="container mx-auto px-4 py-8">
+      <section className="map-explorer container mx-auto px-4 py-8">
         <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
           <h2 className="text-2xl font-bold text-white">{t('mapProblems')}</h2>
           <div className="flex flex-wrap gap-3">
@@ -165,7 +165,7 @@ const HomePage = () => {
       </section>
 
       {/* Filtros */}
-      <section className="container mx-auto px-4 py-8">
+      <section className="map-controls container mx-auto px-4 py-8">
         <div className="site-panel rounded-3xl p-6 mb-8 shadow-[0_24px_70px_rgba(0,0,0,0.18)]">
           <h2 className="mb-4 flex items-center gap-2 text-xl font-bold text-white">
             <FiFilter /> {t('filters')}
