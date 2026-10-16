@@ -22,7 +22,7 @@ import { categoriesAPI, mediaUrl, notificationsAPI, problemsAPI, votesAPI } from
 import { useAuthStore } from '../store';
 import { useI18n } from '../i18n';
 
-const actionAsset = (name) => `/feed-actions/${name}.png`;
+const actionAsset = (name) => `${import.meta.env.BASE_URL}feed-actions/${name}.png`;
 
 const navItems = [
   { key: 'home', label: 'Página Inicial', icon: Mailbox },
@@ -177,7 +177,7 @@ const FeedPage = () => {
       return next;
     });
     try {
-      await navigator.clipboard?.writeText(`${window.location.origin}/problem/${post.id}`);
+      await navigator.clipboard?.writeText(`${window.location.origin}${import.meta.env.BASE_URL}problem/${post.id}`);
       toast.success('Link da ocorrência copiado');
     } catch (error) {
       toast.info('Ocorrência marcada para compartilhar');

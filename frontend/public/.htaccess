@@ -1,6 +1,7 @@
 Options -MultiViews
 DirectoryIndex index.html
 RewriteEngine On
+RewriteBase /tecti/2026/gpec03/
 RewriteCond %{REQUEST_FILENAME} !-f
 RewriteCond %{REQUEST_FILENAME} !-d
 RewriteRule ^ index.html [L]

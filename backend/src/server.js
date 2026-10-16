@@ -29,7 +29,7 @@ import { adminMiddleware } from "./middlewares/auth.js";
 const app = express();
 if (process.env.NODE_ENV === "production") app.set("trust proxy", 1);
 
-const corsOrigins = [process.env.CORS_ORIGIN, process.env.FRONTEND_URL]
+const corsOrigins = [process.env.CORS_ORIGIN, process.env.FRONTEND_URL ? new URL(process.env.FRONTEND_URL).origin : undefined]
   .filter(Boolean)
   .flatMap((origins) => origins.split(","))
   .map((origin) => origin.trim())
