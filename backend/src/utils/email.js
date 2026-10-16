@@ -27,7 +27,7 @@ export const sendVerificationEmail = async ({ email, name, token }) => {
     throw new Error("O envio de e-mail não está configurado no servidor.");
   }
 
-  const frontendUrl = process.env.FRONTEND_URL || "http://localhost:3000";
+  const frontendUrl = (process.env.FRONTEND_URL || "http://localhost:3000").replace(/\/+$/, "");
   const verificationUrl = `${frontendUrl}/verify-email?token=${encodeURIComponent(token)}`;
 
   await transporter.sendMail({
@@ -44,7 +44,7 @@ export const sendVerificationEmail = async ({ email, name, token }) => {
 export const sendNotificationEmail = async ({ email, name, title, message, link }) => {
   const transporter = createTransporter();
   if (!transporter) return false;
-  const frontendUrl = process.env.FRONTEND_URL || "http://localhost:3000";
+  const frontendUrl = (process.env.FRONTEND_URL || "http://localhost:3000").replace(/\/+$/, "");
   await transporter.sendMail({
     from: process.env.SMTP_FROM || process.env.SMTP_USER,
     to: email,
@@ -59,7 +59,7 @@ export const sendPasswordResetEmail = async ({ email, name, token }) => {
   const transporter = createTransporter();
   if (!transporter) throw new Error("O envio de e-mail não está configurado no servidor.");
 
-  const frontendUrl = process.env.FRONTEND_URL || "http://localhost:3000";
+  const frontendUrl = (process.env.FRONTEND_URL || "http://localhost:3000").replace(/\/+$/, "");
   const resetUrl = `${frontendUrl}/reset-password?token=${encodeURIComponent(token)}`;
   await transporter.sendMail({
     from: process.env.SMTP_FROM || process.env.SMTP_USER,

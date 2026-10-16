@@ -12,7 +12,7 @@ const PigeonLogo = ({ className }) => {
     window.clearTimeout(resetTimer);
 
     if (clickCount >= REQUIRED_CLICKS) {
-      const sound = new Audio('/audio/pombo.mp3');
+      const sound = new Audio(`${import.meta.env.BASE_URL}audio/pombo.mp3`);
       void sound.play();
       clickCount = 0;
       return;
@@ -25,7 +25,7 @@ const PigeonLogo = ({ className }) => {
 
   return (
     <img
-      src="/branding/mascote-voz-urbana.png"
+      src={`${import.meta.env.BASE_URL}branding/mascote-voz-urbana.png`}
       alt="Voz Urbana"
       className={className}
       onClick={handleClick}

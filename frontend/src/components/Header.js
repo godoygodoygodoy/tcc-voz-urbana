@@ -21,7 +21,7 @@ const Header = () => {
         <div className="flex justify-between items-center">
           <Link to="/" className="flex items-center gap-3">
             <PigeonLogo className="h-10 w-10 bg-transparent object-contain drop-shadow-[0_0_8px_rgba(168,85,247,0.55)]" />
-            <img src="/branding/voz-urbana-texto.png" alt="Voz Urbana" className="h-9 w-auto max-w-[165px] object-contain" />
+            <img src={`${import.meta.env.BASE_URL}branding/voz-urbana-texto.png`} alt="Voz Urbana" className="h-9 w-auto max-w-[165px] object-contain" />
           </Link>
 
           <div className="flex items-center gap-3">

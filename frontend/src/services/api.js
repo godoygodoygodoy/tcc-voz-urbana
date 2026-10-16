@@ -1,7 +1,9 @@
 import axios from 'axios';
 
-const API_URL = (import.meta.env.VITE_API_URL || (import.meta.env.DEV ? 'http://localhost:5000/api' : '')).replace(/\/$/, '');
-export const mediaUrl = (url) => (!url || /^(https?:|blob:|data:)/i.test(url) ? url : `${API_URL.replace(/\/api\/?$/, '')}${url.startsWith('/') ? '' : '/'}${url}`);
+const BACKEND_URL = (import.meta.env.VITE_API_URL || (import.meta.env.DEV ? 'http://localhost:5000' : ''))
+  .trim().replace(/\/+$/, '').replace(/\/api$/, '');
+const API_URL = `${BACKEND_URL}/api`;
+export const mediaUrl = (url) => (!url || /^(https?:|blob:|data:)/i.test(url) ? url : `${BACKEND_URL}${url.startsWith('/') ? '' : '/'}${url}`);
 
 const api = axios.create({
   baseURL: API_URL,
@@ -24,7 +26,7 @@ api.interceptors.response.use(
     if (error.response?.status === 401) {
       localStorage.removeItem('token');
       localStorage.removeItem('user');
-      window.location.href = '/login';
+      window.location.href = `${import.meta.env.BASE_URL}login`;
     }
     return Promise.reject(error);
   }

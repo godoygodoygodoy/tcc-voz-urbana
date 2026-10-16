@@ -245,7 +245,7 @@ export default function LandingPage() {
           <SiteMenu />
           <Link to="/" className="group flex items-center gap-3">
             <PigeonLogo className="h-11 w-11 bg-transparent object-contain drop-shadow-[0_0_8px_rgba(168,85,247,0.55)] transition-transform duration-300 group-hover:scale-105" />
-            <img src="/branding/voz-urbana-texto.png" alt="Voz Urbana" className="h-10 w-auto max-w-[190px] object-contain" />
+            <img src={`${import.meta.env.BASE_URL}branding/voz-urbana-texto.png`} alt="Voz Urbana" className="h-10 w-auto max-w-[190px] object-contain" />
           </Link>
 
           <AccessMenu authenticated={Boolean(user)} user={user} onLogout={logout} />

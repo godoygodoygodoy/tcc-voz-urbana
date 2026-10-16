@@ -46,18 +46,18 @@ Monorepositório: `frontend/` contém React 18 + Vite e `backend/` contém Expre
 ### Frontend / Hostinger
 
 1. Em `frontend/`, execute `npm install` (ou `npm ci` para reproduzir o lockfile).
-2. Copie `.env.example` para `.env`. Para desenvolvimento: `VITE_API_URL=http://localhost:5000/api`, depois `npm run dev` (porta 3000).
-3. Antes do build de produção, defina `VITE_API_URL=https://SEU-BACKEND.onrender.com/api` em `.env.production.local` ou no ambiente do processo.
-4. Execute `npm run build`. Envie **o conteúdo de `frontend/dist/`** para `public_html/`, incluindo o arquivo oculto `.htaccess`. Esta configuração assume hospedagem na raiz do domínio.
+2. Copie `.env.example` para `.env`. Para desenvolvimento: `VITE_API_URL=http://localhost:5000`, depois `npm run dev` (porta 3000).
+3. Antes do build de produção, defina `VITE_API_URL=https://SEU-BACKEND.onrender.com` em `.env.production.local` ou no ambiente do processo. O frontend acrescenta `/api` nas requisições automaticamente; valores antigos com `/api` também continuam funcionando. Uploads usam a URL base, sem `/api`.
+4. Execute `npm run build`. Envie **o conteúdo de `frontend/dist/`** para `public_html/tecti/2026/gpec03/`, incluindo o arquivo oculto `.htaccess`. A URL pública será `https://SEU-DOMINIO/tecti/2026/gpec03/`. Não envie a pasta dist como uma subpasta adicional.
 5. Use `npm run preview` para conferir o resultado localmente.
 
 Variáveis Vite são incorporadas ao JavaScript durante o build. Alterar uma variável na Hostinger depois não altera o bundle: gere e envie novo build. Não publique arquivos `.env`.
 
-O projeto usa **React Router com BrowserRouter**, preservado. A hospedagem precisa de fallback para `index.html` em rotas SPA. O `.htaccess` incluído faz isso em Apache/LiteSpeed com mod_rewrite; em outro servidor configure o equivalente. Teste acesso direto e atualização em `/login` e outras rotas internas.
+O projeto usa **React Router com BrowserRouter** em `frontend/src/App.js`, com `basename={import.meta.env.BASE_URL}`. O `base` em `frontend/vite.config.mjs` e o `RewriteBase` em `frontend/public/.htaccess` são `/tecti/2026/gpec03/`. Em desenvolvimento, acesse `http://localhost:3000/tecti/2026/gpec03/`. A hospedagem precisa de fallback para `index.html` em rotas SPA. O `.htaccess` incluído faz isso em Apache/LiteSpeed com mod_rewrite; em outro servidor configure o equivalente. Teste acesso direto e atualização em `/tecti/2026/gpec03/login` e outras rotas internas.
 
 | Variável | Configuração |
 | --- | --- |
-| VITE_API_URL | Obrigatória no build; URL HTTPS pública do backend, terminando em `/api` |
+| VITE_API_URL | Obrigatória no build; URL HTTPS pública do backend, sem necessidade de `/api` |
 | VITE_GOOGLE_MAPS_KEY | Opcional, somente para o componente Google Maps; chave pública restrita por domínio e API no Google Cloud |
 
 Nunca coloque senhas, JWT_SECRET ou tokens privados em VITE_*. Geolocalização exige HTTPS em produção. Mapas, fontes e algumas imagens dependem de serviços externos já utilizados pelo projeto.
@@ -86,7 +86,7 @@ Selecione a branch e habilite auto-deploy se desejar publicar novos commits auto
 | DATABASE_URL | `mysql://usuario:senha@host:3306/banco`; codifique caracteres especiais das credenciais |
 | JWT_SECRET | Segredo aleatório forte com pelo menos 32 caracteres; o Blueprint pode gerar |
 | JWT_EXPIRE | Opcional; padrão `7d` |
-| FRONTEND_URL | Origem HTTPS da Hostinger, sem caminho ou barra final |
+| FRONTEND_URL | URL HTTPS completa do site: `https://SEU-DOMINIO/tecti/2026/gpec03` |
 | CORS_ORIGIN | Opcional; origens adicionais exatas, separadas por vírgula, como domínio com www |
 | UPLOAD_DIR | `/var/data/uploads`; exige disco persistente montado nesse caminho |
 | MAX_FILE_SIZE | Opcional; limite por foto de problema, padrão 5242880 bytes |
@@ -97,7 +97,7 @@ Selecione a branch e habilite auto-deploy se desejar publicar novos commits auto
 | SEND_NOTIFICATION_EMAIL | Opcional; `true` para emails de notificações |
 | ADMIN_EMAIL / ADMIN_PASSWORD | Apenas para seed administrativo manual |
 
-CORS permite localhost:3000 em desenvolvimento e as origens explicitamente configuradas. Produção não libera localhost automaticamente. Não use `*` com credenciais. `trust proxy` considera um salto para o proxy do Render; reavalie se adicionar outros proxies.
+FRONTEND_URL inclui a subpasta para os links de email; o CORS extrai somente sua origem (protocolo e domínio). CORS_ORIGIN, se configurado, deve conter apenas origens, sem subpastas. CORS permite localhost:3000 em desenvolvimento e as origens explicitamente configuradas. Produção não libera localhost automaticamente. Não use `*` com credenciais. `trust proxy` considera um salto para o proxy do Render; reavalie se adicionar outros proxies.
 
 **Uploads:** fotos e avatares são gravados em disco. Configure um disco persistente no Render (plano compatível, pago). O Blueprint declara 1 GB em `/var/data/uploads`. Sem persistência, arquivos somem em reinicializações/deploys. Faça backup e monitore espaço. Transfira separadamente os uploads locais que quiser preservar. URLs `/uploads` continuam iguais.
 

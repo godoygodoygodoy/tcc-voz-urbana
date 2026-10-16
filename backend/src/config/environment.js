@@ -8,7 +8,7 @@ if (process.env.NODE_ENV === 'production') {
     throw new Error('JWT_SECRET deve ser aleatório, com pelo menos 32 caracteres.');
   }
   const frontend = new URL(process.env.FRONTEND_URL);
-  if (frontend.protocol !== 'https:' || frontend.origin !== process.env.FRONTEND_URL) {
-    throw new Error('FRONTEND_URL deve ser uma origem HTTPS, sem caminho ou barra final.');
+  if (frontend.protocol !== 'https:' || frontend.username || frontend.password || frontend.search || frontend.hash) {
+    throw new Error('FRONTEND_URL deve ser uma URL HTTPS do site, podendo incluir a subpasta, sem credenciais, query ou fragmento.');
   }
 }
