@@ -19,8 +19,7 @@ import commentRoutes from "./routes/comments.js";
 import notificationRoutes from "./routes/notifications.js";
 import socialRoutes from "./routes/social.js";
 import rateLimit from "express-rate-limit";
-import path from "path";
-import { fileURLToPath } from "url";
+import { uploadedMedia } from "./config/media.js";
 
 // Importar middlewares
 import { errorHandler } from "./middlewares/errorHandler.js";
@@ -59,11 +58,7 @@ app.use(express.urlencoded({ limit: "10mb", extended: true }));
 app.use("/api/", rateLimit({ windowMs: 15 * 60 * 1000, max: 300, standardHeaders: true, legacyHeaders: false, message: { error: "Muitas requisições. Tente novamente em alguns minutos." } }));
 
 // Servir arquivos estáticos
-const uploadsRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../uploads");
-app.use("/uploads", (req, res, next) => {
-  res.setHeader("Cross-Origin-Resource-Policy", "cross-origin");
-  next();
-}, express.static(uploadsRoot));
+app.use("/uploads", uploadedMedia);
 
 // Health check independente do limite da API
 app.get("/health", (req, res) => res.json({ status: "ok" }));

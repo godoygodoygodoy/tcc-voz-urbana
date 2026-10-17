@@ -369,7 +369,7 @@ export default function LandingPage() {
         <AmbientContour variant="violet" />
         <div className="mb-10 max-w-2xl">
           <p className="text-xs font-semibold uppercase tracking-[0.32em] text-white/40">Fluxo</p>
-          <h3 className="mt-3 text-4xl font-black text-white sm:text-5xl">Como funciona?</h3>
+          <h3 className="mt-3 text-4xl font-black text-white sm:text-5xl">{t('howItWorks')}</h3>
           <p className="mt-4 text-white/65">
             Uma experiência simples: registrar, localizar e acompanhar a melhoria.
           </p>
@@ -378,17 +378,17 @@ export default function LandingPage() {
         <motion.div className="grid gap-6 md:grid-cols-3" variants={stagger}>
           {[
             {
-              title: 'Tire uma foto',
+              title: t('takePhoto'),
               description: 'Registre o problema com contexto visual para acelerar a triagem.',
               icon: Camera,
             },
             {
-              title: 'Localize o problema',
+              title: t('locateProblem'),
               description: 'Marque o ponto exato no mapa para facilitar a mobilização.',
               icon: MapPin,
             },
             {
-              title: 'Acompanhe a resolução',
+              title: t('trackResolution'),
               description: 'Veja quando o caso mudar de status e avance no acompanhamento.',
               icon: CheckCircle2,
             },
@@ -416,7 +416,7 @@ export default function LandingPage() {
         <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
           <div>
             <p className="text-xs font-semibold uppercase tracking-[0.32em] text-white/40">Feed</p>
-            <h3 className="mt-3 text-4xl font-black text-white sm:text-5xl">Identificações recentes</h3>
+            <h3 className="mt-3 text-4xl font-black text-white sm:text-5xl">{t('recentIdentifications')}</h3>
             <p className="mt-4 max-w-2xl text-white/65">{t('feedDescription')}</p>
           </div>
           <Link to="/map" className="inline-flex items-center gap-2 text-sm font-semibold text-violet-200 transition hover:text-white">
@@ -474,7 +474,7 @@ export default function LandingPage() {
             <CardContent className="p-10 sm:p-12">
               <p className="text-xs font-semibold uppercase tracking-[0.32em] text-white/55">{t('context')}</p>
               <h3 className="mt-4 max-w-xl text-4xl font-black leading-tight sm:text-5xl">
-                JUNTOS, PODEMOS TRANSFORMAR A NOSSA CIDADE
+                {t('together')}
               </h3>
               <p className="mt-5 max-w-lg text-white/76 leading-8">
                 A plataforma conecta relato, mapa e acompanhamento em um fluxo direto, sem ruído visual.
@@ -570,7 +570,7 @@ export default function LandingPage() {
 
           <Card className="glass-panel rounded-[1.8rem] border-white/10 bg-white/6 text-white">
             <CardContent className="p-7 sm:p-8 space-y-4">
-              <h4 className="text-xl font-black">O que você faz aqui</h4>
+              <h4 className="text-xl font-black">{t('quickAccess')}</h4>
               <p className="leading-8 text-white/65">
                 Este espaço liga o mapa ao fluxo de denúncia. A pessoa entra, identifica o ponto, envia a ocorrência e acompanha a evolução no painel.
               </p>
@@ -605,7 +605,7 @@ export default function LandingPage() {
         <div className="grid gap-8 lg:grid-cols-2 lg:items-center">
           <div>
             <p className="text-xs font-semibold uppercase tracking-[0.32em] text-white/40">Sobre</p>
-            <h3 className="mt-3 text-4xl font-black text-white sm:text-5xl">O que é?</h3>
+            <h3 className="mt-3 text-4xl font-black text-white sm:text-5xl">{t('whatIs')}</h3>
             <p className="mt-5 max-w-2xl text-lg leading-8 text-white/65">
               O Voz Urbana é uma plataforma para facilitar a comunicação entre população e órgãos públicos, permitindo denúncias práticas e acompanhamento do status de cada caso.
             </p>
@@ -613,7 +613,7 @@ export default function LandingPage() {
 
           <Card className="glass-panel rounded-[1.8rem] border-white/10 bg-white/6 text-white">
             <CardContent className="p-7 sm:p-8 space-y-4">
-              <h4 className="text-2xl font-black">A plataforma em uso</h4>
+              <h4 className="text-2xl font-black">{t('platformInUse')}</h4>
               <div className="grid gap-4">
                 <div className="rounded-2xl border border-white/8 bg-black/20 p-4">
                   <p className="text-xs font-semibold uppercase tracking-[0.24em] text-white/45">Mapa</p>
@@ -651,7 +651,7 @@ export default function LandingPage() {
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="mb-8 max-w-2xl">
             <p className="text-xs font-semibold uppercase tracking-[0.32em] text-white/40">Contato</p>
-            <h3 className="mt-3 text-4xl font-black text-white sm:text-5xl">Fale com a Voz Urbana</h3>
+            <h3 className="mt-3 text-4xl font-black text-white sm:text-5xl">{t('contactTitle')}</h3>
           </div>
 
           <div className="grid gap-8 lg:grid-cols-[1.1fr_0.9fr]">

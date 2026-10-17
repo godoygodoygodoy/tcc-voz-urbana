@@ -31,7 +31,7 @@ const ForgotPasswordPage = () => {
         <Link to="/login" className="site-auth-back"><ArrowLeft size={16} /> Voltar para o login</Link>
         <div className="mt-8 text-center">
           <div className="site-auth-icon"><Mail size={23} /></div>
-          <h1 className="mt-5 text-3xl font-black">Esqueci minha senha</h1>
+          <h1 className="mt-5 text-3xl font-black">{t('forgotPasswordTitle')}</h1>
           <p className="mt-3 text-sm text-white/55">Informe seu e-mail e enviaremos um link seguro para criar uma nova senha.</p>
         </div>
         {sent ? (

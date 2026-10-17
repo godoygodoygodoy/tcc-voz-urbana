@@ -26,11 +26,11 @@ import AmbientContour from '../components/AmbientContour';
 const actionAsset = (name) => `${import.meta.env.BASE_URL}feed-actions/${name}.png`;
 
 const navItems = [
-  { key: 'home', label: 'Página Inicial', icon: Mailbox },
-  { key: 'conversations', label: 'Conversas', icon: Mail },
-  { key: 'search', label: 'Pesquisar', icon: Search },
-  { key: 'notifications', label: 'Notificações', icon: Bell },
-  { key: 'create', label: 'Criar', icon: Plus },
+  { key: 'home', label: 'navHome', icon: Mailbox },
+  { key: 'conversations', label: 'conversationsTitle', icon: Mail },
+  { key: 'search', label: 'searchTitle', icon: Search },
+  { key: 'notifications', label: 'notifications', icon: Bell },
+  { key: 'create', label: 'create', icon: Plus },
 ];
 
 const emptyCreateForm = { title: '', description: '', address: '', categoryId: '' };
@@ -356,7 +356,7 @@ const FeedPage = () => {
         <div className="min-w-0"><strong>{authorHandle}</strong><span>{authorName} · {post.createdAt ? formatDistanceToNow(new Date(post.createdAt), { locale: language === 'pt-BR' ? ptBR : undefined, addSuffix: true }) : 'agora'}</span></div>
         <div className="relative">
           <button type="button" className="feed-more" aria-label="Mais opções" onClick={() => post.author?.id === user?.id && startEditing(post)}><Ellipsis size={18} /></button>
-          {post.author?.id === user?.id && <button type="button" className="sr-only" onClick={() => startEditing(post)}>Editar publicação</button>}
+          {post.author?.id === user?.id && <button type="button" className="sr-only" onClick={() => startEditing(post)}>{t('editPostTitle')}</button>}
         </div>
       </div>
       <Link to={`/problem/${post.id}`} className="block">
@@ -377,7 +377,7 @@ const FeedPage = () => {
   };
 
   const renderHome = () => <>
-    <FeedHeader title="Identificações recentes" description="Relatos urbanos, apoio comunitário e acompanhamento real.">
+    <FeedHeader title={t('recentIdentifications')} description="Relatos urbanos, apoio comunitário e acompanhamento real.">
       <button type="button" onClick={() => selectTab('create')} className="feed-report-button"><Plus size={15} /> <span>{t('reportProblem')}</span></button>
     </FeedHeader>
     <section id="search" className="feed-filters">
@@ -391,7 +391,7 @@ const FeedPage = () => {
   </>;
 
   const renderConversations = () => <>
-    <FeedHeader title="Conversas" description="Troque mensagens com pessoas que também cuidam da cidade." />
+    <FeedHeader title={t('conversationsTitle')} description="Troque mensagens com pessoas que também cuidam da cidade." />
     <div className="feed-dm-shell">
       <div className="feed-dm-list">
         <div className="feed-dm-list-head"><strong>Mensagens</strong><button type="button" aria-label="Nova conversa"><Plus size={17} /></button></div>
@@ -402,7 +402,7 @@ const FeedPage = () => {
   </>;
 
   const renderSearch = () => <>
-    <FeedHeader title="Pesquisar" description="Encontre locais, pessoas, ambientes e problemas publicados na cidade." />
+    <FeedHeader title={t('searchTitle')} description="Encontre locais, pessoas, ambientes e problemas publicados na cidade." />
     <div className="feed-discovery-search"><Search size={20} /><input autoFocus value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Busque por rua, usuário, categoria ou problema..." /></div>
     <div className="feed-search-section">
       <div className="feed-section-label"><Users size={15} /> Pessoas</div>
@@ -422,7 +422,7 @@ const FeedPage = () => {
   </>;
 
   const renderNotifications = () => <>
-    <FeedHeader title="Notificações" description="Acompanhe respostas, apoios e novidades sobre os seus relatos."><button type="button" onClick={markNotificationsRead} className="feed-secondary-button">Marcar tudo como lido</button></FeedHeader>
+    <FeedHeader title={t('notifications')} description="Acompanhe respostas, apoios e novidades sobre os seus relatos."><button type="button" onClick={markNotificationsRead} className="feed-secondary-button">Marcar tudo como lido</button></FeedHeader>
     <div className="feed-notification-balloon">
       <div className="feed-notification-head"><span><Bell size={17} /> Sua atividade</span><strong>{notifications.filter((item) => !item.lida).length} novas</strong></div>
       {loadingNotifications ? <div className="feed-empty">Carregando notificações...</div> : notifications.length === 0 ? <div className="feed-notification-empty"><Bell size={30} /><strong>Nenhuma notificação por enquanto</strong><span>Quando a comunidade interagir com seus relatos, elas aparecerão aqui.</span></div> : notifications.map((item) => <div key={item.id} className={`feed-notification ${item.lida ? '' : 'is-unread'}`}><span className="feed-notification-icon"><Bell size={15} /></span><div><strong>{item.titulo}</strong><p>{item.mensagem}</p><small>{item.dataCriacao ? formatDistanceToNow(new Date(item.dataCriacao), { locale: ptBR, addSuffix: true }) : 'agora'}</small></div></div>)}
@@ -430,7 +430,7 @@ const FeedPage = () => {
   </>;
 
   const renderCreate = () => <>
-    <FeedHeader title="Criar postagem" description="Registre um problema urbano e coloque a sua comunidade em movimento." />
+    <FeedHeader title={t('createPostTitle')} description="Registre um problema urbano e coloque a sua comunidade em movimento." />
     <form onSubmit={handleCreate} className="feed-create-form">
       <div className="feed-create-intro"><span className="feed-avatar"><Plus size={18} /></span><div><strong>Nova identificação urbana</strong><small>Compartilhe o que precisa mudar perto de você.</small></div></div>
       <label>Categoria<select name="categoryId" value={createForm.categoryId} onChange={updateCreateForm} required><option value="">Selecione uma categoria</option>{categories.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}</select></label>
@@ -451,16 +451,16 @@ const FeedPage = () => {
       <div className="feed-layout site-menu-safe-layout mx-auto max-w-[1440px] px-4 py-6 lg:px-8">
         <aside className="feed-rail hidden lg:flex">
           <Link to="/" className="feed-brand" aria-label="Voz Urbana"><span className="feed-brand-mark">VU</span><span><strong>Voz</strong><em>URBANA</em></span></Link>
-          <nav className="mt-14 space-y-2">{navItems.map((item) => { const Icon = item.icon; return <button type="button" key={item.key} onClick={() => selectTab(item.key)} className={`feed-nav-item ${activeTab === item.key ? 'is-active' : ''}`}><Icon className="feed-nav-icon" size={29} strokeWidth={1.8} /><span>{item.label}</span></button>; })}</nav>
+          <nav className="mt-14 space-y-2">{navItems.map((item) => { const Icon = item.icon; return <button type="button" key={item.key} onClick={() => selectTab(item.key)} className={`feed-nav-item ${activeTab === item.key ? 'is-active' : ''}`}><Icon className="feed-nav-icon" size={29} strokeWidth={1.8} /><span>{t(item.label)}</span></button>; })}</nav>
           <Link to="/profile" className="feed-profile mt-auto">{displayAvatar ? <img src={displayAvatar} alt="" /> : <span>{displayName.slice(1, 2).toUpperCase()}</span>}<small>{displayName}</small><span className="feed-profile-edit">&#9998;</span></Link>
         </aside>
-        <nav className="feed-mobile-nav lg:hidden" aria-label="Navegação do feed">{navItems.map((item) => { const Icon = item.icon; return <button type="button" key={item.key} onClick={() => selectTab(item.key)} className={activeTab === item.key ? 'is-active' : ''}><Icon size={18} /><span>{item.label}</span></button>; })}</nav>
+        <nav className="feed-mobile-nav lg:hidden" aria-label="Navegação do feed">{navItems.map((item) => { const Icon = item.icon; return <button type="button" key={item.key} onClick={() => selectTab(item.key)} className={activeTab === item.key ? 'is-active' : ''}><Icon size={18} /><span>{t(item.label)}</span></button>; })}</nav>
         <section className="feed-main">{renderTab()}</section>
         <aside className="feed-aside hidden xl:block"><div className="feed-aside-head"><span>Para seguir</span><Users size={17} /></div><div className="feed-empty">Pesquise pessoas para encontrar conexões reais.</div><div className="feed-aside-links">Sobre · Ajuda · Imprensa · API · Carreiras<br />Termos · Localizações · Idioma</div><div className="feed-aside-note"><Bell size={15} /> Comunidade conectada</div></aside>
       </div>
       {editingPost && <div className="fixed inset-0 z-[1400] grid place-items-center bg-black/70 p-4" role="dialog" aria-modal="true" aria-label="Editar publicação">
         <form onSubmit={saveEdit} className="site-panel max-h-[90vh] w-full max-w-2xl space-y-4 overflow-auto rounded-2xl p-6">
-          <div className="flex items-center justify-between"><h2 className="text-xl font-bold">Editar publicação</h2><button type="button" onClick={() => setEditingPost(null)} aria-label="Fechar">×</button></div>
+          <div className="flex items-center justify-between"><h2 className="text-xl font-bold">{t('editPostTitle')}</h2><button type="button" onClick={() => setEditingPost(null)} aria-label="Fechar">×</button></div>
           <input value={editingPost.title} onChange={(event) => setEditingPost((current) => ({ ...current, title: event.target.value }))} required className="site-form-input w-full rounded p-3" />
           <textarea value={editingPost.description} onChange={(event) => setEditingPost((current) => ({ ...current, description: event.target.value }))} required rows="5" className="site-form-input w-full rounded p-3" />
           <input value={editingPost.address} onChange={(event) => setEditingPost((current) => ({ ...current, address: event.target.value }))} required className="site-form-input w-full rounded p-3" />

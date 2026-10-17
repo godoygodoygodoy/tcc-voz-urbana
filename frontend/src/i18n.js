@@ -2,6 +2,14 @@ import React, { createContext, useContext, useEffect, useMemo, useState } from '
 
 const translations = {
   'pt-BR': {
+    forgotPasswordTitle: "Esqueci minha senha",
+    resetPasswordTitle: "Nova senha",
+    conversationsTitle: "Conversas",
+    searchTitle: "Pesquisar",
+    createPostTitle: "Criar postagem",
+    create: "Criar",
+    editPostTitle: "Editar publicação",
+
     navHome: 'Início', navHow: 'Como funciona', navMap: 'Mapa', navFeed: 'Feed', navAbout: 'Sobre', navContact: 'Contato',
     login: 'Entrar', logout: 'Sair', account: 'Minha conta', accountSettings: 'Configurações da conta', siteSettings: 'Configurações do site', createProfile: 'Criar novo perfil', createAccount: 'Criar conta',
     language: 'Idioma', portuguese: 'Português (Brasil)', english: 'English', spanish: 'Español',
@@ -26,6 +34,14 @@ const translations = {
     problemNotFound: 'Problema não encontrado', loading: 'Carregando...', reportedBy: 'Reportado por', date: 'Data', support: 'Apoiar', whatDoYouThink: 'O que acha dessa denúncia?', comments: 'Comentários', writeComment: 'Escreva uma atualização ou comentário', noComments: 'Ainda não há comentários.', updates: 'Atualizações', loginToVote: 'Faça login para votar', loginToComment: 'Faça login para comentar', voteRegistered: 'Voto registrado!', commentPublished: 'Comentário publicado', points: 'pontos', selectedProblem: 'Problema selecionado',
   },
   en: {
+    forgotPasswordTitle: "Forgot password",
+    resetPasswordTitle: "New password",
+    conversationsTitle: "Conversations",
+    searchTitle: "Search",
+    createPostTitle: "Create post",
+    create: "Create",
+    editPostTitle: "Edit post",
+
     navHome: 'Home', navHow: 'How it works', navMap: 'Map', navFeed: 'Feed', navAbout: 'About', navContact: 'Contact',
     login: 'Log in', logout: 'Log out', account: 'My account', accountSettings: 'Account settings', siteSettings: 'Site settings', createProfile: 'Create new profile', createAccount: 'Create account',
     language: 'Language', portuguese: 'Português (Brasil)', english: 'English', spanish: 'Español',
@@ -50,6 +66,14 @@ const translations = {
     problemNotFound: 'Problem not found', loading: 'Loading...', reportedBy: 'Reported by', date: 'Date', support: 'Support', whatDoYouThink: 'What do you think about this report?', comments: 'Comments', writeComment: 'Write an update or comment', noComments: 'No comments yet.', updates: 'Updates', loginToVote: 'Log in to vote', loginToComment: 'Log in to comment', voteRegistered: 'Vote registered!', commentPublished: 'Comment published', points: 'points', selectedProblem: 'Selected problem',
   },
   es: {
+    forgotPasswordTitle: "Olvidé mi contraseña",
+    resetPasswordTitle: "Nueva contraseña",
+    conversationsTitle: "Conversaciones",
+    searchTitle: "Buscar",
+    createPostTitle: "Crear publicación",
+    create: "Crear",
+    editPostTitle: "Editar publicación",
+
     navHome: 'Inicio', navHow: 'Cómo funciona', navMap: 'Mapa', navFeed: 'Feed', navAbout: 'Sobre nosotros', navContact: 'Contacto',
     login: 'Entrar', logout: 'Salir', account: 'Mi cuenta', accountSettings: 'Configuración de la cuenta', siteSettings: 'Configuración del sitio', createProfile: 'Crear nuevo perfil', createAccount: 'Crear cuenta',
     language: 'Idioma', portuguese: 'Português (Brasil)', english: 'English', spanish: 'Español',

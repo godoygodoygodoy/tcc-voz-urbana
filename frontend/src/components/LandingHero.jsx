@@ -13,7 +13,7 @@ const LandingHero = ({
   stats,
   recentProblems,
 }) => {
-  const marqueeText = 'A CIDADE FALA  /  VOZ URBANA  /  A CIDADE FALA  /  ';
+  const marqueeText = `${t('citySpeaks')} ${t('speaks')} / VOZ URBANA / `;
 
   return (
     <section id="inicio" className="urban-hero" aria-labelledby="urban-hero-title">
@@ -50,9 +50,9 @@ const LandingHero = ({
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 1, delay: 0.12, ease: [0.16, 1, 0.3, 1] }}
           >
-            <span>A CIDADE</span>
-            <span className="urban-hero__title-accent">FALA<span className="urban-hero__title-dot">.</span></span>
-            <em>VOCÊ AMPLIFICA</em>
+            <span>{t('citySpeaks')}</span>
+            <span className="urban-hero__title-accent">{t('speaks')}<span className="urban-hero__title-dot">.</span></span>
+            <em>{t('amplify')}</em>
           </motion.h1>
 
           <motion.p
