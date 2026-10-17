@@ -49,6 +49,7 @@ export const problemsAPI = {
     return api.post('/problems', data);
   },
   get: (id) => api.get(`/problems/${id}`),
+  update: (id, data) => api.put(`/problems/${id}`, data),
 };
 
 // Categories

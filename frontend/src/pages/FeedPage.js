@@ -34,6 +34,9 @@ const navItems = [
 ];
 
 const emptyCreateForm = { title: '', description: '', address: '', categoryId: '' };
+const MAX_IMAGE_COUNT = 8;
+const MAX_IMAGE_SIZE = 5 * 1024 * 1024;
+const IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
 
 const FeedAction = ({ active, asset, label, count, onClick, disabled }) => (
   <button
@@ -87,6 +90,12 @@ const FeedPage = () => {
   const [messageText, setMessageText] = useState('');
   const [createForm, setCreateForm] = useState(emptyCreateForm);
   const [creating, setCreating] = useState(false);
+  const [createImages, setCreateImages] = useState([]);
+  const [editingPost, setEditingPost] = useState(null);
+  const [editImages, setEditImages] = useState([]);
+  const [removedEditImages, setRemovedEditImages] = useState([]);
+  const [savingEdit, setSavingEdit] = useState(false);
+  const [lightboxImage, setLightboxImage] = useState(null);
 
   const activeTab = navItems.some((item) => item.key === location.hash.slice(1)) ? location.hash.slice(1) : 'home';
 
@@ -121,6 +130,56 @@ const FeedPage = () => {
         setNotifications([]);
       } finally {
         setLoadingNotifications(false);
+      }
+    };
+
+    const validateImages = (files, existingCount = 0) => {
+      const selected = Array.from(files || []);
+      if (existingCount + selected.length > MAX_IMAGE_COUNT) throw new Error(`Você pode enviar no máximo ${MAX_IMAGE_COUNT} imagens.`);
+      const invalid = selected.find((file) => !IMAGE_TYPES.includes(file.type) || file.size > MAX_IMAGE_SIZE);
+      if (invalid) throw new Error('Use JPG, PNG, WEBP ou GIF com até 5 MB por imagem.');
+      return selected;
+    };
+
+    const handleCreateImages = (event) => {
+      try {
+        setCreateImages((current) => [...current, ...validateImages(event.target.files, current.length)]);
+      } catch (error) {
+        toast.error(error.message);
+      } finally {
+        event.target.value = '';
+      }
+    };
+
+    const startEditing = (post) => {
+      setEditingPost({
+        ...post,
+        title: post.title || '',
+        description: post.description || '',
+        address: post.address || '',
+        categoryId: post.category?.id || ''
+      });
+      setEditImages([]);
+      setRemovedEditImages([]);
+    };
+
+    const saveEdit = async (event) => {
+      event.preventDefault();
+      if (!editingPost) return;
+      try {
+        setSavingEdit(true);
+        const payload = new FormData();
+        ['title', 'description', 'address', 'categoryId'].forEach((key) => payload.append(key, editingPost[key]));
+        payload.append('removedImageIds', JSON.stringify(removedEditImages));
+        editImages.forEach((file) => payload.append('images', file));
+        const response = await problemsAPI.update(editingPost.id, payload);
+        setPosts((current) => current.map((post) => post.id === editingPost.id ? response.data : post));
+        setEditingPost(null);
+        toast.success('Publicação atualizada.');
+      } catch (error) {
+        toast.error(error.response?.data?.error || error.message || 'Não foi possível editar a publicação.');
+      } finally {
+        setSavingEdit(false);
       }
     };
     loadNotifications();
@@ -226,9 +285,11 @@ const FeedPage = () => {
       setCreating(true);
       const payload = new FormData();
       Object.entries(createForm).forEach(([key, value]) => payload.append(key, value));
+      createImages.forEach((file) => payload.append('images', file));
       await problemsAPI.create(payload);
       toast.success('Postagem criada com sucesso!');
       setCreateForm(emptyCreateForm);
+      setCreateImages([]);
       selectTab('home');
       loadFeed();
     } catch (error) {
@@ -293,12 +354,15 @@ const FeedPage = () => {
       <div className="feed-post-head">
         {authorAvatar ? <img className="feed-avatar object-cover" src={authorAvatar} alt="" /> : <div className="feed-avatar">{authorName.charAt(0).toUpperCase()}</div>}
         <div className="min-w-0"><strong>{authorHandle}</strong><span>{authorName} · {post.createdAt ? formatDistanceToNow(new Date(post.createdAt), { locale: language === 'pt-BR' ? ptBR : undefined, addSuffix: true }) : 'agora'}</span></div>
-        <button type="button" className="feed-more" aria-label="Mais opções"><Ellipsis size={18} /></button>
+        <div className="relative">
+          <button type="button" className="feed-more" aria-label="Mais opções" onClick={() => post.author?.id === user?.id && startEditing(post)}><Ellipsis size={18} /></button>
+          {post.author?.id === user?.id && <button type="button" className="sr-only" onClick={() => startEditing(post)}>Editar publicação</button>}
+        </div>
       </div>
       <Link to={`/problem/${post.id}`} className="block">
-        <div className="feed-post-copy"><span className="feed-category">{post.category?.name || t('noCategory')}</span><h2>{post.title}</h2><p>{post.description}</p><span className="feed-location"><MapPin size={13} />{post.address || t('locationOnMap')}</span></div>
+        <div className="feed-post-copy"><span className="feed-category">{post.category?.name || t('noCategory')}</span><h2>{post.title}{post.isEdited && <small className="ml-2 text-xs text-white/45">(editado)</small>}</h2><p>{post.description}</p><span className="feed-location"><MapPin size={13} />{post.address || t('locationOnMap')}</span></div>
         <div className="feed-media">
-          {images.length > 0 ? <img src={mediaUrl(images[slide].url)} alt={post.title} /> : <div className="feed-media-placeholder"><span>Voz Urbana</span><strong>{post.title}</strong><small>{statusLabels[post.status] || post.status}</small></div>}
+          {images.length > 0 ? <button type="button" className="block h-full w-full" onClick={(event) => { event.preventDefault(); setLightboxImage(mediaUrl(images[slide].url)); }}><img src={mediaUrl(images[slide].url)} alt={post.title} /></button> : <div className="feed-media-placeholder"><span>Voz Urbana</span><strong>{post.title}</strong><small>{statusLabels[post.status] || post.status}</small></div>}
           {images.length > 1 && <><button type="button" onClick={(event) => { event.preventDefault(); changeSlide(post.id, -1, images.length); }} className="feed-slide feed-slide-left" aria-label="Imagem anterior"><ChevronLeft size={20} /></button><button type="button" onClick={(event) => { event.preventDefault(); changeSlide(post.id, 1, images.length); }} className="feed-slide feed-slide-right" aria-label="Próxima imagem"><ChevronRight size={20} /></button><div className="feed-dots">{images.map((image, index) => <span key={image.id || index} className={index === slide ? 'is-current' : ''} />)}</div></>}
         </div>
       </Link>
@@ -373,6 +437,8 @@ const FeedPage = () => {
       <label>Título<input name="title" value={createForm.title} onChange={updateCreateForm} placeholder="Ex: Buraco na rua principal" required /></label>
       <label>Descrição<textarea name="description" value={createForm.description} onChange={updateCreateForm} placeholder="Descreva o que está acontecendo..." rows="5" required /></label>
       <label>Endereço completo<input name="address" value={createForm.address} onChange={updateCreateForm} placeholder="Rua, número ou sem número, bairro, cidade e referência" required /></label>
+      <label>Fotos (JPG, PNG, WEBP ou GIF; até 8 arquivos de 5 MB)<input type="file" accept={IMAGE_TYPES.join(',')} multiple onChange={handleCreateImages} /></label>
+      {createImages.length > 0 && <div className="grid grid-cols-4 gap-2">{createImages.map((file, index) => <div key={`${file.name}-${index}`} className="relative"><img src={URL.createObjectURL(file)} alt="" className="h-20 w-full rounded object-cover" /><button type="button" onClick={() => setCreateImages((current) => current.filter((_, imageIndex) => imageIndex !== index))} className="absolute right-1 top-1">×</button></div>)}</div>}
       <button type="submit" disabled={creating} className="feed-create-submit"><Send size={16} /> {creating ? 'Publicando...' : 'Publicar identificação'}</button>
     </form>
   </>;
@@ -390,8 +456,22 @@ const FeedPage = () => {
         </aside>
         <nav className="feed-mobile-nav lg:hidden" aria-label="Navegação do feed">{navItems.map((item) => { const Icon = item.icon; return <button type="button" key={item.key} onClick={() => selectTab(item.key)} className={activeTab === item.key ? 'is-active' : ''}><Icon size={18} /><span>{item.label}</span></button>; })}</nav>
         <section className="feed-main">{renderTab()}</section>
-        <aside className="feed-aside hidden xl:block"><div className="feed-aside-head"><span>Para seguir</span><Users size={17} /></div>{Array.from({ length: 5 }).map((_, index) => <div className="feed-suggestion" key={index}><span className="feed-avatar feed-avatar-small">{String.fromCharCode(65 + index)}</span><span><strong>@usuario_de_exemplo</strong><small>Identificação urbana</small></span><button type="button">Seguir</button></div>)}<div className="feed-aside-links">Sobre · Ajuda · Imprensa · API · Carreiras<br />Termos · Localizações · Idioma</div><div className="feed-aside-note"><Bell size={15} /> Comunidade conectada</div></aside>
+        <aside className="feed-aside hidden xl:block"><div className="feed-aside-head"><span>Para seguir</span><Users size={17} /></div><div className="feed-empty">Pesquise pessoas para encontrar conexões reais.</div><div className="feed-aside-links">Sobre · Ajuda · Imprensa · API · Carreiras<br />Termos · Localizações · Idioma</div><div className="feed-aside-note"><Bell size={15} /> Comunidade conectada</div></aside>
       </div>
+      {editingPost && <div className="fixed inset-0 z-[1400] grid place-items-center bg-black/70 p-4" role="dialog" aria-modal="true" aria-label="Editar publicação">
+        <form onSubmit={saveEdit} className="site-panel max-h-[90vh] w-full max-w-2xl space-y-4 overflow-auto rounded-2xl p-6">
+          <div className="flex items-center justify-between"><h2 className="text-xl font-bold">Editar publicação</h2><button type="button" onClick={() => setEditingPost(null)} aria-label="Fechar">×</button></div>
+          <input value={editingPost.title} onChange={(event) => setEditingPost((current) => ({ ...current, title: event.target.value }))} required className="site-form-input w-full rounded p-3" />
+          <textarea value={editingPost.description} onChange={(event) => setEditingPost((current) => ({ ...current, description: event.target.value }))} required rows="5" className="site-form-input w-full rounded p-3" />
+          <input value={editingPost.address} onChange={(event) => setEditingPost((current) => ({ ...current, address: event.target.value }))} required className="site-form-input w-full rounded p-3" />
+          <select value={editingPost.categoryId} onChange={(event) => setEditingPost((current) => ({ ...current, categoryId: event.target.value }))} required className="site-form-input w-full rounded p-3">{categories.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}</select>
+          <div className="grid grid-cols-4 gap-2">{(editingPost.images || []).filter((image) => !removedEditImages.includes(image.id)).map((image) => <div key={image.id} className="relative"><img src={mediaUrl(image.url)} alt="" className="h-20 w-full rounded object-cover" /><button type="button" onClick={() => setRemovedEditImages((current) => [...current, image.id])} className="absolute right-1 top-1">×</button></div>)}</div>
+          <input type="file" accept={IMAGE_TYPES.join(',')} multiple onChange={(event) => { try { setEditImages((current) => [...current, ...validateImages(event.target.files, (editingPost.images || []).length - removedEditImages.length + current.length)]); } catch (error) { toast.error(error.message); } event.target.value = ''; }} />
+          {editImages.length > 0 && <p className="text-xs text-white/60">{editImages.length} nova(s) selecionada(s)</p>}
+          <div className="flex justify-end gap-3"><button type="button" onClick={() => setEditingPost(null)}>Cancelar</button><button type="submit" disabled={savingEdit} className="feed-create-submit">{savingEdit ? 'Salvando...' : 'Salvar alterações'}</button></div>
+        </form>
+      </div>}
+      {lightboxImage && <button type="button" className="fixed inset-0 z-[1500] grid place-items-center bg-black/90 p-6" onClick={() => setLightboxImage(null)} aria-label="Fechar imagem"><img src={lightboxImage} alt="" className="max-h-full max-w-full object-contain" /></button>}
     </main>
   );
 };

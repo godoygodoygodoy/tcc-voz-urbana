@@ -5,7 +5,7 @@ import multer from "multer";
 import { uploadsRoot } from "../config/uploads.js";
 import { prisma } from "../config/prisma.js";
 import { asyncHandler } from "../middlewares/errorHandler.js";
-import { authMiddleware } from "../middlewares/auth.js";
+import { authMiddleware, optionalAuthMiddleware } from "../middlewares/auth.js";
 
 // Preparar pasta de uploads
 const UPLOAD_DIR = path.join(uploadsRoot, "problems");
@@ -52,6 +52,8 @@ const serializeProblem = (problem) => ({
   description: problem.descricao,
   address: problem.endereco,
   createdAt: problem.dataCriacao,
+  editedAt: problem.editadaEm,
+  isEdited: Boolean(problem.editadaEm),
   category: problem.categoria
     ? {
       id: problem.categoria.id,
@@ -202,7 +204,8 @@ router.post(
           select: {
             id: true,
             nome: true,
-            fotoPerfil: true
+            fotoPerfil: true,
+            username: true
           }
           },
         imagens: true
@@ -221,9 +224,81 @@ router.post(
 
     const createdProblem = await prisma.problema.findUnique({
       where: { id: problem.id },
-      include: { categoria: true, usuario: { select: { id: true, nome: true } }, imagens: true, atualizacoes: { orderBy: { dataCriacao: "desc" } } }
+      include: { categoria: true,       usuario: { select: { id: true, nome: true, username: true, fotoPerfil: true } }, imagens: true, atualizacoes: { orderBy: { dataCriacao: "desc" } } }
     });
     res.status(201).json(serializeProblem(createdProblem));
+  })
+);
+
+router.put(
+  "/:id",
+  authMiddleware,
+  upload.array("images"),
+  asyncHandler(async (req, res) => {
+    const current = await prisma.problema.findUnique({
+      where: { id: req.params.id },
+      include: { imagens: true }
+    });
+    if (!current) return res.status(404).json({ error: "Problema não encontrado" });
+    if (current.usuarioId !== req.userId) return res.status(403).json({ error: "Somente o autor pode editar esta publicação." });
+
+    const { title, description, categoryId, address } = req.body;
+    if (!title?.trim() || !description?.trim() || !categoryId || !address?.trim()) {
+      return res.status(400).json({ error: "Título, descrição, categoria e endereço são obrigatórios." });
+    }
+    let removedImageIds;
+    try {
+      removedImageIds = JSON.parse(req.body.removedImageIds || "[]");
+    } catch {
+      return res.status(400).json({ error: "Lista de imagens removidas inválida." });
+    }
+    if (!Array.isArray(removedImageIds) || removedImageIds.some((id) => typeof id !== "string")) {
+      return res.status(400).json({ error: "Lista de imagens removidas inválida." });
+    }
+    const ownedRemovedIds = current.imagens.filter((image) => removedImageIds.includes(image.id)).map((image) => image.id);
+    const location = await geocodeAddress(address.trim());
+
+    await prisma.$transaction(async (transaction) => {
+      await transaction.problema.update({
+        where: { id: current.id },
+        data: {
+          titulo: title.trim(),
+          descricao: description.trim(),
+          categoriaId: categoryId,
+          endereco: location.address,
+          latitude: location.latitude,
+          longitude: location.longitude,
+          editadaEm: new Date()
+        }
+      });
+      if (ownedRemovedIds.length) await transaction.imagem.deleteMany({ where: { id: { in: ownedRemovedIds }, problemaId: current.id } });
+      if (req.files?.length) {
+        await transaction.imagem.createMany({
+          data: req.files.map((file) => ({ url: `/uploads/problems/${file.filename}`, tipo: "ANTES", problemaId: current.id }))
+        });
+      }
+    });
+    await Promise.all(current.imagens
+      .filter((image) => ownedRemovedIds.includes(image.id))
+      .map((image) => {
+        const filePath = path.join(uploadsRoot, image.url.replace(/^\/uploads\//, ""));
+        return fs.promises.unlink(filePath).catch((error) => {
+          if (error.code !== "ENOENT") throw error;
+        });
+      }));
+
+    const updated = await prisma.problema.findUnique({
+      where: { id: current.id },
+      include: {
+        categoria: true,
+        usuario: { select: { id: true, nome: true, username: true, fotoPerfil: true } },
+        imagens: true,
+        atualizacoes: { orderBy: { dataCriacao: "desc" } },
+        votos: req.userId ? { where: { usuarioId: req.userId }, select: { id: true } } : undefined,
+        _count: { select: { votos: true } }
+      }
+    });
+    res.json({ ...serializeProblem(updated), supportedByMe: Boolean(updated.votos?.length) });
   })
 );
 
@@ -239,7 +314,8 @@ router.get(
           select: {
             id: true,
             nome: true,
-            fotoPerfil: true
+            fotoPerfil: true,
+            username: true
           }
         },
         imagens: true,

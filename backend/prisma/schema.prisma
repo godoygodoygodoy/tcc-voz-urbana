@@ -53,6 +53,7 @@ model Problema {
   endereco     String?               @db.VarChar(300)
   status       StatusProblema        @default(ABERTO)
   dataCriacao  DateTime              @default(now()) @map("data_criacao")
+  editadaEm    DateTime?             @map("editada_em")
   usuarioId    String                @map("usuario_id") @db.Char(36)
   categoriaId  String                @map("categoria_id") @db.Char(36)
   atualizacoes AtualizacaoProblema[]

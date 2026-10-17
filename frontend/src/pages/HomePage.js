@@ -6,54 +6,6 @@ import ProblemCard from '../components/ProblemCard';
 import { FiFilter } from 'react-icons/fi';
 import { useI18n } from '../i18n';
 
-const demoCategories = [
-  { id: 'asfalto', name: 'Asfalto' },
-  { id: 'lixo', name: 'Lixo' },
-  { id: 'vegetacao', name: 'Vegetação' },
-];
-
-const demoProblems = [
-  {
-    id: 'demo-map-1',
-    title: 'Buraco no asfalto',
-    description: 'Trecho com risco para veículos e pedestres.',
-    address: 'Av. Central, 1200',
-    latitude: -15.7797,
-    longitude: -47.9297,
-    status: 'open',
-    votes: 18,
-    createdAt: new Date().toISOString(),
-    category: demoCategories[0],
-    images: [],
-  },
-  {
-    id: 'demo-map-2',
-    title: 'Lixo acumulado',
-    description: 'Coleta irregular gerando mau cheiro e obstrução.',
-    address: 'Rua do Comércio, 48',
-    latitude: -15.7868,
-    longitude: -47.8841,
-    status: 'in_progress',
-    votes: 11,
-    createdAt: new Date().toISOString(),
-    category: demoCategories[1],
-    images: [],
-  },
-  {
-    id: 'demo-map-3',
-    title: 'Vegetação alta',
-    description: 'Crescimento excessivo dificultando a passagem.',
-    address: 'Rua Santa Clara, 77',
-    latitude: -15.8022,
-    longitude: -47.9134,
-    status: 'resolved',
-    votes: 7,
-    createdAt: new Date().toISOString(),
-    category: demoCategories[2],
-    images: [],
-  },
-];
-
 const HomePage = () => {
   const { t } = useI18n();
   const [problems, setProblems] = useState([]);
@@ -84,16 +36,16 @@ const HomePage = () => {
         const fetchedCategories = categoriesRes.data || [];
         setTotal(problemsRes.data.total || 0);
 
-        setProblems(fetchedProblems.length > 0 ? fetchedProblems : demoProblems);
-        setMapProblems(fetchedProblems.length > 0 ? fetchedProblems : demoProblems);
-        setSelectedProblem((currentSelected) => currentSelected || fetchedProblems[0] || demoProblems[0] || null);
-        setCategories(fetchedCategories.length > 0 ? fetchedCategories : demoCategories);
+        setProblems(fetchedProblems);
+        setMapProblems(fetchedProblems);
+        setSelectedProblem((currentSelected) => currentSelected || fetchedProblems[0] || null);
+        setCategories(fetchedCategories);
       } catch (error) {
-        setProblems(demoProblems);
-        setMapProblems(demoProblems);
-        setSelectedProblem(demoProblems[0]);
-        setCategories(demoCategories);
-        toast.info(t('demoMode'));
+        setProblems([]);
+        setMapProblems([]);
+        setSelectedProblem(null);
+        setCategories([]);
+        toast.error(t('apiUnavailable'));
       } finally {
         setLoading(false);
       }

@@ -34,57 +34,6 @@ import SiteMenu from '../components/SiteMenu';
 import LandingHero from '../components/LandingHero';
 import AmbientContour from '../components/AmbientContour';
 
-const fallbackCategories = [
-  { id: 'asfalto', name: 'Asfalto' },
-  { id: 'lixo', name: 'Lixo' },
-  { id: 'vegetacao', name: 'Vegetação' },
-  { id: 'iluminacao', name: 'Iluminação' },
-  { id: 'sinalizacao', name: 'Sinalização' },
-  { id: 'saneamento', name: 'Saneamento' },
-];
-
-const demoProblems = [
-  {
-    id: 'demo-1',
-    title: 'Buraco no asfalto',
-    description: 'Trecho com risco para motos e carros em horário de pico.',
-    address: 'Av. Central, 1200',
-    latitude: -15.7797,
-    longitude: -47.9297,
-    status: 'open',
-    votes: 18,
-    createdAt: new Date().toISOString(),
-    category: fallbackCategories[0],
-    images: [],
-  },
-  {
-    id: 'demo-2',
-    title: 'Lixeira transbordando',
-    description: 'Ponto de descarte acumulando resíduos há vários dias.',
-    address: 'Rua do Comércio, 48',
-    latitude: -15.7868,
-    longitude: -47.8841,
-    status: 'in_progress',
-    votes: 11,
-    createdAt: new Date().toISOString(),
-    category: fallbackCategories[1],
-    images: [],
-  },
-  {
-    id: 'demo-3',
-    title: 'Árvore obstruindo a passagem',
-    description: 'Galhos avançando sobre a calçada e a sinalização da via.',
-    address: 'Rua Santa Clara, 77',
-    latitude: -15.8022,
-    longitude: -47.9134,
-    status: 'resolved',
-    votes: 7,
-    createdAt: new Date().toISOString(),
-    category: fallbackCategories[2],
-    images: [],
-  },
-];
-
 const fadeUp = {
   hidden: { opacity: 0, y: 28 },
   visible: {
@@ -180,14 +129,14 @@ export default function LandingPage() {
         const problems = problemsRes.data?.data || [];
         const fetchedCategories = categoriesRes.data || [];
 
-        setRecentProblems(problems.length > 0 ? problems : demoProblems);
-        setSelectedProblem((currentSelected) => currentSelected || problems[0] || demoProblems[0] || null);
-        setCategories(fetchedCategories.length > 0 ? fetchedCategories : fallbackCategories);
+        setRecentProblems(problems);
+        setSelectedProblem((currentSelected) => currentSelected || problems[0] || null);
+        setCategories(fetchedCategories);
       } catch (error) {
-        setRecentProblems(demoProblems);
-        setSelectedProblem(demoProblems[0]);
-        setCategories(fallbackCategories);
-        toast.info('Modo demonstração ativado, a API não respondeu');
+        setRecentProblems([]);
+        setSelectedProblem(null);
+        setCategories([]);
+        toast.error(t('apiUnavailable'));
       } finally {
         setLoadingFeed(false);
       }
@@ -196,7 +145,7 @@ export default function LandingPage() {
     fetchLandingData();
   }, []);
 
-  const activeCategories = categories.length > 0 ? categories : fallbackCategories;
+  const activeCategories = categories;
 
   const stats = useMemo(() => {
     const openCount = recentProblems.filter((problem) => ['open', 'ABERTO'].includes(problem.status)).length;
@@ -480,7 +429,7 @@ export default function LandingPage() {
           <div>
             <p className="text-xs font-semibold uppercase tracking-[0.32em] text-white/40">Feed</p>
             <h3 className="mt-3 text-4xl font-black text-white sm:text-5xl">Identificações recentes</h3>
-            <p className="mt-4 max-w-2xl text-white/65">{t('feedFallback')}</p>
+            <p className="mt-4 max-w-2xl text-white/65">{t('feedDescription')}</p>
           </div>
           <Link to="/map" className="inline-flex items-center gap-2 text-sm font-semibold text-violet-200 transition hover:text-white">
             Ver tudo no mapa
