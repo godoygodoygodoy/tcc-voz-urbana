@@ -1578,9 +1578,9 @@ code {
    dropdown, so it remains usable on touch devices and with keyboard focus. */
 .site-menu {
   position: fixed;
-  top: 1rem;
-  left: 1rem;
-  z-index: 110;
+  top: var(--site-menu-top);
+  left: var(--site-menu-inset);
+  z-index: 1200;
 }
 
 .site-menu-trigger {
@@ -1838,24 +1838,67 @@ code {
   transition: background 300ms ease, box-shadow 300ms ease;
 }
 
+/* One viewport-based menu column, shared by every route and the fixed trigger. */
+:root {
+  --site-menu-inset: max(12px, env(safe-area-inset-left));
+  --site-menu-top: max(12px, env(safe-area-inset-top));
+  --site-menu-size: 44px;
+  --site-menu-gap: 16px;
+  --site-menu-clearance: calc(var(--site-menu-inset) + var(--site-menu-size) + var(--site-menu-gap));
+  --site-header-height: max(76px, calc(var(--site-menu-top) + var(--site-menu-size) + 12px));
+}
+
+.site-header-inner {
+  display: grid;
+  grid-template-columns: var(--site-menu-clearance) minmax(0, 1fr);
+  min-height: var(--site-header-height);
+  padding-block: 12px;
+  padding-right: max(16px, env(safe-area-inset-right));
+}
+
 .site-header-content {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 16px;
   min-width: 0;
-  gap: clamp(4.5rem, 12vw, 10rem);
+  width: 100%;
+  max-width: 1280px;
+  margin-inline: auto;
 }
 
-.site-header-brand,
-.site-header-actions {
+.site-header-brand {
+  display: flex;
+  align-items: center;
+  gap: 2px;
   min-width: 0;
-  flex-shrink: 1;
+  width: fit-content;
+  max-width: 100%;
 }
 
-.site-header-brand img {
-  max-width: min(165px, 24vw);
+.site-header-brand .site-header-mascot {
+  width: clamp(24px, 7vw, 44px);
+  height: 44px;
+  flex: 0 0 auto;
+  object-fit: contain;
+}
+
+.site-header-brand .site-header-wordmark {
+  width: auto;
+  max-width: calc(100% - clamp(24px, 7vw, 44px) - 2px);
+  min-width: 0;
+  height: 36px;
+  object-fit: contain;
+  object-position: left center;
 }
 
 .site-header-actions {
-  margin-left: auto;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
   justify-content: flex-end;
+  gap: 8px;
+  min-width: 0;
 }
 
 .site-header.is-compact {
@@ -1897,10 +1940,6 @@ code {
   color: rgba(255, 255, 255, 0.5);
 }
 
-.landing-page > header {
-  padding-left: clamp(4.5rem, 12vw, 10rem);
-}
-
 .site-header-inner > a,
 .site-header-inner > div:last-child {
   position: relative;
@@ -1908,27 +1947,14 @@ code {
 }
 
 @media (max-width: 700px) {
-  .site-header-content {
-    gap: 2.75rem;
-  }
+  .site-header-content { gap: 8px; }
+  .site-header-actions .access-menu-label,
+  .site-header-actions .access-menu-chevron { display: none; }
+}
 
-  .site-header-brand {
-    gap: 0.4rem;
-  }
-
-  .site-header-brand svg {
-    width: 2.2rem;
-    height: 2.2rem;
-  }
-
-  .site-header-brand img {
-    max-width: 100px;
-    height: 2rem;
-  }
-
-  .landing-page > header {
-    padding-left: 4rem;
-  }
+@media (max-width: 360px) {
+  .site-header-content { grid-template-columns: minmax(0, 1fr); gap: 4px; }
+  .site-header-actions { grid-column: 1; }
 }
 
 .urban-card {
@@ -2652,14 +2678,6 @@ code {
     #090b0e;
 }
 
-/* Keep only the trigger pinned; the navigation panel still opens on demand. */
-.site-menu {
-  position: fixed !important;
-  top: max(12px, env(safe-area-inset-top)) !important;
-  left: max(12px, env(safe-area-inset-left)) !important;
-  z-index: 1200 !important;
-}
-
 .site-menu-trigger {
   position: relative;
   z-index: 2;
@@ -2675,13 +2693,12 @@ code {
 
 /* Site navigation drawer */
 .site-header-inner { position: relative; }
-.site-menu { position: fixed; top: 16px; left: 16px; z-index: 110; }
-.site-menu-trigger { display: grid; width: 38px; height: 38px; place-items: center; border: 1px solid transparent; border-radius: 50%; background: transparent; color: rgba(255, 255, 255, 0.72); }
+.site-menu-trigger { display: grid; width: var(--site-menu-size); height: var(--site-menu-size); place-items: center; border: 1px solid transparent; border-radius: 50%; background: transparent; color: rgba(255, 255, 255, 0.72); }
 .site-menu-trigger:hover, .site-menu:focus-within .site-menu-trigger { border-color: rgba(192, 54, 255, 0.45); background: rgba(183, 42, 255, 0.12); color: #fff; }
 .site-menu-close-icon { display: none; }
 .site-menu:focus-within .site-menu-open-icon, .site-menu:hover .site-menu-open-icon { display: none; }
 .site-menu:focus-within .site-menu-close-icon, .site-menu:hover .site-menu-close-icon { display: block; }
-.site-menu-panel { position: fixed; top: 73px; left: 16px; width: 274px; visibility: hidden; pointer-events: none; border: 1px solid rgba(255, 255, 255, 0.12); border-radius: 0 18px 18px 18px; background: rgba(25, 18, 32, 0.97); padding: 14px; opacity: 0; box-shadow: 0 24px 70px rgba(0, 0, 0, 0.48), 8px 0 28px rgba(183, 42, 255, 0.12); transform: translate(-12px, -8px); transition: opacity 180ms ease, transform 180ms ease, visibility 180ms ease; backdrop-filter: blur(24px); }
+.site-menu-panel { position: fixed; top: calc(var(--site-menu-top) + var(--site-menu-size) + var(--site-menu-gap)); left: 16px; width: 274px; visibility: hidden; pointer-events: none; border: 1px solid rgba(255, 255, 255, 0.12); border-radius: 0 18px 18px 18px; background: rgba(25, 18, 32, 0.97); padding: 14px; opacity: 0; box-shadow: 0 24px 70px rgba(0, 0, 0, 0.48), 8px 0 28px rgba(183, 42, 255, 0.12); transform: translate(-12px, -8px); transition: opacity 180ms ease, transform 180ms ease, visibility 180ms ease; backdrop-filter: blur(24px); }
 .site-menu:hover .site-menu-panel, .site-menu:focus-within .site-menu-panel { visibility: visible; pointer-events: auto; opacity: 1; transform: translate(0, 0); }
 .site-menu-panel-title { border-bottom: 1px solid rgba(255, 255, 255, 0.08); padding: 3px 10px 12px; color: #c86cff; font-size: 10px; font-weight: 900; letter-spacing: 0.23em; text-transform: uppercase; }
 .site-menu-links { display: flex; flex-direction: column; gap: 3px; padding-top: 8px; }
@@ -2715,6 +2732,7 @@ code {
 .site-comment { border-color: rgba(255, 255, 255, 0.08); background: rgba(255, 255, 255, 0.05); }
 
 .feed-layout {
+  min-height: 100vh;
   display: grid;
   grid-template-columns: 220px minmax(0, 650px) 260px;
   gap: 44px;
@@ -2722,8 +2740,9 @@ code {
 
 .feed-rail {
   position: sticky;
-  top: 1.5rem;
-  height: calc(100vh - 3rem);
+  top: calc(var(--site-header-height) + 1rem);
+  height: calc(100dvh - var(--site-header-height) - 3rem);
+  align-self: start;
   flex-direction: column;
   border-right: 1px solid rgba(255, 255, 255, 0.06);
   padding-right: 24px;
@@ -3008,10 +3027,6 @@ code {
 }
 
 @media (max-width: 640px) {
-  .site-menu {
-    top: max(12px, env(safe-area-inset-top)) !important;
-    left: max(12px, env(safe-area-inset-left)) !important;
-  }
   .site-menu-panel { left: 8px; width: min(274px, calc(100vw - 16px)); }
   .feed-layout { padding: 12px 0; }
   .feed-title { font-size: 27px; }

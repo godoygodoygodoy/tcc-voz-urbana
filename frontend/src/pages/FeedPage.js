@@ -448,7 +448,7 @@ const FeedPage = () => {
   return (
     <main className="feed-shell min-h-screen bg-[#090b0e] text-white">
       <AmbientContour variant="feed" />
-      <div className="feed-layout mx-auto max-w-[1440px] px-4 py-6 lg:px-8">
+      <div className="feed-layout site-menu-safe-layout mx-auto max-w-[1440px] px-4 py-6 lg:px-8">
         <aside className="feed-rail hidden lg:flex">
           <Link to="/" className="feed-brand" aria-label="Voz Urbana"><span className="feed-brand-mark">VU</span><span><strong>Voz</strong><em>URBANA</em></span></Link>
           <nav className="mt-14 space-y-2">{navItems.map((item) => { const Icon = item.icon; return <button type="button" key={item.key} onClick={() => selectTab(item.key)} className={`feed-nav-item ${activeTab === item.key ? 'is-active' : ''}`}><Icon className="feed-nav-icon" size={29} strokeWidth={1.8} /><span>{item.label}</span></button>; })}</nav>

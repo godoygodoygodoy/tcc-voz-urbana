@@ -1,0 +1,46 @@
+{
+  "zoomMethod": "200% reflow simulated by halving CSS viewport dimensions",
+  "api": "local fixtures; no real login/backend",
+  "checks": 1920,
+  "errors": [],
+  "routes": [
+    "/",
+    "/#como",
+    "/#sobre",
+    "/#contato",
+    "/contato",
+    "/map",
+    "/feed",
+    "/login",
+    "/forgot-password",
+    "/reset-password?token=fixture",
+    "/register",
+    "/problem/1",
+    "/report",
+    "/profile",
+    "/admin",
+    "/inexistente"
+  ],
+  "sizes": [
+    [
+      320,
+      740
+    ],
+    [
+      390,
+      844
+    ],
+    [
+      768,
+      1024
+    ],
+    [
+      1440,
+      900
+    ],
+    [
+      900,
+      1440
+    ]
+  ]
+}
