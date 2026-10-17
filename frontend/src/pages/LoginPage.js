@@ -5,6 +5,7 @@ import { toast } from 'react-toastify';
 import { Card, CardContent } from '../components/ui/card';
 import { Button } from '../components/ui/button';
 import { useI18n } from '../i18n';
+import PasswordField from '../components/PasswordField';
 
 const LoginPage = () => {
   const [formData, setFormData] = useState({
@@ -66,8 +67,7 @@ const LoginPage = () => {
 
             <div>
               <label className="block text-sm font-semibold mb-2">{t('password')}</label>
-              <input
-                type="password"
+              <PasswordField
                 name="password"
                 value={formData.password}
                 onChange={handleChange}
