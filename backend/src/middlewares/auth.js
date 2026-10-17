@@ -25,6 +25,19 @@ export const authMiddleware = async (req, res, next) => {
   }
 };
 
+export const optionalAuthMiddleware = async (req, res, next) => {
+  const token = req.headers.authorization?.split(" ")[1];
+  if (!token) return next();
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const user = await prisma.usuario.findUnique({ where: { id: decoded.id }, select: { id: true } });
+    if (user) req.userId = user.id;
+  } catch {
+    // Public feed requests remain valid when an expired token is present.
+  }
+  next();
+};
+
 export const adminMiddleware = async (req, res, next) => {
   const admin = await prisma.admin.findUnique({
     where: { usuarioId: req.userId }

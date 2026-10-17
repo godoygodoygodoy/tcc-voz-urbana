@@ -11,8 +11,6 @@ const ReportProblemPage = () => {
     title: '',
     description: '',
     address: '',
-    latitude: '',
-    longitude: '',
     categoryId: '',
   });
   const [categories, setCategories] = useState([]);
@@ -33,20 +31,6 @@ const ReportProblemPage = () => {
         setLoadingCategories(false);
       }
     };
-
-    // Obter localização atual
-    if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-          setFormData((prev) => ({
-            ...prev,
-            latitude: position.coords.latitude.toString(),
-            longitude: position.coords.longitude.toString(),
-          }));
-        },
-        (error) => console.log('Erro ao obter localização:', error)
-      );
-    }
 
     fetchCategories();
   }, [t]);
@@ -71,22 +55,6 @@ const ReportProblemPage = () => {
     setPreviews(nextPreviews);
   };
 
-  const handleLocationChange = async ([latitude, longitude]) => {
-    setFormData((prev) => ({ ...prev, latitude: String(latitude), longitude: String(longitude) }));
-
-    try {
-      const response = await fetch(
-        `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${latitude}&lon=${longitude}`,
-        { headers: { Accept: 'application/json', 'User-Agent': 'VozUrbana/1.0' } }
-      );
-      if (!response.ok) return;
-      const data = await response.json();
-      setFormData((prev) => ({ ...prev, address: data.display_name || prev.address }));
-    } catch (error) {
-      console.warn('Não foi possível obter o endereço da localização', error);
-    }
-  };
-
   const handleSubmit = async (e) => {
     e.preventDefault();
 
@@ -102,8 +70,6 @@ const ReportProblemPage = () => {
       payload.append('title', formData.title);
       payload.append('description', formData.description);
       if (formData.address) payload.append('address', formData.address);
-      payload.append('latitude', parseFloat(formData.latitude));
-      payload.append('longitude', parseFloat(formData.longitude));
       payload.append('categoryId', formData.categoryId);
 
       images.forEach((file) => payload.append('images', file));
@@ -183,19 +149,6 @@ const ReportProblemPage = () => {
                 onChange={handleChange}
                 className="site-form-input w-full border rounded-lg p-3"
                 placeholder={t('addressPlaceholder')}
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-semibold mb-2">{t('mapLocation')}</label>
-              <p className="site-muted mb-3 text-sm">{t('mapLocationHint')}</p>
-              <Map
-                problems={[]}
-                height="320px"
-                location={formData.latitude && formData.longitude
-                  ? [Number(formData.latitude), Number(formData.longitude)]
-                  : null}
-                onLocationChange={handleLocationChange}
               />
             </div>
 

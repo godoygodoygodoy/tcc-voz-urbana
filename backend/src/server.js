@@ -17,6 +17,7 @@ import voteRoutes from "./routes/votes.js";
 import adminRoutes from "./routes/admin.js";
 import commentRoutes from "./routes/comments.js";
 import notificationRoutes from "./routes/notifications.js";
+import socialRoutes from "./routes/social.js";
 import rateLimit from "express-rate-limit";
 import path from "path";
 import { fileURLToPath } from "url";
@@ -83,6 +84,7 @@ app.use("/api/users", authMiddleware, userRoutes);
 app.use("/api/votes", authMiddleware, voteRoutes);
 app.use("/api/admin", authMiddleware, adminMiddleware, adminRoutes);
 app.use("/api/notifications", notificationRoutes);
+app.use("/api/social", authMiddleware, socialRoutes);
 
 // 404 handler
 app.use((req, res) => {

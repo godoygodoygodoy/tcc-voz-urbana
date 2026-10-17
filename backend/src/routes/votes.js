@@ -26,8 +26,6 @@ router.post(
       return res.status(404).json({ error: "Problema não encontrado" });
     }
 
-    await notifyProblemOwner({ problem, tipo: "VOTO", titulo: "Novo apoio", mensagem: "Seu problema recebeu uma nova interação" });
-
     // Verificar se já votou
     const existingVote = await prisma.voto.findUnique({
       where: {
@@ -52,6 +50,10 @@ router.post(
           where: { id: existingVote.id },
           data: { tipo: tipoVoto }
         });
+      }
+
+      if (!existingVote || existingVote.tipo !== tipoVoto) {
+        await notifyProblemOwner({ problem, tipo: "VOTO", titulo: "Novo apoio", mensagem: "Seu problema recebeu uma nova interação" });
       }
     } else {
       // Adicionar voto

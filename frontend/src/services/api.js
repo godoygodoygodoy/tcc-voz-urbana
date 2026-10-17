@@ -72,6 +72,15 @@ export const notificationsAPI = {
   markAllRead: () => api.patch('/notifications/read-all'),
 };
 
+export const socialAPI = {
+  searchUsers: (params) => api.get('/social/users/search', { params }),
+  friendship: (id) => api.get(`/social/users/${id}/friendship`),
+  requestFriendship: (id) => api.post(`/social/users/${id}/friendship`),
+  updateFriendship: (id, action) => api.patch(`/social/friendships/${id}`, { action }),
+  friends: () => api.get('/social/friends'),
+  requests: () => api.get('/social/friend-requests'),
+};
+
 // Users
 export const usersAPI = {
   getMe: () => api.get('/users/me'),

@@ -18,7 +18,7 @@ import { formatDistanceToNow } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
-import { categoriesAPI, mediaUrl, notificationsAPI, problemsAPI, votesAPI } from '../services/api';
+import { categoriesAPI, mediaUrl, notificationsAPI, problemsAPI, socialAPI, votesAPI } from '../services/api';
 import { useAuthStore } from '../store';
 import { useI18n } from '../i18n';
 import AmbientContour from '../components/AmbientContour';
@@ -33,7 +33,7 @@ const navItems = [
   { key: 'create', label: 'Criar', icon: Plus },
 ];
 
-const emptyCreateForm = { title: '', description: '', address: '', latitude: '', longitude: '', categoryId: '' };
+const emptyCreateForm = { title: '', description: '', address: '', categoryId: '' };
 
 const FeedAction = ({ active, asset, label, count, onClick, disabled }) => (
   <button
@@ -79,8 +79,11 @@ const FeedPage = () => {
   const [votingPost, setVotingPost] = useState(null);
   const [notifications, setNotifications] = useState([]);
   const [loadingNotifications, setLoadingNotifications] = useState(false);
-  const [messages, setMessages] = useState([{ from: 'Coletivo Centro', text: 'Você viu o novo ponto de iluminação na praça?', time: '09:42' }]);
-  const [selectedConversation, setSelectedConversation] = useState(0);
+  const [userResults, setUserResults] = useState([]);
+  const [loadingUsers, setLoadingUsers] = useState(false);
+  const [friendships, setFriendships] = useState({});
+  const [messages, setMessages] = useState([]);
+  const [selectedConversation, setSelectedConversation] = useState(null);
   const [messageText, setMessageText] = useState('');
   const [createForm, setCreateForm] = useState(emptyCreateForm);
   const [creating, setCreating] = useState(false);
@@ -95,6 +98,7 @@ const FeedPage = () => {
         categoriesAPI.list(),
       ]);
       setPosts(problemsResponse.data?.data || []);
+      setLikedPosts(new Set((problemsResponse.data?.data || []).filter((post) => post.supportedByMe).map((post) => post.id)));
       setTotal(problemsResponse.data?.total || 0);
       setCategories(categoriesResponse.data || []);
     } catch (error) {
@@ -122,6 +126,27 @@ const FeedPage = () => {
     loadNotifications();
   }, [activeTab]);
 
+  useEffect(() => {
+    if (activeTab !== 'search' || search.trim().length < 2) {
+      setUserResults([]);
+      return undefined;
+    }
+    let cancelled = false;
+    const loadUsers = async () => {
+      try {
+        setLoadingUsers(true);
+        const response = await socialAPI.searchUsers({ q: search.trim(), page: 1, limit: 12 });
+        if (!cancelled) setUserResults(response.data?.data || []);
+      } catch (error) {
+        if (!cancelled) setUserResults([]);
+      } finally {
+        if (!cancelled) setLoadingUsers(false);
+      }
+    };
+    loadUsers();
+    return () => { cancelled = true; };
+  }, [activeTab, search]);
+
   const statusLabels = {
     ABERTO: t('openStatus'),
     EM_ANDAMENTO: t('progressStatus'),
@@ -138,7 +163,7 @@ const FeedPage = () => {
       .some((value) => String(value || '').toLowerCase().includes(query)));
   }, [posts, search]);
 
-  const displayName = user?.username ? `@${user.username.replace(/^@/, '')}` : user?.name || user?.nome || '@usuario_de_exemplo';
+  const displayName = user?.username ? `@${user.username.replace(/^@/, '')}` : user?.name || user?.nome || 'Perfil';
   const displayAvatar = mediaUrl(user?.avatar || user?.fotoPerfil);
 
   const selectTab = (key) => {
@@ -193,14 +218,14 @@ const FeedPage = () => {
       toast.info('Entre na sua conta para criar uma postagem.');
       return;
     }
-    if (!createForm.title || !createForm.description || !createForm.categoryId || !createForm.latitude || !createForm.longitude) {
-      toast.error('Preencha título, descrição, categoria e localização.');
+    if (!createForm.title || !createForm.description || !createForm.categoryId || !createForm.address.trim()) {
+      toast.error('Preencha título, descrição, categoria e endereço.');
       return;
     }
     try {
       setCreating(true);
       const payload = new FormData();
-      Object.entries(createForm).forEach(([key, value]) => payload.append(key, key === 'latitude' || key === 'longitude' ? Number(value) : value));
+      Object.entries(createForm).forEach(([key, value]) => payload.append(key, value));
       await problemsAPI.create(payload);
       toast.success('Postagem criada com sucesso!');
       setCreateForm(emptyCreateForm);
@@ -225,16 +250,49 @@ const FeedPage = () => {
     setNotifications((current) => current.map((item) => ({ ...item, lida: true })));
   };
 
+  const loadFriendship = async (userId) => {
+    if (!user) return;
+    try {
+      const response = await socialAPI.friendship(userId);
+      setFriendships((current) => ({ ...current, [userId]: response.data }));
+    } catch (error) {
+      toast.error('Não foi possível consultar a amizade.');
+    }
+  };
+
+  const changeFriendship = async (person) => {
+    if (!user) {
+      toast.info('Entre na sua conta para adicionar pessoas.');
+      return;
+    }
+    const relation = friendships[person.id];
+    try {
+      if (!relation || relation.status === 'NONE') {
+        const response = await socialAPI.requestFriendship(person.id);
+        setFriendships((current) => ({ ...current, [person.id]: response.data }));
+      } else {
+        const action = relation.status === 'PENDENTE' && relation.destinatarioId === user.id ? 'accept'
+          : relation.status === 'PENDENTE' ? 'cancel' : 'remove';
+        const response = await socialAPI.updateFriendship(relation.id, action);
+        setFriendships((current) => ({ ...current, [person.id]: response.data }));
+      }
+    } catch (error) {
+      toast.error(error.response?.data?.error || 'Não foi possível atualizar a amizade.');
+    }
+  };
+
   const renderPost = (post) => {
     const images = post.images?.length ? post.images : [];
     const slide = slideByPost[post.id] || 0;
     const liked = likedPosts.has(post.id);
     const shared = sharedPosts.has(post.id);
-    const authorName = post.author?.name || 'Usuário de exemplo';
+    const authorName = post.author?.name || 'Usuário';
+    const authorHandle = post.author?.username ? `@${post.author.username.replace(/^@/, '')}` : 'perfil sem @';
+    const authorAvatar = mediaUrl(post.author?.avatar);
     return <article key={post.id} className="feed-post">
       <div className="feed-post-head">
-        <div className="feed-avatar">{authorName.charAt(0).toUpperCase()}</div>
-        <div className="min-w-0"><strong>{post.author?.username ? `@${post.author.username}` : `@${authorName.toLowerCase().replace(/\s+/g, '_')}`}</strong><span>{post.createdAt ? formatDistanceToNow(new Date(post.createdAt), { locale: language === 'pt-BR' ? ptBR : undefined, addSuffix: true }) : 'agora'}</span></div>
+        {authorAvatar ? <img className="feed-avatar object-cover" src={authorAvatar} alt="" /> : <div className="feed-avatar">{authorName.charAt(0).toUpperCase()}</div>}
+        <div className="min-w-0"><strong>{authorHandle}</strong><span>{authorName} · {post.createdAt ? formatDistanceToNow(new Date(post.createdAt), { locale: language === 'pt-BR' ? ptBR : undefined, addSuffix: true }) : 'agora'}</span></div>
         <button type="button" className="feed-more" aria-label="Mais opções"><Ellipsis size={18} /></button>
       </div>
       <Link to={`/problem/${post.id}`} className="block">
@@ -273,16 +331,30 @@ const FeedPage = () => {
     <div className="feed-dm-shell">
       <div className="feed-dm-list">
         <div className="feed-dm-list-head"><strong>Mensagens</strong><button type="button" aria-label="Nova conversa"><Plus size={17} /></button></div>
-        {['Coletivo Centro', 'Ana da Vila', 'Mutirão da Praça'].map((name, index) => <button type="button" key={name} onClick={() => setSelectedConversation(index)} className={`feed-dm-contact ${selectedConversation === index ? 'is-selected' : ''}`}><span className="feed-avatar feed-avatar-small">{name.charAt(0)}</span><span><strong>{name}</strong><small>{index === 0 ? 'Você viu o novo ponto...' : 'Nova conversa da comunidade'}</small></span></button>)}
+        {selectedConversation ? null : <div className="feed-empty">Você ainda não tem conversas.</div>}
       </div>
-      <div className="feed-dm-thread"><div className="feed-dm-thread-head"><span className="feed-avatar">{['C', 'A', 'M'][selectedConversation]}</span><div><strong>{['Coletivo Centro', 'Ana da Vila', 'Mutirão da Praça'][selectedConversation]}</strong><small>Conversa comunitária</small></div></div><div className="feed-dm-messages">{messages.map((message, index) => <div key={`${message.time}-${index}`} className={`feed-message ${message.from === 'Você' ? 'is-own' : ''}`}><span>{message.text}</span><small>{message.time}</small></div>)}</div><form onSubmit={sendMessage} className="feed-dm-compose"><input value={messageText} onChange={(event) => setMessageText(event.target.value)} placeholder="Escreva uma mensagem..." /><button type="submit" aria-label="Enviar mensagem"><Send size={17} /></button></form></div>
+      <div className="feed-dm-thread"><div className="feed-dm-thread-head"><span className="feed-avatar">—</span><div><strong>Nenhuma conversa selecionada</strong><small>As mensagens reais aparecerão aqui.</small></div></div><div className="feed-dm-messages">{messages.length ? messages.map((message, index) => <div key={`${message.time}-${index}`} className={`feed-message ${message.from === 'Você' ? 'is-own' : ''}`}><span>{message.text}</span><small>{message.time}</small></div>) : <div className="feed-empty">Nenhuma mensagem.</div>}</div><form onSubmit={sendMessage} className="feed-dm-compose"><input value={messageText} onChange={(event) => setMessageText(event.target.value)} placeholder="Mensagens estarão disponíveis quando houver uma conversa." disabled /><button type="submit" aria-label="Enviar mensagem" disabled><Send size={17} /></button></form></div>
     </div>
   </>;
 
   const renderSearch = () => <>
     <FeedHeader title="Pesquisar" description="Encontre locais, pessoas, ambientes e problemas publicados na cidade." />
     <div className="feed-discovery-search"><Search size={20} /><input autoFocus value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Busque por rua, usuário, categoria ou problema..." /></div>
-    <div className="feed-search-section"><div className="feed-section-label"><MapPin size={15} /> Ocorrências e locais</div>{filteredPosts.length === 0 ? <p className="feed-search-empty">Nenhum resultado encontrado.</p> : filteredPosts.map(renderPost)}</div>
+    <div className="feed-search-section">
+      <div className="feed-section-label"><Users size={15} /> Pessoas</div>
+      {loadingUsers ? <p className="feed-search-empty">Buscando pessoas...</p> : userResults.length === 0 ? <p className="feed-search-empty">Nenhuma pessoa encontrada.</p> : userResults.map((person) => {
+        const relation = friendships[person.id];
+        const relationLabel = relation?.status === 'ACEITA' ? 'Amigos' : relation?.status === 'PENDENTE' && relation.destinatarioId === user?.id ? 'Aceitar' : relation?.status === 'PENDENTE' ? 'Solicitação enviada' : 'Adicionar';
+        return <div key={person.id} className="feed-search-person">
+          <div className="feed-search-person-main">
+            {person.fotoPerfil ? <img src={mediaUrl(person.fotoPerfil)} alt="" /> : <span>{person.nome.charAt(0).toUpperCase()}</span>}
+            <span><strong>{person.nome}</strong><small>{person.username ? `@${person.username}` : 'Sem @ definido'}</small></span>
+          </div>
+          {person.id !== user?.id && <button type="button" onClick={() => changeFriendship(person)} onMouseEnter={() => loadFriendship(person.id)}>{relationLabel}</button>}
+        </div>;
+      })}
+      <div className="feed-section-label"><MapPin size={15} /> Ocorrências e locais</div>{filteredPosts.length === 0 ? <p className="feed-search-empty">Nenhum resultado encontrado.</p> : filteredPosts.map(renderPost)}
+    </div>
   </>;
 
   const renderNotifications = () => <>
@@ -300,8 +372,7 @@ const FeedPage = () => {
       <label>Categoria<select name="categoryId" value={createForm.categoryId} onChange={updateCreateForm} required><option value="">Selecione uma categoria</option>{categories.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}</select></label>
       <label>Título<input name="title" value={createForm.title} onChange={updateCreateForm} placeholder="Ex: Buraco na rua principal" required /></label>
       <label>Descrição<textarea name="description" value={createForm.description} onChange={updateCreateForm} placeholder="Descreva o que está acontecendo..." rows="5" required /></label>
-      <label>Endereço<input name="address" value={createForm.address} onChange={updateCreateForm} placeholder="Rua, número, bairro" /></label>
-      <div className="feed-create-grid"><label>Latitude<input name="latitude" type="number" step="0.000001" value={createForm.latitude} onChange={updateCreateForm} placeholder="-15.7942" required /></label><label>Longitude<input name="longitude" type="number" step="0.000001" value={createForm.longitude} onChange={updateCreateForm} placeholder="-47.8822" required /></label></div>
+      <label>Endereço completo<input name="address" value={createForm.address} onChange={updateCreateForm} placeholder="Rua, número ou sem número, bairro, cidade e referência" required /></label>
       <button type="submit" disabled={creating} className="feed-create-submit"><Send size={16} /> {creating ? 'Publicando...' : 'Publicar identificação'}</button>
     </form>
   </>;

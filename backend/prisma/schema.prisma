@@ -28,6 +28,8 @@ model Usuario {
   notificacoes           Notificacao[]
   problemas              Problema[]
   votos                  Voto[]
+  amizadesEnviadas       Amizade[]             @relation("amizadeSolicitante")
+  amizadesRecebidas      Amizade[]             @relation("amizadeDestinatario")
 
   @@map("usuarios")
 }
@@ -133,6 +135,27 @@ model Voto {
   @@unique([usuarioId, problemaId])
   @@index([problemaId], map: "votos_problema_id_fkey")
   @@map("votos")
+}
+
+model Amizade {
+  id             String        @id @default(uuid()) @db.Char(36)
+  status         StatusAmizade @default(PENDENTE)
+  solicitanteId  String        @map("solicitante_id") @db.Char(36)
+  destinatarioId String       @map("destinatario_id") @db.Char(36)
+  criadaEm       DateTime      @default(now()) @map("criada_em")
+  atualizadaEm   DateTime      @updatedAt @map("atualizada_em")
+  solicitante    Usuario       @relation("amizadeSolicitante", fields: [solicitanteId], references: [id], onDelete: Cascade)
+  destinatario   Usuario       @relation("amizadeDestinatario", fields: [destinatarioId], references: [id], onDelete: Cascade)
+
+  @@unique([solicitanteId, destinatarioId])
+  @@index([destinatarioId, status])
+  @@map("amizades")
+}
+
+enum StatusAmizade {
+  PENDENTE
+  ACEITA
+  RECUSADA
 }
 
 model Admin {

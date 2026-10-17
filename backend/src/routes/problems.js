@@ -36,6 +36,16 @@ const upload = multer({
 
 const router = express.Router();
 
+const geocodeAddress = async (address) => {
+  const response = await fetch(`https://nominatim.openstreetmap.org/search?format=jsonv2&limit=1&q=${encodeURIComponent(address)}`, {
+    headers: { Accept: "application/json", "User-Agent": "VozUrbana/1.0 (contact@vozurbana.local)" }
+  });
+  if (!response.ok) throw Object.assign(new Error("Não foi possível consultar o endereço."), { status: 502 });
+  const results = await response.json();
+  if (!results[0]) throw Object.assign(new Error("Endereço não localizado. Revise os dados e tente novamente."), { status: 422 });
+  return { latitude: Number(results[0].lat), longitude: Number(results[0].lon), address: results[0].display_name };
+};
+
 const serializeProblem = (problem) => ({
   ...problem,
   title: problem.titulo,
@@ -50,7 +60,12 @@ const serializeProblem = (problem) => ({
       color: problem.categoria.cor
     }
     : null,
-  author: problem.usuario ? { id: problem.usuario.id, name: problem.usuario.nome } : null,
+  author: problem.usuario ? {
+    id: problem.usuario.id,
+    name: problem.usuario.nome,
+    username: problem.usuario.username,
+    avatar: problem.usuario.fotoPerfil
+  } : null,
   images: problem.imagens || [],
   updates: problem.atualizacoes || [],
   votes: problem._count?.votos || problem.votos?.length || 0
@@ -59,6 +74,7 @@ const serializeProblem = (problem) => ({
 // Listar problemas com filtros
 router.get(
   "/",
+  optionalAuthMiddleware,
   asyncHandler(async (req, res) => {
     const {
       page = 1,
@@ -120,11 +136,13 @@ router.get(
             select: {
               id: true,
               nome: true,
-              fotoPerfil: true
+              fotoPerfil: true,
+              username: true
             }
           },
           imagens: true,
           atualizacoes: { orderBy: { dataCriacao: "desc" } },
+          votos: req.userId ? { where: { usuarioId: req.userId }, select: { id: true } } : undefined,
           _count: {
             select: { votos: true }
           }
@@ -139,7 +157,7 @@ router.get(
       total,
       page: pageNumber,
       limit: pageSize,
-      data: data.map(serializeProblem)
+      data: data.map((item) => ({ ...serializeProblem(item), supportedByMe: Boolean(item.votos?.length) }))
     });
   })
 );
@@ -158,17 +176,23 @@ router.post(
       return res.status(401).json({ error: "Autenticação necessária" });
     }
 
-    if (!title || !description || !categoryId || !Number.isFinite(Number(latitude)) || !Number.isFinite(Number(longitude))) {
-      return res.status(400).json({ error: "Título, descrição, categoria e localização são obrigatórios" });
+    if (!title || !description || !categoryId || !String(address || "").trim()) {
+      return res.status(400).json({ error: "Título, descrição, categoria e endereço são obrigatórios" });
+    }
+    let resolvedLocation;
+    if (Number.isFinite(Number(latitude)) && Number.isFinite(Number(longitude))) {
+      resolvedLocation = { latitude: Number(latitude), longitude: Number(longitude), address };
+    } else {
+      resolvedLocation = await geocodeAddress(String(address).trim());
     }
 
     const problem = await prisma.problema.create({
       data: {
         titulo: title,
         descricao: description,
-        latitude: parseFloat(latitude),
-        longitude: parseFloat(longitude),
-        endereco: address,
+        latitude: resolvedLocation.latitude,
+        longitude: resolvedLocation.longitude,
+        endereco: resolvedLocation.address,
         categoriaId: categoryId,
         usuarioId: userId
       },
