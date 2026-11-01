@@ -132,58 +132,58 @@ const FeedPage = () => {
         setLoadingNotifications(false);
       }
     };
-
-    const validateImages = (files, existingCount = 0) => {
-      const selected = Array.from(files || []);
-      if (existingCount + selected.length > MAX_IMAGE_COUNT) throw new Error(`Você pode enviar no máximo ${MAX_IMAGE_COUNT} imagens.`);
-      const invalid = selected.find((file) => !IMAGE_TYPES.includes(file.type) || file.size > MAX_IMAGE_SIZE);
-      if (invalid) throw new Error('Use JPG, PNG, WEBP ou GIF com até 5 MB por imagem.');
-      return selected;
-    };
-
-    const handleCreateImages = (event) => {
-      try {
-        setCreateImages((current) => [...current, ...validateImages(event.target.files, current.length)]);
-      } catch (error) {
-        toast.error(error.message);
-      } finally {
-        event.target.value = '';
-      }
-    };
-
-    const startEditing = (post) => {
-      setEditingPost({
-        ...post,
-        title: post.title || '',
-        description: post.description || '',
-        address: post.address || '',
-        categoryId: post.category?.id || ''
-      });
-      setEditImages([]);
-      setRemovedEditImages([]);
-    };
-
-    const saveEdit = async (event) => {
-      event.preventDefault();
-      if (!editingPost) return;
-      try {
-        setSavingEdit(true);
-        const payload = new FormData();
-        ['title', 'description', 'address', 'categoryId'].forEach((key) => payload.append(key, editingPost[key]));
-        payload.append('removedImageIds', JSON.stringify(removedEditImages));
-        editImages.forEach((file) => payload.append('images', file));
-        const response = await problemsAPI.update(editingPost.id, payload);
-        setPosts((current) => current.map((post) => post.id === editingPost.id ? response.data : post));
-        setEditingPost(null);
-        toast.success('Publicação atualizada.');
-      } catch (error) {
-        toast.error(error.response?.data?.error || error.message || 'Não foi possível editar a publicação.');
-      } finally {
-        setSavingEdit(false);
-      }
-    };
     loadNotifications();
   }, [activeTab]);
+
+  const validateImages = (files, existingCount = 0) => {
+    const selected = Array.from(files || []);
+    if (existingCount + selected.length > MAX_IMAGE_COUNT) throw new Error(`Você pode enviar no máximo ${MAX_IMAGE_COUNT} imagens.`);
+    const invalid = selected.find((file) => !IMAGE_TYPES.includes(file.type) || file.size > MAX_IMAGE_SIZE);
+    if (invalid) throw new Error('Use JPG, PNG, WEBP ou GIF com até 5 MB por imagem.');
+    return selected;
+  };
+
+  const handleCreateImages = (event) => {
+    try {
+      setCreateImages((current) => [...current, ...validateImages(event.target.files, current.length)]);
+    } catch (error) {
+      toast.error(error.message);
+    } finally {
+      event.target.value = '';
+    }
+  };
+
+  const startEditing = (post) => {
+    setEditingPost({
+      ...post,
+      title: post.title || '',
+      description: post.description || '',
+      address: post.address || '',
+      categoryId: post.category?.id || ''
+    });
+    setEditImages([]);
+    setRemovedEditImages([]);
+  };
+
+  const saveEdit = async (event) => {
+    event.preventDefault();
+    if (!editingPost) return;
+    try {
+      setSavingEdit(true);
+      const payload = new FormData();
+      ['title', 'description', 'address', 'categoryId'].forEach((key) => payload.append(key, editingPost[key]));
+      payload.append('removedImageIds', JSON.stringify(removedEditImages));
+      editImages.forEach((file) => payload.append('images', file));
+      const response = await problemsAPI.update(editingPost.id, payload);
+      setPosts((current) => current.map((post) => post.id === editingPost.id ? response.data : post));
+      setEditingPost(null);
+      toast.success('Publicação atualizada.');
+    } catch (error) {
+      toast.error(error.response?.data?.error || error.message || 'Não foi possível editar a publicação.');
+    } finally {
+      setSavingEdit(false);
+    }
+  };
 
   useEffect(() => {
     if (activeTab !== 'search' || search.trim().length < 2) {
