@@ -22,7 +22,7 @@ import { categoriesAPI, mediaUrl, notificationsAPI, problemsAPI, socialAPI, vote
 import { useAuthStore } from '../store';
 import { useI18n } from '../i18n';
 import AmbientContour from '../components/AmbientContour';
-import { FloatingDatePicker, FloatingSelect, FloatingTimePicker } from '../components/FloatingFields';
+import { FloatingDatePicker, FloatingSelect, FloatingTimePicker, UploadField } from '../components/FloatingFields';
 
 const actionAsset = (name) => `${import.meta.env.BASE_URL}feed-actions/${name}.png`;
 
@@ -475,7 +475,7 @@ const FeedPage = () => {
           <label>Hora<FloatingTimePicker value={createForm.occurrenceTime} onChange={(value) => setCreateForm((current) => ({ ...current, occurrenceTime: value }))} /></label>
         </div>
       </fieldset>
-      <label>Fotos (JPG, PNG, WEBP ou GIF; até 8 arquivos de 5 MB)<input type="file" accept={IMAGE_TYPES.join(',')} multiple onChange={handleCreateImages} /></label>
+      <UploadField accept={IMAGE_TYPES.join(',')} multiple files={createImages} maxFiles={MAX_IMAGE_COUNT} maxSizeMb={5} label="Adicionar fotos" onChange={handleCreateImages} />
       {createImages.length > 0 && <div className="grid grid-cols-4 gap-2">{createImages.map((file, index) => <div key={`${file.name}-${index}`} className="relative"><img src={URL.createObjectURL(file)} alt="" className="h-20 w-full rounded object-cover" /><button type="button" onClick={() => setCreateImages((current) => current.filter((_, imageIndex) => imageIndex !== index))} className="absolute right-1 top-1">×</button></div>)}</div>}
       <button type="submit" disabled={creating} className="feed-create-submit"><Send size={16} /> {creating ? 'Publicando...' : 'Publicar identificação'}</button>
     </form>
@@ -504,8 +504,7 @@ const FeedPage = () => {
           <input value={editingPost.address} onChange={(event) => setEditingPost((current) => ({ ...current, address: event.target.value }))} required className="site-form-input w-full rounded p-3" />
           <FloatingSelect value={editingPost.categoryId} onChange={(value) => setEditingPost((current) => ({ ...current, categoryId: value }))} options={categories.map((item) => ({ value: item.id, label: item.name }))} />
           <div className="grid grid-cols-4 gap-2">{(editingPost.images || []).filter((image) => !removedEditImages.includes(image.id)).map((image) => <div key={image.id} className="relative"><img src={mediaUrl(image.url)} alt="" className="h-20 w-full rounded object-cover" /><button type="button" onClick={() => setRemovedEditImages((current) => [...current, image.id])} className="absolute right-1 top-1">×</button></div>)}</div>
-          <input type="file" accept={IMAGE_TYPES.join(',')} multiple onChange={(event) => { try { setEditImages((current) => [...current, ...validateImages(event.target.files, (editingPost.images || []).length - removedEditImages.length + current.length)]); } catch (error) { toast.error(error.message); } event.target.value = ''; }} />
-          {editImages.length > 0 && <p className="text-xs text-white/60">{editImages.length} nova(s) selecionada(s)</p>}
+          <UploadField accept={IMAGE_TYPES.join(',')} multiple files={editImages} maxFiles={MAX_IMAGE_COUNT} maxSizeMb={5} label="Adicionar fotos" onChange={(event) => { try { setEditImages((current) => [...current, ...validateImages(event.target.files, (editingPost.images || []).length - removedEditImages.length + current.length)]); } catch (error) { toast.error(error.message); } }} />
           <div className="flex justify-end gap-3"><button type="button" onClick={() => setEditingPost(null)}>Cancelar</button><button type="submit" disabled={savingEdit} className="feed-create-submit">{savingEdit ? 'Salvando...' : 'Salvar alterações'}</button></div>
         </form>
       </div>}

@@ -3,6 +3,7 @@ import { usersAPI, mediaUrl } from '../services/api';
 import { toast } from 'react-toastify';
 import { useAuthStore } from '../store';
 import { useI18n } from '../i18n';
+import { UploadField } from '../components/FloatingFields';
 
 const ProfilePage = () => {
   const [profile, setProfile] = useState(null);
@@ -175,20 +176,18 @@ const ProfilePage = () => {
                   <div className="h-64 w-64 shrink-0 rounded-full bg-violet-950 flex items-center justify-center text-5xl text-violet-200 font-bold">{formData.name?.[0] || '?'}</div>
                 )}
                 <div className="flex-1 space-y-3">
-                  <input type="file" accept="image/*" onChange={(event) => {
+                  <UploadField accept="image/*" files={formData.avatarFile ? [formData.avatarFile] : []} maxSizeMb={5} label="Escolher foto" onChange={(event) => {
                     const file = event.target.files?.[0];
                     if (file && !file.type.startsWith('image/')) {
                       toast.error('Selecione um arquivo de imagem válido.');
-                      event.target.value = '';
                       return;
                     }
                     if (file && file.size > 5 * 1024 * 1024) {
                       toast.error('A imagem deve ter no máximo 5 MB.');
-                      event.target.value = '';
                       return;
                     }
                     selectAvatar(file);
-                  }} className="w-full rounded-lg border border-white/15 bg-[#17171b] p-3 text-sm" />
+                  }} />
                   {formData.avatarFile && <>
                     <div>
                       <label className="mb-1 block text-sm font-medium">{t('zoom')}</label>

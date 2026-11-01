@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { problemsAPI, categoriesAPI } from '../services/api';
 import { toast } from 'react-toastify';
 import { useI18n } from '../i18n';
-import { FloatingDatePicker, FloatingSelect, FloatingTimePicker } from '../components/FloatingFields';
+import { FloatingDatePicker, FloatingSelect, FloatingTimePicker, UploadField } from '../components/FloatingFields';
 
 const ReportProblemPage = () => {
   const { t } = useI18n();
@@ -167,13 +167,7 @@ const ReportProblemPage = () => {
 
             <div>
               <label className="block text-sm font-semibold mb-2">{t('imagesOptional')}</label>
-              <input
-                type="file"
-                accept="image/*"
-                multiple
-                onChange={handleFilesChange}
-                  className="site-form-input w-full"
-              />
+              <UploadField accept="image/*" multiple files={images} maxSizeMb={5} label="Adicionar imagens" onChange={handleFilesChange} />
 
               {previews.length > 0 && (
                 <div className="mt-3 grid grid-cols-3 gap-2">
