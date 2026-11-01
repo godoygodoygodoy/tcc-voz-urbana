@@ -30,7 +30,6 @@ const AccessMenu = ({ authenticated = false, user, onLogout, compact = false }) 
   const changeLanguage = (code) => {
     setLanguage(code);
     localStorage.setItem('language', code);
-    setLanguage(code);
   };
 
   return (

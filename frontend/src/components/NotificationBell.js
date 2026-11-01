@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Bell, CheckCheck } from 'lucide-react';
 import { notificationsAPI } from '../services/api';
 import { useI18n } from '../i18n';
+import { toast } from 'react-toastify';
 
 const NotificationBell = () => {
   const [items, setItems] = useState([]);
@@ -21,8 +22,12 @@ const NotificationBell = () => {
 
   const unread = items.filter((item) => !item.lida).length;
   const markAll = async () => {
-    await notificationsAPI.markAllRead();
-    setItems((current) => current.map((item) => ({ ...item, lida: true })));
+    try {
+      await notificationsAPI.markAllRead();
+      setItems((current) => current.map((item) => ({ ...item, lida: true })));
+    } catch (error) {
+      toast.error(error.response?.data?.error || 'Não foi possível marcar as notificações como lidas.');
+    }
   };
 
   return (

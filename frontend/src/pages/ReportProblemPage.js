@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { problemsAPI, categoriesAPI } from '../services/api';
 import { toast } from 'react-toastify';
-import Map from '../components/Map';
 import { useI18n } from '../i18n';
 
 const ReportProblemPage = () => {
@@ -12,6 +11,8 @@ const ReportProblemPage = () => {
     description: '',
     address: '',
     categoryId: '',
+    latitude: '',
+    longitude: '',
   });
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -58,7 +59,7 @@ const ReportProblemPage = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    if (!formData.title || !formData.description || !formData.categoryId) {
+    if (!formData.title || !formData.description || !formData.categoryId || !formData.address.trim()) {
       toast.error(t('requiredFields'));
       return;
     }
@@ -69,8 +70,10 @@ const ReportProblemPage = () => {
       const payload = new FormData();
       payload.append('title', formData.title);
       payload.append('description', formData.description);
-      if (formData.address) payload.append('address', formData.address);
+      payload.append('address', formData.address.trim());
       payload.append('categoryId', formData.categoryId);
+      if (formData.latitude) payload.append('latitude', formData.latitude);
+      if (formData.longitude) payload.append('longitude', formData.longitude);
 
       images.forEach((file) => payload.append('images', file));
 
@@ -141,12 +144,13 @@ const ReportProblemPage = () => {
             </div>
 
             <div>
-              <label className="block text-sm font-semibold mb-2">{t('address')}</label>
+              <label className="block text-sm font-semibold mb-2">{t('address')} *</label>
               <input
                 type="text"
                 name="address"
                 value={formData.address}
                 onChange={handleChange}
+                required
                 className="site-form-input w-full border rounded-lg p-3"
                 placeholder={t('addressPlaceholder')}
               />
