@@ -46,12 +46,25 @@ const geocodeAddress = async (address) => {
   return { latitude: Number(results[0].lat), longitude: Number(results[0].lon), address: results[0].display_name };
 };
 
+const parseOccurrenceDateTime = (date, time) => {
+  if (!date && !time) return null;
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(String(date || "")) || !/^\d{2}:\d{2}$/.test(String(time || ""))) {
+    throw Object.assign(new Error("Informe uma data e uma hora válidas para a ocorrência."), { status: 400 });
+  }
+  const occurrence = new Date(`${date}T${time}:00`);
+  if (Number.isNaN(occurrence.getTime())) {
+    throw Object.assign(new Error("Informe uma data e uma hora válidas para a ocorrência."), { status: 400 });
+  }
+  return occurrence;
+};
+
 const serializeProblem = (problem) => ({
   ...problem,
   title: problem.titulo,
   description: problem.descricao,
   address: problem.endereco,
   createdAt: problem.dataCriacao,
+  occurredAt: problem.dataOcorrencia,
   editedAt: problem.editadaEm,
   isEdited: Boolean(problem.editadaEm),
   category: problem.categoria
@@ -170,7 +183,7 @@ router.post(
   authMiddleware,
   upload.array("images"),
   asyncHandler(async (req, res) => {
-    const { title, description, latitude, longitude, address, categoryId } =
+    const { title, description, latitude, longitude, address, categoryId, occurrenceDate, occurrenceTime } =
       req.body;
     const userId = req.userId;
 
@@ -181,6 +194,7 @@ router.post(
     if (!title || !description || !categoryId || !String(address || "").trim()) {
       return res.status(400).json({ error: "Título, descrição, categoria e endereço são obrigatórios" });
     }
+    const occurrenceDateTime = parseOccurrenceDateTime(occurrenceDate, occurrenceTime);
     let resolvedLocation;
     if (Number.isFinite(Number(latitude)) && Number.isFinite(Number(longitude))) {
       resolvedLocation = { latitude: Number(latitude), longitude: Number(longitude), address };
@@ -195,6 +209,7 @@ router.post(
         latitude: resolvedLocation.latitude,
         longitude: resolvedLocation.longitude,
         endereco: resolvedLocation.address,
+        ...(occurrenceDate || occurrenceTime ? { dataOcorrencia: occurrenceDateTime } : {}),
         categoriaId: categoryId,
         usuarioId: userId
       },
@@ -242,10 +257,11 @@ router.put(
     if (!current) return res.status(404).json({ error: "Problema não encontrado" });
     if (current.usuarioId !== req.userId) return res.status(403).json({ error: "Somente o autor pode editar esta publicação." });
 
-    const { title, description, categoryId, address } = req.body;
+    const { title, description, categoryId, address, occurrenceDate, occurrenceTime } = req.body;
     if (!title?.trim() || !description?.trim() || !categoryId || !address?.trim()) {
       return res.status(400).json({ error: "Título, descrição, categoria e endereço são obrigatórios." });
     }
+    const occurrenceDateTime = parseOccurrenceDateTime(occurrenceDate, occurrenceTime);
     let removedImageIds;
     try {
       removedImageIds = JSON.parse(req.body.removedImageIds || "[]");
@@ -266,6 +282,7 @@ router.put(
           descricao: description.trim(),
           categoriaId: categoryId,
           endereco: location.address,
+          ...(occurrenceDate || occurrenceTime ? { dataOcorrencia: occurrenceDateTime } : {}),
           latitude: location.latitude,
           longitude: location.longitude,
           editadaEm: new Date()

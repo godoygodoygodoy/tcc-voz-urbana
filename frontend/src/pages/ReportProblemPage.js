@@ -13,6 +13,13 @@ const ReportProblemPage = () => {
     categoryId: '',
     latitude: '',
     longitude: '',
+    street: '',
+    number: '',
+    neighborhood: '',
+    city: '',
+    state: '',
+    occurrenceDate: '',
+    occurrenceTime: '',
   });
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -59,7 +66,9 @@ const ReportProblemPage = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    if (!formData.title || !formData.description || !formData.categoryId || !formData.address.trim()) {
+    if (!formData.title || !formData.description || !formData.categoryId
+      || !formData.street.trim() || !formData.neighborhood.trim() || !formData.city.trim()
+      || !formData.occurrenceDate || !formData.occurrenceTime) {
       toast.error(t('requiredFields'));
       return;
     }
@@ -70,10 +79,15 @@ const ReportProblemPage = () => {
       const payload = new FormData();
       payload.append('title', formData.title);
       payload.append('description', formData.description);
-      payload.append('address', formData.address.trim());
+      const address = [formData.street, formData.number, formData.neighborhood, formData.city, formData.state]
+        .filter((value) => value.trim())
+        .join(', ');
+      payload.append('address', address);
       payload.append('categoryId', formData.categoryId);
       if (formData.latitude) payload.append('latitude', formData.latitude);
       if (formData.longitude) payload.append('longitude', formData.longitude);
+      payload.append('occurrenceDate', formData.occurrenceDate);
+      payload.append('occurrenceTime', formData.occurrenceTime);
 
       images.forEach((file) => payload.append('images', file));
 
@@ -144,16 +158,23 @@ const ReportProblemPage = () => {
             </div>
 
             <div>
-              <label className="block text-sm font-semibold mb-2">{t('address')} *</label>
-              <input
-                type="text"
-                name="address"
-                value={formData.address}
-                onChange={handleChange}
-                required
-                className="site-form-input w-full border rounded-lg p-3"
-                placeholder={t('addressPlaceholder')}
-              />
+              <fieldset className="feed-fieldset">
+                <legend>{t('address')} *</legend>
+                <div className="feed-address-grid">
+                  <label className="feed-address-street">Rua<input type="text" name="street" value={formData.street} onChange={handleChange} placeholder="Nome da rua" required /></label>
+                  <label>Número<input type="text" name="number" value={formData.number} onChange={handleChange} placeholder="Nº" /></label>
+                  <label>Bairro<input type="text" name="neighborhood" value={formData.neighborhood} onChange={handleChange} placeholder="Bairro" required /></label>
+                  <label>Cidade<input type="text" name="city" value={formData.city} onChange={handleChange} placeholder="Cidade" required /></label>
+                  <label>Estado<input type="text" name="state" value={formData.state} onChange={handleChange} placeholder="UF" maxLength="2" /></label>
+                </div>
+              </fieldset>
+              <fieldset className="feed-fieldset mt-6">
+                <legend>Quando aconteceu?</legend>
+                <div className="feed-datetime-grid">
+                  <label>Data<input type="date" name="occurrenceDate" value={formData.occurrenceDate} onChange={handleChange} required /></label>
+                  <label>Hora<input type="time" name="occurrenceTime" value={formData.occurrenceTime} onChange={handleChange} required /></label>
+                </div>
+              </fieldset>
             </div>
 
             <div>

@@ -33,7 +33,18 @@ const navItems = [
   { key: 'create', label: 'create', icon: Plus },
 ];
 
-const emptyCreateForm = { title: '', description: '', address: '', categoryId: '' };
+const emptyCreateForm = {
+  title: '',
+  description: '',
+  categoryId: '',
+  street: '',
+  number: '',
+  neighborhood: '',
+  city: '',
+  state: '',
+  occurrenceDate: '',
+  occurrenceTime: ''
+};
 const MAX_IMAGE_COUNT = 8;
 const MAX_IMAGE_SIZE = 5 * 1024 * 1024;
 const IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
@@ -277,14 +288,24 @@ const FeedPage = () => {
       toast.info('Entre na sua conta para criar uma postagem.');
       return;
     }
-    if (!createForm.title || !createForm.description || !createForm.categoryId || !createForm.address.trim()) {
-      toast.error('Preencha título, descrição, categoria e endereço.');
+    if (!createForm.title || !createForm.description || !createForm.categoryId
+      || !createForm.street.trim() || !createForm.neighborhood.trim() || !createForm.city.trim()
+      || !createForm.occurrenceDate || !createForm.occurrenceTime) {
+      toast.error('Preencha título, descrição, categoria, endereço e data/hora da ocorrência.');
       return;
     }
     try {
       setCreating(true);
       const payload = new FormData();
-      Object.entries(createForm).forEach(([key, value]) => payload.append(key, value));
+      const address = [createForm.street, createForm.number, createForm.neighborhood, createForm.city, createForm.state]
+        .filter((value) => value.trim())
+        .join(', ');
+      payload.append('title', createForm.title);
+      payload.append('description', createForm.description);
+      payload.append('categoryId', createForm.categoryId);
+      payload.append('address', address);
+      payload.append('occurrenceDate', createForm.occurrenceDate);
+      payload.append('occurrenceTime', createForm.occurrenceTime);
       createImages.forEach((file) => payload.append('images', file));
       await problemsAPI.create(payload);
       toast.success('Postagem criada com sucesso!');
@@ -436,7 +457,23 @@ const FeedPage = () => {
       <label>Categoria<select name="categoryId" value={createForm.categoryId} onChange={updateCreateForm} required><option value="">Selecione uma categoria</option>{categories.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}</select></label>
       <label>Título<input name="title" value={createForm.title} onChange={updateCreateForm} placeholder="Ex: Buraco na rua principal" required /></label>
       <label>Descrição<textarea name="description" value={createForm.description} onChange={updateCreateForm} placeholder="Descreva o que está acontecendo..." rows="5" required /></label>
-      <label>Endereço completo<input name="address" value={createForm.address} onChange={updateCreateForm} placeholder="Rua, número ou sem número, bairro, cidade e referência" required /></label>
+      <fieldset className="feed-fieldset">
+        <legend>Endereço</legend>
+        <div className="feed-address-grid">
+          <label className="feed-address-street">Rua<input name="street" value={createForm.street} onChange={updateCreateForm} placeholder="Nome da rua" required /></label>
+          <label>Número<input name="number" value={createForm.number} onChange={updateCreateForm} placeholder="Nº" /></label>
+          <label>Bairro<input name="neighborhood" value={createForm.neighborhood} onChange={updateCreateForm} placeholder="Bairro" required /></label>
+          <label>Cidade<input name="city" value={createForm.city} onChange={updateCreateForm} placeholder="Cidade" required /></label>
+          <label>Estado<input name="state" value={createForm.state} onChange={updateCreateForm} placeholder="UF" maxLength="2" /></label>
+        </div>
+      </fieldset>
+      <fieldset className="feed-fieldset">
+        <legend>Quando aconteceu?</legend>
+        <div className="feed-datetime-grid">
+          <label>Data<input type="date" name="occurrenceDate" value={createForm.occurrenceDate} onChange={updateCreateForm} required /></label>
+          <label>Hora<input type="time" name="occurrenceTime" value={createForm.occurrenceTime} onChange={updateCreateForm} required /></label>
+        </div>
+      </fieldset>
       <label>Fotos (JPG, PNG, WEBP ou GIF; até 8 arquivos de 5 MB)<input type="file" accept={IMAGE_TYPES.join(',')} multiple onChange={handleCreateImages} /></label>
       {createImages.length > 0 && <div className="grid grid-cols-4 gap-2">{createImages.map((file, index) => <div key={`${file.name}-${index}`} className="relative"><img src={URL.createObjectURL(file)} alt="" className="h-20 w-full rounded object-cover" /><button type="button" onClick={() => setCreateImages((current) => current.filter((_, imageIndex) => imageIndex !== index))} className="absolute right-1 top-1">×</button></div>)}</div>}
       <button type="submit" disabled={creating} className="feed-create-submit"><Send size={16} /> {creating ? 'Publicando...' : 'Publicar identificação'}</button>
