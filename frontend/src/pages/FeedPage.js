@@ -22,6 +22,7 @@ import { categoriesAPI, mediaUrl, notificationsAPI, problemsAPI, socialAPI, vote
 import { useAuthStore } from '../store';
 import { useI18n } from '../i18n';
 import AmbientContour from '../components/AmbientContour';
+import { FloatingDatePicker, FloatingSelect, FloatingTimePicker } from '../components/FloatingFields';
 
 const actionAsset = (name) => `${import.meta.env.BASE_URL}feed-actions/${name}.png`;
 
@@ -403,9 +404,9 @@ const FeedPage = () => {
     </FeedHeader>
     <section id="search" className="feed-filters">
       <label className="feed-search"><Search size={16} /><input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Buscar no feed..." /></label>
-      <select value={status} onChange={(event) => { setStatus(event.target.value); setPage(1); }}><option value="">Todos os status</option><option value="ABERTO">{t('openStatus')}</option><option value="EM_ANDAMENTO">{t('progressStatus')}</option><option value="RESOLVIDO">{t('resolvedStatus')}</option></select>
-      <select value={category} onChange={(event) => { setCategory(event.target.value); setPage(1); }}><option value="">Todas as categorias</option>{categories.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}</select>
-      <select value={sort} onChange={(event) => { setSort(event.target.value); setPage(1); }}><option value="recent">Ocorrências recentes</option><option value="votes">Mais apoiadas</option></select>
+      <FloatingSelect value={status} onChange={(value) => { setStatus(value); setPage(1); }} options={[{ value: '', label: 'Todos os status' }, { value: 'ABERTO', label: t('openStatus') }, { value: 'EM_ANDAMENTO', label: t('progressStatus') }, { value: 'RESOLVIDO', label: t('resolvedStatus') }]} />
+      <FloatingSelect value={category} onChange={(value) => { setCategory(value); setPage(1); }} options={[{ value: '', label: 'Todas as categorias' }, ...categories.map((item) => ({ value: item.id, label: item.name }))]} />
+      <FloatingSelect value={sort} onChange={(value) => { setSort(value); setPage(1); }} options={[{ value: 'recent', label: 'Ocorrências recentes' }, { value: 'votes', label: 'Mais apoiadas' }]} />
     </section>
     {loading ? <div className="feed-empty">{t('loadingPosts')}</div> : filteredPosts.length === 0 ? <div className="feed-empty"><ImageIcon size={30} />{t('noPosts')}</div> : <div className="space-y-5">{filteredPosts.map(renderPost)}</div>}
     <footer className="feed-pagination"><span>{total} publicações</span><div><button type="button" disabled={page <= 1} onClick={() => setPage((value) => value - 1)}><ChevronLeft size={16} /></button><span>{page}</span><button type="button" disabled={page * 9 >= total} onClick={() => setPage((value) => value + 1)}><ChevronRight size={16} /></button></div></footer>
@@ -454,7 +455,7 @@ const FeedPage = () => {
     <FeedHeader title={t('createPostTitle')} description="Registre um problema urbano e coloque a sua comunidade em movimento." />
     <form onSubmit={handleCreate} className="feed-create-form">
       <div className="feed-create-intro"><span className="feed-avatar"><Plus size={18} /></span><div><strong>Nova identificação urbana</strong><small>Compartilhe o que precisa mudar perto de você.</small></div></div>
-      <label>Categoria<select name="categoryId" value={createForm.categoryId} onChange={updateCreateForm} required><option value="">Selecione uma categoria</option>{categories.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}</select></label>
+      <label>Categoria<FloatingSelect value={createForm.categoryId} onChange={(value) => setCreateForm((current) => ({ ...current, categoryId: value }))} options={[{ value: '', label: 'Selecione uma categoria' }, ...categories.map((item) => ({ value: item.id, label: item.name }))]} /></label>
       <label>Título<input name="title" value={createForm.title} onChange={updateCreateForm} placeholder="Ex: Buraco na rua principal" required /></label>
       <label>Descrição<textarea name="description" value={createForm.description} onChange={updateCreateForm} placeholder="Descreva o que está acontecendo..." rows="5" required /></label>
       <fieldset className="feed-fieldset">
@@ -470,8 +471,8 @@ const FeedPage = () => {
       <fieldset className="feed-fieldset">
         <legend>Quando aconteceu?</legend>
         <div className="feed-datetime-grid">
-          <label>Data<input type="date" name="occurrenceDate" value={createForm.occurrenceDate} onChange={updateCreateForm} required /></label>
-          <label>Hora<input type="time" name="occurrenceTime" value={createForm.occurrenceTime} onChange={updateCreateForm} required /></label>
+          <label>Data<FloatingDatePicker value={createForm.occurrenceDate} onChange={(value) => setCreateForm((current) => ({ ...current, occurrenceDate: value }))} /></label>
+          <label>Hora<FloatingTimePicker value={createForm.occurrenceTime} onChange={(value) => setCreateForm((current) => ({ ...current, occurrenceTime: value }))} /></label>
         </div>
       </fieldset>
       <label>Fotos (JPG, PNG, WEBP ou GIF; até 8 arquivos de 5 MB)<input type="file" accept={IMAGE_TYPES.join(',')} multiple onChange={handleCreateImages} /></label>
@@ -501,7 +502,7 @@ const FeedPage = () => {
           <input value={editingPost.title} onChange={(event) => setEditingPost((current) => ({ ...current, title: event.target.value }))} required className="site-form-input w-full rounded p-3" />
           <textarea value={editingPost.description} onChange={(event) => setEditingPost((current) => ({ ...current, description: event.target.value }))} required rows="5" className="site-form-input w-full rounded p-3" />
           <input value={editingPost.address} onChange={(event) => setEditingPost((current) => ({ ...current, address: event.target.value }))} required className="site-form-input w-full rounded p-3" />
-          <select value={editingPost.categoryId} onChange={(event) => setEditingPost((current) => ({ ...current, categoryId: event.target.value }))} required className="site-form-input w-full rounded p-3">{categories.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}</select>
+          <FloatingSelect value={editingPost.categoryId} onChange={(value) => setEditingPost((current) => ({ ...current, categoryId: value }))} options={categories.map((item) => ({ value: item.id, label: item.name }))} />
           <div className="grid grid-cols-4 gap-2">{(editingPost.images || []).filter((image) => !removedEditImages.includes(image.id)).map((image) => <div key={image.id} className="relative"><img src={mediaUrl(image.url)} alt="" className="h-20 w-full rounded object-cover" /><button type="button" onClick={() => setRemovedEditImages((current) => [...current, image.id])} className="absolute right-1 top-1">×</button></div>)}</div>
           <input type="file" accept={IMAGE_TYPES.join(',')} multiple onChange={(event) => { try { setEditImages((current) => [...current, ...validateImages(event.target.files, (editingPost.images || []).length - removedEditImages.length + current.length)]); } catch (error) { toast.error(error.message); } event.target.value = ''; }} />
           {editImages.length > 0 && <p className="text-xs text-white/60">{editImages.length} nova(s) selecionada(s)</p>}

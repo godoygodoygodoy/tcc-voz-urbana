@@ -5,6 +5,7 @@ import Map from '../components/Map';
 import ProblemCard from '../components/ProblemCard';
 import { FiFilter } from 'react-icons/fi';
 import { useI18n } from '../i18n';
+import { FloatingDatePicker, FloatingSelect } from '../components/FloatingFields';
 
 const HomePage = () => {
   const { t } = useI18n();
@@ -126,54 +127,28 @@ const HomePage = () => {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
               <label className="mb-2 block text-sm font-semibold text-white/70">{t('status')}</label>
-              <select
-                value={selectedStatus}
-                onChange={(e) => setSelectedStatus(e.target.value)}
-                className="w-full rounded-xl border border-white/10 bg-black/20 p-3 text-white outline-none"
-              >
-                {statusOptions.map((option) => (
-                  <option key={option.value} value={option.value}>
-                    {option.label}
-                  </option>
-                ))}
-              </select>
+              <FloatingSelect value={selectedStatus} onChange={setSelectedStatus} options={statusOptions} />
             </div>
 
             <div>
               <label className="mb-2 block text-sm font-semibold text-white/70">{t('category')}</label>
-              <select
-                value={selectedCategory || ''}
-                onChange={(e) => setSelectedCategory(e.target.value || null)}
-                className="w-full rounded-xl border border-white/10 bg-black/20 p-3 text-white outline-none"
-              >
-                <option value="">{t('allCategories')}</option>
-                {categories.map((cat) => (
-                  <option key={cat.id} value={cat.id}>
-                    {cat.name}
-                  </option>
-                ))}
-              </select>
+              <FloatingSelect value={selectedCategory || ''} onChange={(value) => setSelectedCategory(value || null)} options={[{ value: '', label: t('allCategories') }, ...categories.map((cat) => ({ value: cat.id, label: cat.name }))]} />
             </div>
             <div>
               <label className="mb-2 block text-sm font-semibold text-white/70">{t('sort')}</label>
-              <select value={sort} onChange={(e) => { setSort(e.target.value); setPage(1); }} className="w-full rounded-xl border border-white/10 bg-black/20 p-3 text-white outline-none">
-                <option value="recent">{t('recent')}</option>
-                <option value="votes">{t('mostVoted')}</option>
-              </select>
+              <FloatingSelect value={sort} onChange={(value) => { setSort(value); setPage(1); }} options={[{ value: 'recent', label: t('recent') }, { value: 'votes', label: t('mostVoted') }]} />
             </div>
             <div>
               <label className="mb-2 block text-sm font-semibold text-white/70">{t('startDate')}</label>
-              <input type="date" value={from} onChange={(e) => { setFrom(e.target.value); setPage(1); }} className="w-full rounded-xl border border-white/10 bg-black/20 p-3 text-white outline-none" />
+              <FloatingDatePicker value={from} onChange={(value) => { setFrom(value); setPage(1); }} />
             </div>
             <div>
               <label className="mb-2 block text-sm font-semibold text-white/70">{t('endDate')}</label>
-              <input type="date" value={to} onChange={(e) => { setTo(e.target.value); setPage(1); }} className="w-full rounded-xl border border-white/10 bg-black/20 p-3 text-white outline-none" />
+              <FloatingDatePicker value={to} onChange={(value) => { setTo(value); setPage(1); }} />
             </div>
             <div>
               <label className="mb-2 block text-sm font-semibold text-white/70">{t('radius')}</label>
-              <select value={radius} onChange={(e) => setRadius(e.target.value)} className="w-full rounded-xl border border-white/10 bg-black/20 p-3 text-white outline-none">
-                <option value="1">1 km</option><option value="5">5 km</option><option value="10">10 km</option><option value="25">25 km</option>
-              </select>
+              <FloatingSelect value={radius} onChange={setRadius} options={[{ value: '1', label: '1 km' }, { value: '5', label: '5 km' }, { value: '10', label: '10 km' }, { value: '25', label: '25 km' }]} />
             </div>
           </div>
         </div>

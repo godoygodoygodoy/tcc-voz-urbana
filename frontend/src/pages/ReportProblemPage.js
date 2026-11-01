@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { problemsAPI, categoriesAPI } from '../services/api';
 import { toast } from 'react-toastify';
 import { useI18n } from '../i18n';
+import { FloatingDatePicker, FloatingSelect, FloatingTimePicker } from '../components/FloatingFields';
 
 const ReportProblemPage = () => {
   const { t } = useI18n();
@@ -114,20 +115,7 @@ const ReportProblemPage = () => {
               {loadingCategories ? (
                 <p className="site-muted">{t('loadingCategories')}</p>
               ) : (
-                <select
-                  name="categoryId"
-                  value={formData.categoryId}
-                  onChange={handleChange}
-                  required
-                  className="site-form-input w-full border rounded-lg p-3"
-                >
-                  <option value="">{t('selectCategory')}</option>
-                  {categories.map((cat) => (
-                    <option key={cat.id} value={cat.id}>
-                      {cat.name}
-                    </option>
-                  ))}
-                </select>
+                <FloatingSelect value={formData.categoryId} onChange={(value) => setFormData((current) => ({ ...current, categoryId: value }))} options={[{ value: '', label: t('selectCategory') }, ...categories.map((cat) => ({ value: cat.id, label: cat.name }))]} />
               )}
             </div>
 
@@ -171,8 +159,8 @@ const ReportProblemPage = () => {
               <fieldset className="feed-fieldset mt-6">
                 <legend>Quando aconteceu?</legend>
                 <div className="feed-datetime-grid">
-                  <label>Data<input type="date" name="occurrenceDate" value={formData.occurrenceDate} onChange={handleChange} required /></label>
-                  <label>Hora<input type="time" name="occurrenceTime" value={formData.occurrenceTime} onChange={handleChange} required /></label>
+                  <label>Data<FloatingDatePicker value={formData.occurrenceDate} onChange={(value) => setFormData((current) => ({ ...current, occurrenceDate: value }))} /></label>
+                  <label>Hora<FloatingTimePicker value={formData.occurrenceTime} onChange={(value) => setFormData((current) => ({ ...current, occurrenceTime: value }))} /></label>
                 </div>
               </fieldset>
             </div>
