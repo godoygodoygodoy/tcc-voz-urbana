@@ -37,10 +37,15 @@ const formatAreaLabel = (points, t) => {
 };
 
 const toPoint = (problem) => {
+  if (problem.latitude === null || problem.latitude === undefined
+    || problem.longitude === null || problem.longitude === undefined) {
+    return null;
+  }
+
   const latitude = Number(problem.latitude);
   const longitude = Number(problem.longitude);
 
-  if (Number.isNaN(latitude) || Number.isNaN(longitude)) {
+  if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) {
     return null;
   }
   return [latitude, longitude];
@@ -290,12 +295,15 @@ const Map = ({
                 <div className="w-56">
                   <h3 className="font-bold text-sm text-zinc-900">{problem.title}</h3>
                   <p className="text-xs text-zinc-600 mt-1 line-clamp-3">{problem.description}</p>
+                  <p className="text-xs text-zinc-600 mt-2">
+                    <strong>Endereço:</strong> {problem.address || t('locationNotSpecified')}
+                  </p>
                   <p className="text-xs mt-3">
                     <span
                       className="px-2 py-1 rounded text-white text-xs font-semibold"
                       style={{ backgroundColor: markerColor }}
                     >
-                      {problem.category?.name || t('noCategory')}
+                      <strong>Causa:</strong> {problem.category?.name || t('noCategory')}
                     </span>
                   </p>
                 </div>

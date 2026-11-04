@@ -290,9 +290,8 @@ const FeedPage = () => {
       return;
     }
     if (!createForm.title || !createForm.description || !createForm.categoryId
-      || !createForm.street.trim() || !createForm.neighborhood.trim() || !createForm.city.trim()
       || !createForm.occurrenceDate || !createForm.occurrenceTime) {
-      toast.error('Preencha título, descrição, categoria, endereço e data/hora da ocorrência.');
+      toast.error('Preencha título, descrição, categoria e data/hora da ocorrência.');
       return;
     }
     try {
@@ -461,10 +460,10 @@ const FeedPage = () => {
       <fieldset className="feed-fieldset">
         <legend>Endereço</legend>
         <div className="feed-address-grid">
-          <label className="feed-address-street">Rua<input name="street" value={createForm.street} onChange={updateCreateForm} placeholder="Nome da rua" required /></label>
+          <label className="feed-address-street">Rua<input name="street" value={createForm.street} onChange={updateCreateForm} placeholder="Nome da rua" /></label>
           <label>Número<input name="number" value={createForm.number} onChange={updateCreateForm} placeholder="Nº" /></label>
-          <label>Bairro<input name="neighborhood" value={createForm.neighborhood} onChange={updateCreateForm} placeholder="Bairro" required /></label>
-          <label>Cidade<input name="city" value={createForm.city} onChange={updateCreateForm} placeholder="Cidade" required /></label>
+          <label>Bairro<input name="neighborhood" value={createForm.neighborhood} onChange={updateCreateForm} placeholder="Bairro" /></label>
+          <label>Cidade<input name="city" value={createForm.city} onChange={updateCreateForm} placeholder="Cidade" /></label>
           <label>Estado<input name="state" value={createForm.state} onChange={updateCreateForm} placeholder="UF" maxLength="2" /></label>
         </div>
       </fieldset>
@@ -501,7 +500,7 @@ const FeedPage = () => {
           <div className="flex items-center justify-between"><h2 className="text-xl font-bold">{t('editPostTitle')}</h2><button type="button" onClick={() => setEditingPost(null)} aria-label="Fechar">×</button></div>
           <input value={editingPost.title} onChange={(event) => setEditingPost((current) => ({ ...current, title: event.target.value }))} required className="site-form-input w-full rounded p-3" />
           <textarea value={editingPost.description} onChange={(event) => setEditingPost((current) => ({ ...current, description: event.target.value }))} required rows="5" className="site-form-input w-full rounded p-3" />
-          <input value={editingPost.address} onChange={(event) => setEditingPost((current) => ({ ...current, address: event.target.value }))} required className="site-form-input w-full rounded p-3" />
+          <input value={editingPost.address} onChange={(event) => setEditingPost((current) => ({ ...current, address: event.target.value }))} className="site-form-input w-full rounded p-3" placeholder="Endereço (opcional)" />
           <FloatingSelect value={editingPost.categoryId} onChange={(value) => setEditingPost((current) => ({ ...current, categoryId: value }))} options={categories.map((item) => ({ value: item.id, label: item.name }))} />
           <div className="grid grid-cols-4 gap-2">{(editingPost.images || []).filter((image) => !removedEditImages.includes(image.id)).map((image) => <div key={image.id} className="relative"><img src={mediaUrl(image.url)} alt="" className="h-20 w-full rounded object-cover" /><button type="button" onClick={() => setRemovedEditImages((current) => [...current, image.id])} className="absolute right-1 top-1">×</button></div>)}</div>
           <UploadField accept={IMAGE_TYPES.join(',')} multiple files={editImages} maxFiles={MAX_IMAGE_COUNT} maxSizeMb={5} label="Adicionar fotos" onChange={(event) => { try { setEditImages((current) => [...current, ...validateImages(event.target.files, (editingPost.images || []).length - removedEditImages.length + current.length)]); } catch (error) { toast.error(error.message); } }} />

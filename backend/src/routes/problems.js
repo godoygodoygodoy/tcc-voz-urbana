@@ -37,14 +37,35 @@ const upload = multer({
 const router = express.Router();
 
 const geocodeAddress = async (address) => {
-  const response = await fetch(`https://nominatim.openstreetmap.org/search?format=jsonv2&limit=1&q=${encodeURIComponent(address)}`, {
-    headers: { Accept: "application/json", "User-Agent": "VozUrbana/1.0 (contact@vozurbana.local)" }
-  });
-  if (!response.ok) throw Object.assign(new Error("Não foi possível consultar o endereço."), { status: 502 });
-  const results = await response.json();
-  if (!results[0]) throw Object.assign(new Error("Endereço não localizado. Revise os dados e tente novamente."), { status: 422 });
-  return { latitude: Number(results[0].lat), longitude: Number(results[0].lon), address: results[0].display_name };
+  if (!address) return { latitude: null, longitude: null, address: null };
+
+  try {
+    const response = await fetch(`https://nominatim.openstreetmap.org/search?format=jsonv2&limit=1&q=${encodeURIComponent(address)}`, {
+      headers: { Accept: "application/json", "User-Agent": "VozUrbana/1.0 (contact@vozurbana.local)" }
+    });
+    if (!response.ok) {
+      console.warn(`Não foi possível consultar o endereço informado: ${response.status}`);
+      return { latitude: null, longitude: null, address };
+    }
+
+    const results = await response.json();
+    if (!results[0]) return { latitude: null, longitude: null, address };
+
+    return { latitude: Number(results[0].lat), longitude: Number(results[0].lon), address: results[0].display_name };
+  } catch (error) {
+    console.warn("Falha ao consultar o endereço; o problema será salvo sem ponto no mapa.", error.message);
+    return { latitude: null, longitude: null, address };
+  }
 };
+
+const hasValidCoordinates = (latitude, longitude) => (
+  Number.isFinite(Number(latitude))
+  && Number.isFinite(Number(longitude))
+  && Number(latitude) >= -90
+  && Number(latitude) <= 90
+  && Number(longitude) >= -180
+  && Number(longitude) <= 180
+);
 
 const parseOccurrenceDateTime = (date, time) => {
   if (!date && !time) return null;
@@ -191,15 +212,16 @@ router.post(
       return res.status(401).json({ error: "Autenticação necessária" });
     }
 
-    if (!title || !description || !categoryId || !String(address || "").trim()) {
-      return res.status(400).json({ error: "Título, descrição, categoria e endereço são obrigatórios" });
+    if (!title || !description || !categoryId) {
+      return res.status(400).json({ error: "Título, descrição e categoria são obrigatórios" });
     }
     const occurrenceDateTime = parseOccurrenceDateTime(occurrenceDate, occurrenceTime);
     let resolvedLocation;
-    if (Number.isFinite(Number(latitude)) && Number.isFinite(Number(longitude))) {
-      resolvedLocation = { latitude: Number(latitude), longitude: Number(longitude), address };
+    const rawAddress = String(address || "").trim();
+    if (hasValidCoordinates(latitude, longitude)) {
+      resolvedLocation = { latitude: Number(latitude), longitude: Number(longitude), address: rawAddress || null };
     } else {
-      resolvedLocation = await geocodeAddress(String(address).trim());
+      resolvedLocation = await geocodeAddress(rawAddress);
     }
 
     const problem = await prisma.problema.create({
@@ -258,8 +280,8 @@ router.put(
     if (current.usuarioId !== req.userId) return res.status(403).json({ error: "Somente o autor pode editar esta publicação." });
 
     const { title, description, categoryId, address, occurrenceDate, occurrenceTime } = req.body;
-    if (!title?.trim() || !description?.trim() || !categoryId || !address?.trim()) {
-      return res.status(400).json({ error: "Título, descrição, categoria e endereço são obrigatórios." });
+    if (!title?.trim() || !description?.trim() || !categoryId) {
+      return res.status(400).json({ error: "Título, descrição e categoria são obrigatórios." });
     }
     const occurrenceDateTime = parseOccurrenceDateTime(occurrenceDate, occurrenceTime);
     let removedImageIds;
@@ -272,7 +294,7 @@ router.put(
       return res.status(400).json({ error: "Lista de imagens removidas inválida." });
     }
     const ownedRemovedIds = current.imagens.filter((image) => removedImageIds.includes(image.id)).map((image) => image.id);
-    const location = await geocodeAddress(address.trim());
+    const location = await geocodeAddress(String(address || "").trim());
 
     await prisma.$transaction(async (transaction) => {
       await transaction.problema.update({

@@ -4,9 +4,14 @@ import { GoogleMap, Marker, InfoWindow, useLoadScript } from '@react-google-maps
 const containerStyle = (height) => ({ width: '100%', height });
 
 const toPoint = (problem) => {
+  if (problem.latitude === null || problem.latitude === undefined
+    || problem.longitude === null || problem.longitude === undefined) {
+    return null;
+  }
+
   const lat = Number(problem.latitude);
   const lng = Number(problem.longitude);
-  if (Number.isNaN(lat) || Number.isNaN(lng)) return null;
+  if (!Number.isFinite(lat) || !Number.isFinite(lng)) return null;
   return { lat, lng };
 };
 
@@ -58,6 +63,12 @@ const MapGoogle = ({ problems = [], onMarkerClick, height = '500px', className =
             <div style={{ maxWidth: 220 }}>
               <h3 style={{ margin: 0, fontSize: 14 }}>{active.title}</h3>
               <p style={{ margin: '6px 0 0 0', fontSize: 12 }}>{active.description}</p>
+              <p style={{ margin: '6px 0 0 0', fontSize: 12 }}>
+                <strong>Causa:</strong> {active.category?.name || 'Não informada'}
+              </p>
+              <p style={{ margin: '6px 0 0 0', fontSize: 12 }}>
+                <strong>Endereço:</strong> {active.address || 'Não informado'}
+              </p>
             </div>
           </InfoWindow>
         )}

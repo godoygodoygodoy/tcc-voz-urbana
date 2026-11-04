@@ -68,7 +68,6 @@ const ReportProblemPage = () => {
     e.preventDefault();
 
     if (!formData.title || !formData.description || !formData.categoryId
-      || !formData.street.trim() || !formData.neighborhood.trim() || !formData.city.trim()
       || !formData.occurrenceDate || !formData.occurrenceTime) {
       toast.error(t('requiredFields'));
       return;
@@ -147,12 +146,12 @@ const ReportProblemPage = () => {
 
             <div>
               <fieldset className="feed-fieldset">
-                <legend>{t('address')} *</legend>
+                <legend>{t('address')} (opcional)</legend>
                 <div className="feed-address-grid">
-                  <label className="feed-address-street">Rua<input type="text" name="street" value={formData.street} onChange={handleChange} placeholder="Nome da rua" required /></label>
+                  <label className="feed-address-street">Rua<input type="text" name="street" value={formData.street} onChange={handleChange} placeholder="Nome da rua" /></label>
                   <label>Número<input type="text" name="number" value={formData.number} onChange={handleChange} placeholder="Nº" /></label>
-                  <label>Bairro<input type="text" name="neighborhood" value={formData.neighborhood} onChange={handleChange} placeholder="Bairro" required /></label>
-                  <label>Cidade<input type="text" name="city" value={formData.city} onChange={handleChange} placeholder="Cidade" required /></label>
+                  <label>Bairro<input type="text" name="neighborhood" value={formData.neighborhood} onChange={handleChange} placeholder="Bairro" /></label>
+                  <label>Cidade<input type="text" name="city" value={formData.city} onChange={handleChange} placeholder="Cidade" /></label>
                   <label>Estado<input type="text" name="state" value={formData.state} onChange={handleChange} placeholder="UF" maxLength="2" /></label>
                 </div>
               </fieldset>
