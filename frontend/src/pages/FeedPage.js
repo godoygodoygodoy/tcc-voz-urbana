@@ -12,6 +12,7 @@ import {
   Plus,
   Search,
   Send,
+  Trash2,
   Users,
 } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
@@ -23,6 +24,7 @@ import { useAuthStore } from '../store';
 import { useI18n } from '../i18n';
 import AmbientContour from '../components/AmbientContour';
 import { FloatingDatePicker, FloatingSelect, FloatingTimePicker, UploadField } from '../components/FloatingFields';
+import { brazilStates, fetchCities } from '../utils/brazil';
 
 const actionAsset = (name) => `${import.meta.env.BASE_URL}feed-actions/${name}.png`;
 
@@ -102,6 +104,9 @@ const FeedPage = () => {
   const [messageText, setMessageText] = useState('');
   const [createForm, setCreateForm] = useState(emptyCreateForm);
   const [creating, setCreating] = useState(false);
+  const [deletingPost, setDeletingPost] = useState(null);
+  const [cities, setCities] = useState([]);
+  const [loadingCities, setLoadingCities] = useState(false);
   const [createImages, setCreateImages] = useState([]);
   const [editingPost, setEditingPost] = useState(null);
   const [editImages, setEditImages] = useState([]);
@@ -130,6 +135,20 @@ const FeedPage = () => {
   }, [category, page, sort, status, t]);
 
   useEffect(() => { loadFeed(); }, [loadFeed]);
+
+  useEffect(() => {
+    let cancelled = false;
+    if (!createForm.state) {
+      setCities([]);
+      return undefined;
+    }
+    setLoadingCities(true);
+    fetchCities(createForm.state)
+      .then((items) => { if (!cancelled) setCities(items); })
+      .catch((error) => { if (!cancelled) { setCities([]); toast.error(error.message); } })
+      .finally(() => { if (!cancelled) setLoadingCities(false); });
+    return () => { cancelled = true; };
+  }, [createForm.state]);
 
   useEffect(() => {
     if (activeTab !== 'notifications') return;
@@ -306,6 +325,8 @@ const FeedPage = () => {
       payload.append('address', address);
       payload.append('occurrenceDate', createForm.occurrenceDate);
       payload.append('occurrenceTime', createForm.occurrenceTime);
+      payload.append('city', createForm.city);
+      payload.append('state', createForm.state);
       createImages.forEach((file) => payload.append('images', file));
       await problemsAPI.create(payload);
       toast.success('Postagem criada com sucesso!');
@@ -317,6 +338,21 @@ const FeedPage = () => {
       toast.error(error.response?.data?.error || t('reportError'));
     } finally {
       setCreating(false);
+    }
+  };
+
+  const deletePost = async (post) => {
+    if (!window.confirm(t('confirmDeletePublication'))) return;
+    try {
+      setDeletingPost(post.id);
+      await problemsAPI.remove(post.id);
+      setPosts((current) => current.filter((item) => item.id !== post.id));
+      setTotal((current) => Math.max(0, current - 1));
+      toast.success(t('publicationDeleted'));
+    } catch (error) {
+      toast.error(error.response?.data?.error || t('deletePublicationError'));
+    } finally {
+      setDeletingPost(null);
     }
   };
 
@@ -373,11 +409,14 @@ const FeedPage = () => {
     const authorAvatar = mediaUrl(post.author?.avatar);
     return <article key={post.id} className="feed-post">
       <div className="feed-post-head">
-        {authorAvatar ? <img className="feed-avatar object-cover" src={authorAvatar} alt="" /> : <div className="feed-avatar">{authorName.charAt(0).toUpperCase()}</div>}
-        <div className="min-w-0"><strong>{authorHandle}</strong><span>{authorName} · {post.createdAt ? formatDistanceToNow(new Date(post.createdAt), { locale: language === 'pt-BR' ? ptBR : undefined, addSuffix: true }) : 'agora'}</span></div>
+        <Link to={`/profile/${post.author?.id}`} className="feed-post-author">
+          {authorAvatar ? <img className="feed-avatar object-cover" src={authorAvatar} alt="" /> : <div className="feed-avatar">{authorName.charAt(0).toUpperCase()}</div>}
+        </Link>
+        <Link to={`/profile/${post.author?.id}`} className="min-w-0 feed-post-author-copy"><strong>{authorHandle}</strong><span>{authorName} · {post.createdAt ? formatDistanceToNow(new Date(post.createdAt), { locale: language === 'pt-BR' ? ptBR : undefined, addSuffix: true }) : t('now')}</span></Link>
         <div className="relative">
           <button type="button" className="feed-more" aria-label="Mais opções" onClick={() => post.author?.id === user?.id && startEditing(post)}><Ellipsis size={18} /></button>
           {post.author?.id === user?.id && <button type="button" className="sr-only" onClick={() => startEditing(post)}>{t('editPostTitle')}</button>}
+          {(post.author?.id === user?.id || user?.role === 'admin') && <button type="button" className="feed-more text-red-200" aria-label={t('deletePublication')} disabled={deletingPost === post.id} onClick={() => deletePost(post)}><Trash2 size={16} /></button>}
         </div>
       </div>
       <Link to={`/problem/${post.id}`} className="block">
@@ -432,8 +471,10 @@ const FeedPage = () => {
         const relationLabel = relation?.status === 'ACEITA' ? 'Amigos' : relation?.status === 'PENDENTE' && relation.destinatarioId === user?.id ? 'Aceitar' : relation?.status === 'PENDENTE' ? 'Solicitação enviada' : 'Adicionar';
         return <div key={person.id} className="feed-search-person">
           <div className="feed-search-person-main">
-            {person.fotoPerfil ? <img src={mediaUrl(person.fotoPerfil)} alt="" /> : <span>{person.nome.charAt(0).toUpperCase()}</span>}
-            <span><strong>{person.nome}</strong><small>{person.username ? `@${person.username}` : 'Sem @ definido'}</small></span>
+            <Link to={`/profile/${person.id}`} className="feed-search-person-main">
+              {person.fotoPerfil ? <img src={mediaUrl(person.fotoPerfil)} alt="" /> : <span>{person.nome.charAt(0).toUpperCase()}</span>}
+              <span><strong>{person.nome}</strong><small>{person.username ? `@${person.username}` : t('noUsername')}</small></span>
+            </Link>
           </div>
           {person.id !== user?.id && <button type="button" onClick={() => changeFriendship(person)} onMouseEnter={() => loadFriendship(person.id)}>{relationLabel}</button>}
         </div>;
@@ -463,8 +504,8 @@ const FeedPage = () => {
           <label className="feed-address-street">Rua<input name="street" value={createForm.street} onChange={updateCreateForm} placeholder="Nome da rua" /></label>
           <label>Número<input name="number" value={createForm.number} onChange={updateCreateForm} placeholder="Nº" /></label>
           <label>Bairro<input name="neighborhood" value={createForm.neighborhood} onChange={updateCreateForm} placeholder="Bairro" /></label>
-          <label>Cidade<input name="city" value={createForm.city} onChange={updateCreateForm} placeholder="Cidade" /></label>
-          <label>Estado<input name="state" value={createForm.state} onChange={updateCreateForm} placeholder="UF" maxLength="2" /></label>
+              <label>Cidade<FloatingSelect value={createForm.city} onChange={(value) => setCreateForm((current) => ({ ...current, city: value }))} options={[{ value: '', label: loadingCities ? t('loadingCities') : t('selectCity') }, ...cities]} /></label>
+              <label>Estado<FloatingSelect value={createForm.state} onChange={(value) => setCreateForm((current) => ({ ...current, state: value, city: '' }))} options={[{ value: '', label: t('selectState') }, ...brazilStates]} /></label>
         </div>
       </fieldset>
       <fieldset className="feed-fieldset">

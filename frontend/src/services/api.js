@@ -50,6 +50,7 @@ export const problemsAPI = {
   },
   get: (id) => api.get(`/problems/${id}`),
   update: (id, data) => api.put(`/problems/${id}`, data),
+  remove: (id) => api.delete(`/problems/${id}`),
 };
 
 // Categories
@@ -80,6 +81,7 @@ export const socialAPI = {
   updateFriendship: (id, action) => api.patch(`/social/friendships/${id}`, { action }),
   friends: () => api.get('/social/friends'),
   requests: () => api.get('/social/friend-requests'),
+  profile: (id) => api.get(`/social/users/${id}/profile`),
 };
 
 // Users
@@ -95,6 +97,10 @@ export const adminAPI = {
   getStats: () => api.get('/admin/stats'),
   updateProblem: (id, data) => api.put(`/admin/problems/${id}`, data),
   createCategory: (data) => api.post('/admin/categories', data),
+  listUsers: (params) => api.get('/admin/users', { params }),
+  listProblems: (params) => api.get('/admin/problems', { params }),
+  deleteProblem: (id) => api.delete(`/admin/problems/${id}`),
+  getAnalytics: () => api.get('/admin/analytics'),
 };
 
 export default api;

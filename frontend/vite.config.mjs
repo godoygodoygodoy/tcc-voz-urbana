@@ -4,24 +4,34 @@ import react from "@vitejs/plugin-react";
 export default defineConfig(({ command, mode }) => {
   const env = loadEnv(mode, process.cwd(), "VITE_");
   if (command === "build") {
+    const rawApiUrl = env.VITE_API_URL;
+    if (!rawApiUrl) {
+      throw new Error("Configure VITE_API_URL com a URL do backend antes do build.");
+    }
+
     let api;
     try {
-      api = new URL(env.VITE_API_URL);
+      api = new URL(rawApiUrl);
     } catch {
-      /* Validado abaixo. */
+      throw new Error("Configure VITE_API_URL com uma URL válida do backend.");
     }
+
+    const isLocalNetwork = ["localhost", "127.0.0.1", "[::1]"].includes(api.hostname);
+    const validProtocol = isLocalNetwork ? ["http:", "https:"].includes(api.protocol) : api.protocol === "https:";
+    const validPath = ["", "/api"].includes(api.pathname.replace(/\/+$/, ""));
+
     if (
-      !api ||
-      api.protocol !== "https:" ||
+      !validProtocol ||
       api.username ||
       api.password ||
-      !["", "/api"].includes(api.pathname.replace(/\/+$/, "")) ||
+      !validPath ||
       api.search ||
-      api.hash ||
-      ["localhost", "127.0.0.1", "[::1]"].includes(api.hostname)
+      api.hash
     ) {
       throw new Error(
-        "Configure VITE_API_URL com a URL HTTPS pública do backend (ex.: https://seu-backend.onrender.com)."
+        isLocalNetwork
+          ? "Configure VITE_API_URL com a URL do backend local (ex.: http://localhost:5000 ou https://seu-backend.onrender.com)."
+          : "Configure VITE_API_URL com a URL HTTPS pública do backend (ex.: https://seu-backend.onrender.com)."
       );
     }
   }

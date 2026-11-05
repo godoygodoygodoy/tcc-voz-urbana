@@ -163,7 +163,7 @@ export default function LandingPage() {
       title: t('reportProblem'),
       description: t('reportDescription'),
       icon: FileText,
-      href: '/report',
+      href: '/feed#create',
     },
     {
       title: t('openMapAction'),
@@ -627,7 +627,7 @@ export default function LandingPage() {
                   <Link to="/map">
                     <Button className="rounded-full bg-white px-6 py-3 font-black text-zinc-950 hover:bg-violet-50">Abrir mapa</Button>
                   </Link>
-                  <Link to="/report">
+                  <Link to="/feed#create">
                     <Button variant="outline" className="rounded-full border-white/16 bg-white/6 px-6 py-3 font-black text-white hover:bg-white/12">
                       Reportar
                     </Button>

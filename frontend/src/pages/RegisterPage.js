@@ -11,6 +11,7 @@ const RegisterPage = () => {
   const [formData, setFormData] = useState({
     name: '',
     email: '',
+    phone: '',
     username: '',
     password: '',
     passwordConfirm: '',
@@ -41,6 +42,7 @@ const RegisterPage = () => {
       await register({
         name: formData.name,
         email: formData.email,
+        phone: formData.phone,
         password: formData.password,
         username: formData.username.replace(/^@/, '').trim(),
       });
@@ -106,6 +108,18 @@ const RegisterPage = () => {
                   maxLength="30"
                   pattern="[A-Za-z0-9._]+"
                   className="w-full rounded-xl bg-transparent p-3 text-white focus:outline-none"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-semibold mb-2">{t('phone')}</label>
+                <input
+                  type="tel"
+                  name="phone"
+                  value={formData.phone}
+                  onChange={handleChange}
+                  placeholder="+55 (11) 99999-9999"
+                  className="site-form-input w-full rounded-xl border-2 border-white/10 p-3 focus:outline-none focus:border-violet-500"
                 />
               </div>
               <p className="site-muted mt-1 text-xs">{t('usernameHint')}</p>

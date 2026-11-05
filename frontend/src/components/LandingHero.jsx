@@ -109,7 +109,7 @@ const LandingHero = ({
                 <h2>{t('recentCases')}</h2>
                 <div className="urban-hero__case-list">
                   {quickActions.map(({ title, description, icon: Icon }, index) => (
-                    <Link to={index === 0 ? '/report' : index === 1 ? '/map' : '/login'} key={title} className="urban-hero__case">
+                    <Link to={index === 0 ? '/feed#create' : index === 1 ? '/map' : '/login'} key={title} className="urban-hero__case">
                       <span className="urban-hero__case-icon"><Icon size={16} /></span>
                       <span><strong>{title}</strong><small>{description}</small></span>
                       <ArrowUpRight size={15} />

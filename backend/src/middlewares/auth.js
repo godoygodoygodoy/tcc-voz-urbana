@@ -12,12 +12,13 @@ export const authMiddleware = async (req, res, next) => {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
     const user = await prisma.usuario.findUnique({
       where: { id: decoded.id },
-      select: { email: true }
+      select: { id: true, email: true, nivel: true, admin: { select: { nivel: true } } }
     });
     if (!user) return res.status(401).json({ error: "Conta não encontrada" });
     // A verificacao de e-mail foi mantida no schema como legado e nao bloqueia acesso.
     req.userId = decoded.id;
-    req.userRole = decoded.role;
+    req.userRole = user.admin ? "admin" : user.nivel.toLowerCase();
+    req.adminLevel = user.admin?.nivel || null;
 
     next();
   } catch (error) {
@@ -39,9 +40,8 @@ export const optionalAuthMiddleware = async (req, res, next) => {
 };
 
 export const adminMiddleware = async (req, res, next) => {
-  const admin = await prisma.admin.findUnique({
-    where: { usuarioId: req.userId }
-  });
+  if (!req.userId) return res.status(401).json({ error: "Autenticação necessária." });
+  const admin = await prisma.admin.findUnique({ where: { usuarioId: req.userId } });
 
   if (!admin) {
     return res

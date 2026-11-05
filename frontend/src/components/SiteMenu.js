@@ -3,11 +3,13 @@ import { createPortal } from 'react-dom';
 import { FiCompass, FiFileText, FiHome, FiInfo, FiMail, FiMenu, FiMap, FiX } from 'react-icons/fi';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useI18n } from '../i18n';
+import { useAuthStore } from '../store';
 
 const SiteMenu = () => {
   const { t } = useI18n();
   const location = useLocation();
   const navigate = useNavigate();
+  const user = useAuthStore((state) => state.user);
   const [open, setOpen] = useState(false);
   const [clickedIndex, setClickedIndex] = useState(null);
   const [clickPulse, setClickPulse] = useState(0);
@@ -28,6 +30,7 @@ const SiteMenu = () => {
     { label: t('navFeed'), href: '/feed', icon: FiFileText },
     { label: t('navAbout'), href: '/#sobre', icon: FiInfo },
     { label: t('navContact'), href: '/#contato', icon: FiMail },
+    ...(user?.role === 'admin' ? [{ label: t('adminNav'), href: '/admin', icon: FiMap }] : []),
   ];
 
   const currentIndex = items.findIndex(({ href }) => {
@@ -352,8 +355,8 @@ const SiteMenu = () => {
             </Link>
           ))}
           <Link
-            to="/report"
-            onClick={(event) => handleLinkClick(event, items.length, '/report')}
+            to="/feed#create"
+            onClick={(event) => handleLinkClick(event, items.length, '/feed#create')}
             onFocus={() => {
               setPointerInside(true);
               pointerIndexRef.current = items.length;

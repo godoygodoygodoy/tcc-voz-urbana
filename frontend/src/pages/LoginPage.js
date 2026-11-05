@@ -9,7 +9,7 @@ import PasswordField from '../components/PasswordField';
 
 const LoginPage = () => {
   const [formData, setFormData] = useState({
-    email: '',
+    identifier: '',
     password: '',
   });
   const [loading, setLoading] = useState(false);
@@ -29,7 +29,7 @@ const LoginPage = () => {
     setLoading(true);
 
     try {
-      await login({ email: formData.email, password: formData.password });
+      await login({ identifier: formData.identifier, password: formData.password });
       toast.success(t('loginSuccess'));
       navigate('/');
     } catch (error) {
@@ -53,13 +53,13 @@ const LoginPage = () => {
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label className="block text-sm font-semibold mb-2">{t('email')}</label>
+              <label className="block text-sm font-semibold mb-2">{t('loginIdentifier')}</label>
               <input
-                type="email"
-                name="email"
-                value={formData.email}
+                type="text"
+                name="identifier"
+                value={formData.identifier}
                 onChange={handleChange}
-                placeholder={t('emailPlaceholder')}
+                placeholder={t('loginIdentifierPlaceholder')}
                 required
                 className="site-form-input w-full rounded-xl border-2 border-white/10 p-3 focus:outline-none focus:border-violet-500"
               />

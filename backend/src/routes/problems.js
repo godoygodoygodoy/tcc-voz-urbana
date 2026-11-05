@@ -40,7 +40,7 @@ const geocodeAddress = async (address) => {
   if (!address) return { latitude: null, longitude: null, address: null };
 
   try {
-    const response = await fetch(`https://nominatim.openstreetmap.org/search?format=jsonv2&limit=1&q=${encodeURIComponent(address)}`, {
+    const response = await fetch(`https://nominatim.openstreetmap.org/search?format=jsonv2&addressdetails=1&countrycodes=br&limit=5&q=${encodeURIComponent(address)}`, {
       headers: { Accept: "application/json", "User-Agent": "VozUrbana/1.0 (contact@vozurbana.local)" }
     });
     if (!response.ok) {
@@ -49,13 +49,24 @@ const geocodeAddress = async (address) => {
     }
 
     const results = await response.json();
-    if (!results[0]) return { latitude: null, longitude: null, address };
+    const best = results.find((result) => result.address?.country_code === "br") || results[0];
+    if (!best) return { latitude: null, longitude: null, address };
 
-    return { latitude: Number(results[0].lat), longitude: Number(results[0].lon), address: results[0].display_name };
+    return { latitude: Number(best.lat), longitude: Number(best.lon), address: best.display_name };
   } catch (error) {
     console.warn("Falha ao consultar o endereço; o problema será salvo sem ponto no mapa.", error.message);
     return { latitude: null, longitude: null, address };
   }
+};
+
+const geocodeCache = new Map();
+const geocodeRegion = async ({ address, city, state }) => {
+  const context = [address, city, state, "Brasil"].filter(Boolean).join(", ");
+  if (!context) return { latitude: null, longitude: null, address: null };
+  if (geocodeCache.has(context)) return geocodeCache.get(context);
+  const result = await geocodeAddress(context);
+  geocodeCache.set(context, result);
+  return result;
 };
 
 const hasValidCoordinates = (latitude, longitude) => (
@@ -84,6 +95,8 @@ const serializeProblem = (problem) => ({
   title: problem.titulo,
   description: problem.descricao,
   address: problem.endereco,
+  state: problem.estado,
+  city: problem.cidade,
   createdAt: problem.dataCriacao,
   occurredAt: problem.dataOcorrencia,
   editedAt: problem.editadaEm,
@@ -116,6 +129,8 @@ router.get(
       page = 1,
       limit = 20,
       category,
+      city,
+      state,
       status,
       lat,
       lng,
@@ -136,6 +151,8 @@ router.get(
     if (category) {
       where.categoriaId = category;
     }
+    if (city) where.cidade = { contains: String(city) };
+    if (state) where.estado = { contains: String(state) };
 
     if (from || to) {
       where.dataCriacao = {};
@@ -204,7 +221,7 @@ router.post(
   authMiddleware,
   upload.array("images"),
   asyncHandler(async (req, res) => {
-    const { title, description, latitude, longitude, address, categoryId, occurrenceDate, occurrenceTime } =
+    const { title, description, latitude, longitude, address, categoryId, occurrenceDate, occurrenceTime, city, state } =
       req.body;
     const userId = req.userId;
 
@@ -221,7 +238,10 @@ router.post(
     if (hasValidCoordinates(latitude, longitude)) {
       resolvedLocation = { latitude: Number(latitude), longitude: Number(longitude), address: rawAddress || null };
     } else {
-      resolvedLocation = await geocodeAddress(rawAddress);
+      resolvedLocation = await geocodeRegion({ address: rawAddress, city: String(city || "").trim(), state: String(state || "").trim() });
+    }
+    if (!hasValidCoordinates(resolvedLocation.latitude, resolvedLocation.longitude) && rawAddress) {
+      return res.status(422).json({ error: "Não foi possível identificar esse local. Revise o endereço, a cidade e o estado." });
     }
 
     const problem = await prisma.problema.create({
@@ -231,6 +251,8 @@ router.post(
         latitude: resolvedLocation.latitude,
         longitude: resolvedLocation.longitude,
         endereco: resolvedLocation.address,
+        cidade: String(city || "").trim() || null,
+        estado: String(state || "").trim() || null,
         ...(occurrenceDate || occurrenceTime ? { dataOcorrencia: occurrenceDateTime } : {}),
         categoriaId: categoryId,
         usuarioId: userId
@@ -279,7 +301,7 @@ router.put(
     if (!current) return res.status(404).json({ error: "Problema não encontrado" });
     if (current.usuarioId !== req.userId) return res.status(403).json({ error: "Somente o autor pode editar esta publicação." });
 
-    const { title, description, categoryId, address, occurrenceDate, occurrenceTime } = req.body;
+    const { title, description, categoryId, address, occurrenceDate, occurrenceTime, city, state } = req.body;
     if (!title?.trim() || !description?.trim() || !categoryId) {
       return res.status(400).json({ error: "Título, descrição e categoria são obrigatórios." });
     }
@@ -294,7 +316,7 @@ router.put(
       return res.status(400).json({ error: "Lista de imagens removidas inválida." });
     }
     const ownedRemovedIds = current.imagens.filter((image) => removedImageIds.includes(image.id)).map((image) => image.id);
-    const location = await geocodeAddress(String(address || "").trim());
+    const location = await geocodeRegion({ address: String(address || "").trim(), city: String(city || "").trim(), state: String(state || "").trim() });
 
     await prisma.$transaction(async (transaction) => {
       await transaction.problema.update({
@@ -304,6 +326,8 @@ router.put(
           descricao: description.trim(),
           categoriaId: categoryId,
           endereco: location.address,
+          cidade: String(city || "").trim() || null,
+          estado: String(state || "").trim() || null,
           ...(occurrenceDate || occurrenceTime ? { dataOcorrencia: occurrenceDateTime } : {}),
           latitude: location.latitude,
           longitude: location.longitude,
@@ -338,6 +362,35 @@ router.put(
       }
     });
     res.json({ ...serializeProblem(updated), supportedByMe: Boolean(updated.votos?.length) });
+  })
+);
+
+router.delete(
+  "/:id",
+  authMiddleware,
+  asyncHandler(async (req, res) => {
+    const problem = await prisma.problema.findUnique({
+      where: { id: req.params.id },
+      include: { imagens: true }
+    });
+    if (!problem) return res.status(404).json({ error: "Publicação não encontrada." });
+    const isAdmin = Boolean(await prisma.admin.findUnique({ where: { usuarioId: req.userId } }));
+    if (problem.usuarioId !== req.userId && !isAdmin) {
+      return res.status(403).json({ error: "Você só pode excluir suas próprias publicações." });
+    }
+    await prisma.$transaction([
+      prisma.problema.delete({ where: { id: problem.id } }),
+      ...(isAdmin && problem.usuarioId !== req.userId
+        ? [prisma.log.create({ data: { acao: `Publicação ${problem.id} excluída por administrador`, usuarioId: req.userId } })]
+        : [])
+    ]);
+    await Promise.all(problem.imagens.map((image) => {
+      const filePath = path.join(uploadsRoot, image.url.replace(/^\/uploads\//, ""));
+      return fs.promises.unlink(filePath).catch((error) => {
+        if (error.code !== "ENOENT") throw error;
+      });
+    }));
+    return res.json({ message: "Publicação excluída com sucesso." });
   })
 );
 

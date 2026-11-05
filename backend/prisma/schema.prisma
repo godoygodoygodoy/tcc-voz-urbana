@@ -37,6 +37,7 @@ model Usuario {
 model Categoria {
   id        String     @id @default(uuid()) @db.Char(36)
   nome      String     @unique @db.VarChar(80)
+  descricao String     @db.Text
   icone     String?    @db.VarChar(10)
   cor       String?    @db.VarChar(7)
   problemas Problema[]
@@ -45,29 +46,32 @@ model Categoria {
 }
 
 model Problema {
-  id           String                @id @default(uuid()) @db.Char(36)
-  titulo       String                @db.VarChar(150)
-  descricao    String                @db.Text
-  latitude     Decimal?              @db.Decimal(10, 7)
-  longitude    Decimal?              @db.Decimal(10, 7)
-  endereco     String?               @db.VarChar(300)
-  status       StatusProblema        @default(ABERTO)
-  dataCriacao  DateTime              @default(now()) @map("data_criacao")
-  dataOcorrencia DateTime?           @map("data_ocorrencia")
-  editadaEm    DateTime?             @map("editada_em")
-  usuarioId    String                @map("usuario_id") @db.Char(36)
-  categoriaId  String                @map("categoria_id") @db.Char(36)
-  atualizacoes AtualizacaoProblema[]
-  comentarios  Comentario[]
-  imagens      Imagem[]
-  categoria    Categoria             @relation(fields: [categoriaId], references: [id])
-  usuario      Usuario               @relation(fields: [usuarioId], references: [id])
-  votos        Voto[]
+  id             String                @id @default(uuid()) @db.Char(36)
+  titulo         String                @db.VarChar(150)
+  descricao      String                @db.Text
+  latitude       Decimal?              @db.Decimal(10, 7)
+  longitude      Decimal?              @db.Decimal(10, 7)
+  endereco       String?               @db.VarChar(300)
+  estado         String?               @db.VarChar(80)
+  cidade         String?               @db.VarChar(120)
+  status         StatusProblema        @default(ABERTO)
+  dataCriacao    DateTime              @default(now()) @map("data_criacao")
+  dataOcorrencia DateTime?             @map("data_ocorrencia")
+  editadaEm      DateTime?             @map("editada_em")
+  usuarioId      String                @map("usuario_id") @db.Char(36)
+  categoriaId    String                @map("categoria_id") @db.Char(36)
+  atualizacoes   AtualizacaoProblema[]
+  comentarios    Comentario[]
+  imagens        Imagem[]
+  categoria      Categoria             @relation(fields: [categoriaId], references: [id])
+  usuario        Usuario               @relation(fields: [usuarioId], references: [id])
+  votos          Voto[]
 
   @@index([latitude, longitude])
   @@index([status])
   @@index([categoriaId])
   @@index([usuarioId], map: "problemas_usuario_id_fkey")
+  @@index([estado, cidade])
   @@map("problemas")
 }
 
@@ -143,7 +147,7 @@ model Amizade {
   id             String        @id @default(uuid()) @db.Char(36)
   status         StatusAmizade @default(PENDENTE)
   solicitanteId  String        @map("solicitante_id") @db.Char(36)
-  destinatarioId String       @map("destinatario_id") @db.Char(36)
+  destinatarioId String        @map("destinatario_id") @db.Char(36)
   criadaEm       DateTime      @default(now()) @map("criada_em")
   atualizadaEm   DateTime      @updatedAt @map("atualizada_em")
   solicitante    Usuario       @relation("amizadeSolicitante", fields: [solicitanteId], references: [id], onDelete: Cascade)

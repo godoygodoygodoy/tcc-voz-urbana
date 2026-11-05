@@ -15,11 +15,11 @@ import ForgotPasswordPage from './pages/ForgotPasswordPage';
 import ResetPasswordPage from './pages/ResetPasswordPage';
 import RegisterPage from './pages/RegisterPage';
 import ProblemDetailPage from './pages/ProblemDetailPage';
-import ReportProblemPage from './pages/ReportProblemPage';
 import AdminDashboard from './pages/AdminDashboard';
 import ProfilePage from './pages/ProfilePage';
 // import VerifyEmailPage from './pages/VerifyEmailPage';
 import FeedPage from './pages/FeedPage';
+import UserProfilePage from './pages/UserProfilePage';
 
 // Components
 import Header from './components/Header';
@@ -60,8 +60,9 @@ function App() {
                   <Route path="/problem/:id" element={<ProblemDetailPage />} />
 
                   {/* Rotas protegidas */}
-                  <Route path="/report" element={<ProtectedRoute component={ReportProblemPage} />} />
+                  <Route path="/report" element={<Navigate to="/feed#create" replace />} />
                   <Route path="/profile" element={<ProtectedRoute component={ProfilePage} />} />
+                  <Route path="/profile/:id" element={<ProtectedRoute component={UserProfilePage} />} />
                   <Route path="/admin" element={<ProtectedRoute component={AdminDashboard} roles={['admin']} />} />
                 </Routes>
               </div>

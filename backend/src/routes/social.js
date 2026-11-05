@@ -11,12 +11,66 @@ router.get("/users/search", asyncHandler(async (req, res) => {
   if (query.length < 2) return res.json({ data: [], page: 1, total: 0 });
   const page = Math.max(1, Number(req.query.page) || 1);
   const limit = Math.min(30, Math.max(1, Number(req.query.limit) || 12));
-  const where = { OR: [{ nome: { contains: query } }, { username: { contains: query.replace(/^@/, "") } }] };
+  const searchTerm = query.replace(/^@/, "");
+  const where = {
+    OR: [
+      { nome: { contains: query } },
+      { username: { contains: searchTerm } },
+      { email: { contains: query } }
+    ]
+  };
   const [total, users] = await Promise.all([
     prisma.usuario.count({ where }),
     prisma.usuario.findMany({ where, select: publicUser, orderBy: { nome: "asc" }, skip: (page - 1) * limit, take: limit })
   ]);
   res.json({ data: users, page, limit, total });
+}));
+
+router.get("/users/:id/profile", asyncHandler(async (req, res) => {
+  const user = await prisma.usuario.findUnique({
+    where: { id: req.params.id },
+    select: {
+      id: true,
+      nome: true,
+      username: true,
+      fotoPerfil: true,
+      bio: true,
+      dataCriacao: true,
+      _count: { select: { problemas: true } },
+      problemas: {
+        orderBy: { dataCriacao: "desc" },
+        take: 30,
+        include: {
+          categoria: true,
+          imagens: true,
+          _count: { select: { votos: true } }
+        }
+      }
+    }
+  });
+  if (!user) return res.status(404).json({ error: "Usuário não encontrado." });
+  res.json({
+    id: user.id,
+    name: user.nome,
+    username: user.username,
+    avatar: user.fotoPerfil,
+    bio: user.bio,
+    joinedAt: user.dataCriacao,
+    publicationCount: user._count.problemas,
+    publications: user.problemas.map((problem) => ({
+      id: problem.id,
+      title: problem.titulo,
+      description: problem.descricao,
+      address: problem.endereco,
+      state: problem.estado,
+      city: problem.cidade,
+      status: problem.status,
+      createdAt: problem.dataCriacao,
+      category: { id: problem.categoria.id, name: problem.categoria.nome, color: problem.categoria.cor },
+      images: problem.imagens,
+      votes: problem._count.votos
+    }))
+  });
 }));
 
 router.get("/users/:id/friendship", asyncHandler(async (req, res) => {

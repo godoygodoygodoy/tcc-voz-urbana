@@ -7,7 +7,6 @@ import { hashPassword, comparePassword } from "../utils/password.js";
 import { asyncHandler } from "../middlewares/errorHandler.js";
 import { sendPasswordResetEmail } from "../utils/email.js";
 // Verificacao de e-mail mantida como legado e desativada para o fluxo atual.
-// import crypto from "crypto";
 // import { sendVerificationEmail } from "../utils/email.js";
 
 const router = express.Router();
@@ -22,14 +21,40 @@ const router = express.Router();
 const registerSchema = Joi.object({
   name: Joi.string().required(),
   email: Joi.string().email().required(),
+  phone: Joi.string().trim().max(30).allow(""),
   password: Joi.string().min(6).required(),
   username: Joi.string().trim().lowercase().pattern(/^[a-z0-9._]+$/).min(3).max(30).required()
 });
 
 const loginSchema = Joi.object({
-  email: Joi.string().email().required(),
+  identifier: Joi.string().trim().min(2),
+  email: Joi.string().trim().min(2),
   password: Joi.string().required()
-});
+}).or("identifier", "email");
+
+const normalizePhone = (value) => String(value || "").replace(/\D/g, "");
+
+const findUserByIdentifier = async (identifier) => {
+  const normalized = String(identifier).trim();
+  const withoutAt = normalized.replace(/^@/, "").toLowerCase();
+  const emailCandidate = normalized.toLowerCase();
+  const phoneCandidate = normalizePhone(normalized);
+  const candidates = await prisma.usuario.findMany({
+    where: {
+      OR: [
+        { email: emailCandidate },
+        { username: withoutAt },
+        ...(phoneCandidate.length >= 8 ? [{ telefone: { not: null } }] : [])
+      ]
+    },
+    include: { admin: true }
+  });
+  return candidates.find((candidate) => (
+    candidate.email.toLowerCase() === emailCandidate
+    || candidate.username?.toLowerCase() === withoutAt
+    || (phoneCandidate.length >= 8 && normalizePhone(candidate.telefone) === phoneCandidate)
+  )) || null;
+};
 
 const forgotPasswordSchema = Joi.object({
   email: Joi.string().email().required()
@@ -49,7 +74,7 @@ router.post(
       return res.status(400).json({ error: error.details[0].message });
     }
 
-  const { name, password, username } = value;
+  const { name, password, username, phone } = value;
   const email = value.email.toLowerCase();
 
 const existingUser = await prisma.usuario.findUnique({
@@ -72,6 +97,7 @@ if (existingUsername) {
         nome: name,
         email,
         username,
+        telefone: phone ? normalizePhone(phone) : null,
         senhaHash,
         emailVerificado: true
       },
@@ -91,12 +117,12 @@ if (existingUsername) {
     const token = jwt.sign(
       { id: user.id, email: user.email },
       process.env.JWT_SECRET,
-      { expiresIn: process.env.JWT_EXPIRE || "7d" }
+      { expiresIn: process.env.JWT_EXPIRE || "7d", jwtid: crypto.randomUUID() }
     );
 
     res.status(201).json({
       message: "Usuário registrado com sucesso",
-      user: { ...user, name: user.nome, avatar: user.fotoPerfil, role: "usuario" },
+      user: { ...user, name: user.nome, avatar: user.fotoPerfil, phone: user.telefone, role: "usuario" },
       token
     });
   })
@@ -111,12 +137,16 @@ router.post(
       return res.status(400).json({ error: error.details[0].message });
     }
 
-    const { email, password } = value;
-
-    const user = await prisma.usuario.findUnique({
-      where: { email: email.toLowerCase() },
-      include: { admin: true }
-    });
+    const { password } = value;
+    const identifier = value.identifier || value.email;
+    const usesLegacyEmail = !value.identifier && Boolean(value.email);
+    if (
+      (usesLegacyEmail || identifier.includes("@")) &&
+      Joi.string().email().validate(identifier).error
+    ) {
+      return res.status(400).json({ error: "Informe um e-mail, telefone ou nome de usuário válido." });
+    }
+    const user = await findUserByIdentifier(identifier);
 
     if (!user) {
       return res.status(401).json({ error: "Credenciais inválidas" });
@@ -131,7 +161,7 @@ router.post(
     const token = jwt.sign(
       { id: user.id, email: user.email },
       process.env.JWT_SECRET,
-      { expiresIn: process.env.JWT_EXPIRE || "7d" }
+      { expiresIn: process.env.JWT_EXPIRE || "7d", jwtid: crypto.randomUUID() }
     );
 
     const { senhaHash, tokenVerificacao, tokenVerificacaoExpira, ...userWithoutPassword } = user;
