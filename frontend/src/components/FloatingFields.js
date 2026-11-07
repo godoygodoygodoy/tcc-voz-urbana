@@ -16,11 +16,12 @@ const useFloatingField = (open, setOpen, panelSize = { width: 280, height: 360, 
   const updatePosition = useCallback(() => {
     if (!ref.current) return;
     const rect = ref.current.getBoundingClientRect();
-    const panelWidth = panelSize.matchTriggerWidth
-      ? rect.width
-      : panelRef.current?.offsetWidth || panelSize.width;
     const gap = 8;
     const viewportPadding = 8;
+    const requestedWidth = panelSize.matchTriggerWidth
+      ? Math.max(rect.width, panelSize.minWidth || 0)
+      : panelRef.current?.offsetWidth || panelSize.width;
+    const panelWidth = Math.min(requestedWidth, window.innerWidth - viewportPadding * 2);
     const availableBelow = Math.max(0, window.innerHeight - rect.bottom - gap - viewportPadding);
     const availableAbove = Math.max(0, rect.top - gap - viewportPadding);
     const contentHeight = panelRef.current?.scrollHeight || panelSize.height;
@@ -35,7 +36,7 @@ const useFloatingField = (open, setOpen, panelSize = { width: 280, height: 360, 
       Math.max(viewportPadding, window.innerWidth - panelWidth - viewportPadding),
     );
     setPosition({ left, top, width: panelWidth, maxHeight });
-  }, [panelSize.height, panelSize.matchTriggerWidth, panelSize.width]);
+  }, [panelSize.height, panelSize.matchTriggerWidth, panelSize.minWidth, panelSize.width]);
 
   useEffect(() => {
     if (!open) {
@@ -70,6 +71,20 @@ const useFloatingField = (open, setOpen, panelSize = { width: 280, height: 360, 
 };
 
 const FloatingPortal = ({ panelRef, position, className, children, ...props }) => {
+  useEffect(() => {
+    const panel = panelRef.current;
+    if (!panel) return undefined;
+    const handleWheel = (event) => {
+      if (panel.scrollHeight <= panel.clientHeight) return;
+      const maxScroll = panel.scrollHeight - panel.clientHeight;
+      panel.scrollTop = Math.max(0, Math.min(maxScroll, panel.scrollTop + event.deltaY));
+      event.preventDefault();
+      event.stopPropagation();
+    };
+    panel.addEventListener('wheel', handleWheel, { passive: false });
+    return () => panel.removeEventListener('wheel', handleWheel);
+  }, [panelRef, position]);
+
   if (!position) return null;
   return createPortal(<div ref={panelRef} className={`floating-portal context-scroll ${className}`} style={{ left: position.left, top: position.top, width: position.width, maxHeight: position.maxHeight }} {...props}>{children}</div>, document.body);
 };
@@ -77,7 +92,12 @@ const FloatingPortal = ({ panelRef, position, className, children, ...props }) =
 export const FloatingSelect = ({ value, onChange, options, placeholder = 'Selecione uma opção', className = '' }) => {
   const [open, setOpen] = useState(false);
   const [highlighted, setHighlighted] = useState(Math.max(0, options.findIndex((option) => option.value === value)));
-  const { ref, panelRef, position } = useFloatingField(open, setOpen, { width: 240, height: 280, matchTriggerWidth: true });
+  const { ref, panelRef, position } = useFloatingField(open, setOpen, {
+    width: 240,
+    height: 280,
+    matchTriggerWidth: true,
+    minWidth: 220,
+  });
   const selected = options.find((option) => option.value === value);
   const selectOption = (option) => {
     onChange(option.value);
