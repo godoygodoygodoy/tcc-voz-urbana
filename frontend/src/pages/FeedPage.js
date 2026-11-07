@@ -116,6 +116,17 @@ const FeedPage = () => {
 
   const activeTab = navItems.some((item) => item.key === location.hash.slice(1)) ? location.hash.slice(1) : 'home';
 
+  useEffect(() => {
+    const modalOpen = Boolean(editingPost || lightboxImage);
+    if (!modalOpen) return undefined;
+
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = previousOverflow;
+    };
+  }, [editingPost, lightboxImage]);
+
   const loadFeed = useCallback(async () => {
     try {
       setLoading(true);
@@ -536,8 +547,8 @@ const FeedPage = () => {
         <section className="feed-main">{renderTab()}</section>
         <aside className="feed-aside hidden xl:block"><div className="feed-aside-head"><span>Para seguir</span><Users size={17} /></div><div className="feed-empty">Pesquise pessoas para encontrar conexões reais.</div><div className="feed-aside-links">Sobre · Ajuda · Imprensa · API · Carreiras<br />Termos · Localizações · Idioma</div><div className="feed-aside-note"><Bell size={15} /> Comunidade conectada</div></aside>
       </div>
-      {editingPost && <div className="fixed inset-0 z-[1400] grid place-items-center bg-black/70 p-4" role="dialog" aria-modal="true" aria-label="Editar publicação">
-        <form onSubmit={saveEdit} className="site-panel max-h-[90vh] w-full max-w-2xl space-y-4 overflow-auto rounded-2xl p-6">
+      {editingPost && <div className="context-modal fixed inset-0 z-[1400] grid place-items-center bg-black/70 p-4" role="dialog" aria-modal="true" aria-label="Editar publicação">
+        <form onSubmit={saveEdit} className="context-scroll site-panel max-h-[90vh] w-full max-w-2xl space-y-4 overflow-auto rounded-2xl p-6">
           <div className="flex items-center justify-between"><h2 className="text-xl font-bold">{t('editPostTitle')}</h2><button type="button" onClick={() => setEditingPost(null)} aria-label="Fechar">×</button></div>
           <input value={editingPost.title} onChange={(event) => setEditingPost((current) => ({ ...current, title: event.target.value }))} required className="site-form-input w-full rounded p-3" />
           <textarea value={editingPost.description} onChange={(event) => setEditingPost((current) => ({ ...current, description: event.target.value }))} required rows="5" className="site-form-input w-full rounded p-3" />
@@ -548,7 +559,7 @@ const FeedPage = () => {
           <div className="flex justify-end gap-3"><button type="button" onClick={() => setEditingPost(null)}>Cancelar</button><button type="submit" disabled={savingEdit} className="feed-create-submit">{savingEdit ? 'Salvando...' : 'Salvar alterações'}</button></div>
         </form>
       </div>}
-      {lightboxImage && <button type="button" className="fixed inset-0 z-[1500] grid place-items-center bg-black/90 p-6" onClick={() => setLightboxImage(null)} aria-label="Fechar imagem"><img src={lightboxImage} alt="" className="max-h-full max-w-full object-contain" /></button>}
+      {lightboxImage && <button type="button" className="context-modal fixed inset-0 z-[1500] grid place-items-center bg-black/90 p-6" onClick={() => setLightboxImage(null)} aria-label="Fechar imagem"><img src={lightboxImage} alt="" className="max-h-full max-w-full object-contain" /></button>}
     </main>
   );
 };

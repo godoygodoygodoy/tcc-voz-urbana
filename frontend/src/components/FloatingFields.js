@@ -56,7 +56,7 @@ const useFloatingField = (open, setOpen, panelSize = { width: 280, height: 360, 
 
 const FloatingPortal = ({ panelRef, position, className, children, ...props }) => {
   if (!position) return null;
-  return createPortal(<div ref={panelRef} className={`floating-portal ${className}`} style={{ left: position.left, top: position.top, width: position.width, maxHeight: position.maxHeight }} {...props}>{children}</div>, document.body);
+  return createPortal(<div ref={panelRef} className={`floating-portal context-scroll ${className}`} style={{ left: position.left, top: position.top, width: position.width, maxHeight: position.maxHeight }} {...props}>{children}</div>, document.body);
 };
 
 export const FloatingSelect = ({ value, onChange, options, placeholder = 'Selecione uma opção', className = '' }) => {

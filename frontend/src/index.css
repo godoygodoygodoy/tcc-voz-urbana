@@ -125,6 +125,16 @@ button:not(:disabled):focus-visible {
   animation: floatingPanelIn 160ms ease-out both;
 }
 .floating-menu { max-height: min(270px, calc(100vh - 16px)); overflow-y: auto; }
+.context-scroll {
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+}
+.context-scroll:where(.floating-menu, .floating-calendar, .floating-time, .overflow-auto) {
+  scrollbar-gutter: stable;
+}
+.context-modal {
+  overscroll-behavior: contain;
+}
 .floating-menu::-webkit-scrollbar, .floating-time-column::-webkit-scrollbar { width: 5px; }
 .floating-menu::-webkit-scrollbar-thumb, .floating-time-column::-webkit-scrollbar-thumb { border-radius: 9px; background: rgba(216,180,255,0.3); }
 .floating-option {
