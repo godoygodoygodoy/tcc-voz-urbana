@@ -1,5 +1,5 @@
 import React, { createPortal } from 'react-dom';
-import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { CalendarDays, Check, ChevronDown, ChevronLeft, ChevronRight, Clock3 } from 'lucide-react';
 import { ImagePlus, Upload, X } from 'lucide-react';
 
@@ -13,23 +13,35 @@ const useFloatingField = (open, setOpen, panelSize = { width: 280, height: 360, 
   const ref = useRef(null);
   const panelRef = useRef(null);
   const [position, setPosition] = useState(null);
-  const updatePosition = () => {
+  const updatePosition = useCallback(() => {
     if (!ref.current) return;
     const rect = ref.current.getBoundingClientRect();
     const panelWidth = panelSize.matchTriggerWidth
-      ? ref.current.getBoundingClientRect().width
+      ? rect.width
       : panelRef.current?.offsetWidth || panelSize.width;
-    const panelHeight = panelRef.current?.offsetHeight || panelSize.height;
     const gap = 8;
-    const left = Math.min(Math.max(8, rect.left), Math.max(8, window.innerWidth - panelWidth - 8));
-    const below = window.innerHeight - rect.bottom - gap;
-    const top = below >= Math.min(panelHeight, window.innerHeight - 16)
-      ? rect.bottom + gap
-      : Math.max(8, rect.top - panelHeight - gap);
-    setPosition({ left, top, width: panelWidth, maxHeight: Math.max(160, window.innerHeight - top - 8) });
-  };
+    const viewportPadding = 8;
+    const availableBelow = Math.max(0, window.innerHeight - rect.bottom - gap - viewportPadding);
+    const availableAbove = Math.max(0, rect.top - gap - viewportPadding);
+    const contentHeight = panelRef.current?.scrollHeight || panelSize.height;
+    const opensAbove = contentHeight > availableBelow && availableAbove > availableBelow;
+    const availableHeight = opensAbove ? availableAbove : availableBelow;
+    const maxHeight = Math.max(80, Math.min(contentHeight, availableHeight));
+    const top = opensAbove
+      ? Math.max(viewportPadding, rect.top - gap - maxHeight)
+      : Math.min(window.innerHeight - viewportPadding - maxHeight, rect.bottom + gap);
+    const left = Math.min(
+      Math.max(viewportPadding, rect.left),
+      Math.max(viewportPadding, window.innerWidth - panelWidth - viewportPadding),
+    );
+    setPosition({ left, top, width: panelWidth, maxHeight });
+  }, [panelSize.height, panelSize.matchTriggerWidth, panelSize.width]);
+
   useEffect(() => {
-    if (!open) return undefined;
+    if (!open) {
+      setPosition(null);
+      return undefined;
+    }
     const close = (event) => {
       if (!ref.current?.contains(event.target) && !panelRef.current?.contains(event.target)) setOpen(false);
     };
@@ -41,16 +53,19 @@ const useFloatingField = (open, setOpen, panelSize = { width: 280, height: 360, 
     window.addEventListener('resize', updatePosition);
     window.addEventListener('scroll', updatePosition, true);
     updatePosition();
+    const frame = window.requestAnimationFrame(updatePosition);
     return () => {
+      window.cancelAnimationFrame(frame);
       document.removeEventListener('pointerdown', close);
       document.removeEventListener('keydown', escape);
       window.removeEventListener('resize', updatePosition);
       window.removeEventListener('scroll', updatePosition, true);
     };
-  }, [open, setOpen]);
+  }, [open, setOpen, updatePosition]);
   useLayoutEffect(() => {
-    if (open) updatePosition();
-  }, [open, panelSize.height, panelSize.width]);
+    if (!open) return;
+    updatePosition();
+  }, [open, updatePosition]);
   return { ref, panelRef, position };
 };
 
