@@ -3119,7 +3119,7 @@ code {
 .feed-aside .feed-empty { padding: 2rem 1.5rem; text-align: center; }
 .feed-fieldset { min-width: 0; border: 1px solid rgba(221, 193, 255, 0.16); border-radius: 14px; padding: 14px; }
 .feed-fieldset legend { padding: 0 7px; color: rgba(255, 255, 255, 0.72); font-size: 10px; font-weight: 900; letter-spacing: 0.12em; text-transform: uppercase; }
-.feed-address-grid { display: grid; grid-template-columns: minmax(0, 2fr) minmax(5rem, 0.7fr) repeat(3, minmax(0, 1fr)); gap: 12px; }
+.feed-address-grid { display: grid; grid-template-columns: minmax(0, 2fr) minmax(5rem, 0.7fr) repeat(4, minmax(0, 1fr)); gap: 12px; }
 .feed-address-grid .feed-address-street { grid-column: span 2; }
 .feed-fieldset label { display: flex; min-width: 0; flex-direction: column; gap: 7px; color: rgba(255, 255, 255, 0.62); font-size: 10px; font-weight: 800; }
 .feed-datetime-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }

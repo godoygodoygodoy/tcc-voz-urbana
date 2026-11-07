@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   Bell,
   ChevronLeft,
@@ -24,7 +24,7 @@ import { useAuthStore } from '../store';
 import { useI18n } from '../i18n';
 import AmbientContour from '../components/AmbientContour';
 import { FloatingDatePicker, FloatingSelect, FloatingTimePicker, UploadField } from '../components/FloatingFields';
-import { brazilStates, fetchCities } from '../utils/brazil';
+import { brazilStates, fetchCep, fetchCities, formatCep, normalizeCep } from '../utils/brazil';
 
 const actionAsset = (name) => `${import.meta.env.BASE_URL}feed-actions/${name}.png`;
 
@@ -40,6 +40,7 @@ const emptyCreateForm = {
   title: '',
   description: '',
   categoryId: '',
+  cep: '',
   street: '',
   number: '',
   neighborhood: '',
@@ -108,12 +109,14 @@ const FeedPage = () => {
   const [deletingPost, setDeletingPost] = useState(null);
   const [cities, setCities] = useState([]);
   const [loadingCities, setLoadingCities] = useState(false);
+  const [loadingCep, setLoadingCep] = useState(false);
   const [createImages, setCreateImages] = useState([]);
   const [editingPost, setEditingPost] = useState(null);
   const [editImages, setEditImages] = useState([]);
   const [removedEditImages, setRemovedEditImages] = useState([]);
   const [savingEdit, setSavingEdit] = useState(false);
   const [lightboxImage, setLightboxImage] = useState(null);
+  const lastCepLookup = useRef('');
 
   const activeTab = navItems.some((item) => item.key === location.hash.slice(1)) ? location.hash.slice(1) : 'home';
 
@@ -173,6 +176,33 @@ const FeedPage = () => {
       .finally(() => { if (!cancelled) setLoadingCities(false); });
     return () => { cancelled = true; };
   }, [createForm.state]);
+
+  useEffect(() => {
+    const cep = normalizeCep(createForm.cep);
+    if (cep.length !== 8) {
+      lastCepLookup.current = '';
+      return undefined;
+    }
+    if (lastCepLookup.current === cep) return undefined;
+    lastCepLookup.current = cep;
+    let cancelled = false;
+    setLoadingCep(true);
+    fetchCep(cep)
+      .then((result) => {
+        if (cancelled || !result) return;
+        setCreateForm((current) => ({
+          ...current,
+          cep: formatCep(result.cep),
+          street: current.street || result.street,
+          neighborhood: current.neighborhood || result.neighborhood,
+          city: current.city || result.city,
+          state: current.state || result.state
+        }));
+      })
+      .catch((error) => { if (!cancelled) toast.error(error.message); })
+      .finally(() => { if (!cancelled) setLoadingCep(false); });
+    return () => { cancelled = true; };
+  }, [createForm.cep]);
 
   useEffect(() => {
     if (activeTab !== 'notifications') return;
@@ -340,13 +370,17 @@ const FeedPage = () => {
     try {
       setCreating(true);
       const payload = new FormData();
-      const address = [createForm.street, createForm.number, createForm.neighborhood, createForm.city, createForm.state]
+      const address = [createForm.street, createForm.number, createForm.neighborhood]
         .filter((value) => value.trim())
         .join(', ');
       payload.append('title', createForm.title);
       payload.append('description', createForm.description);
       payload.append('categoryId', createForm.categoryId);
       payload.append('address', address);
+      payload.append('street', createForm.street);
+      payload.append('number', createForm.number);
+      payload.append('neighborhood', createForm.neighborhood);
+      payload.append('cep', normalizeCep(createForm.cep));
       payload.append('occurrenceDate', createForm.occurrenceDate);
       payload.append('occurrenceTime', createForm.occurrenceTime);
       payload.append('city', createForm.city);
@@ -528,6 +562,7 @@ const FeedPage = () => {
           <label className="feed-address-street">Rua<input name="street" value={createForm.street} onChange={updateCreateForm} placeholder="Nome da rua" /></label>
           <label>Número<input name="number" value={createForm.number} onChange={updateCreateForm} placeholder="Nº" /></label>
           <label>Bairro<input name="neighborhood" value={createForm.neighborhood} onChange={updateCreateForm} placeholder="Bairro" /></label>
+              <label>CEP<div className="relative"><input name="cep" value={createForm.cep} onChange={(event) => setCreateForm((current) => ({ ...current, cep: formatCep(event.target.value) }))} placeholder="00000-000" inputMode="numeric" />{loadingCep && <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-violet-200">...</span>}</div></label>
               <label>Cidade<FloatingSelect value={createForm.city} onChange={(value) => setCreateForm((current) => ({ ...current, city: value }))} options={[{ value: '', label: loadingCities ? t('loadingCities') : t('selectCity') }, ...cities]} /></label>
               <label>Estado<FloatingSelect value={createForm.state} onChange={(value) => setCreateForm((current) => ({ ...current, state: value, city: '' }))} options={[{ value: '', label: t('selectState') }, ...brazilStates]} /></label>
         </div>

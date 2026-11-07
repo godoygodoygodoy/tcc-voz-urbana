@@ -306,6 +306,9 @@ const Map = ({
                       {t('category')}: {problem.category?.name || t('noCategory')}
                     </span>
                   </p>
+                  <p className="urban-map-popup__status">
+                    <strong>Status:</strong> {problem.status || 'ABERTO'}
+                  </p>
                 </div>
               </Popup>
             </Marker>

@@ -8,8 +8,11 @@ const router = express.Router();
 router.get(
   "/",
   asyncHandler(async (req, res) => {
-    const categories = await prisma.categoria.findMany({
-      orderBy: { nome: "asc" }
+    const categories = await prisma.categoria.findMany({ orderBy: { nome: "asc" } });
+    categories.sort((left, right) => {
+      if (left.nome === "Outros") return 1;
+      if (right.nome === "Outros") return -1;
+      return left.nome.localeCompare(right.nome, "pt-BR");
     });
 
     res.json(categories.map(({ id, nome, icone, cor }) => ({ id, name: nome, icon: icone, color: cor })));

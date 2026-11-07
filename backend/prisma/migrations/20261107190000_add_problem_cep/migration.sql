@@ -1,0 +1,1 @@
+ALTER TABLE `problemas` ADD COLUMN `cep` VARCHAR(8) NULL;

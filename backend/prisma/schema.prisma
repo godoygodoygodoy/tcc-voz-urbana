@@ -52,6 +52,7 @@ model Problema {
   latitude       Decimal?              @db.Decimal(10, 7)
   longitude      Decimal?              @db.Decimal(10, 7)
   endereco       String?               @db.VarChar(300)
+  cep            String?               @db.VarChar(8)
   estado         String?               @db.VarChar(80)
   cidade         String?               @db.VarChar(120)
   status         StatusProblema        @default(ABERTO)

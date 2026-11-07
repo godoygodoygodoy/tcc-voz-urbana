@@ -75,9 +75,13 @@ const FloatingPortal = ({ panelRef, position, className, children, ...props }) =
     const panel = panelRef.current;
     if (!panel) return undefined;
     const handleWheel = (event) => {
-      if (panel.scrollHeight <= panel.clientHeight) return;
-      const maxScroll = panel.scrollHeight - panel.clientHeight;
-      panel.scrollTop = Math.max(0, Math.min(maxScroll, panel.scrollTop + event.deltaY));
+      const target = event.target instanceof Element
+        ? event.target.closest('.floating-time-column, .floating-menu, .floating-portal')
+        : panel;
+      const scrollTarget = target && target.scrollHeight > target.clientHeight ? target : panel;
+      if (scrollTarget.scrollHeight <= scrollTarget.clientHeight) return;
+      const maxScroll = scrollTarget.scrollHeight - scrollTarget.clientHeight;
+      scrollTarget.scrollTop = Math.max(0, Math.min(maxScroll, scrollTarget.scrollTop + event.deltaY));
       event.preventDefault();
       event.stopPropagation();
     };

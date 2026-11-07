@@ -36,36 +36,77 @@ const upload = multer({
 
 const router = express.Router();
 
-const geocodeAddress = async (address) => {
-  if (!address) return { latitude: null, longitude: null, address: null };
+const stateNames = {
+  AC: "Acre", AL: "Alagoas", AP: "Amapá", AM: "Amazonas", BA: "Bahia", CE: "Ceará",
+  DF: "Distrito Federal", ES: "Espírito Santo", GO: "Goiás", MA: "Maranhão", MT: "Mato Grosso",
+  MS: "Mato Grosso do Sul", MG: "Minas Gerais", PA: "Pará", PB: "Paraíba", PR: "Paraná",
+  PE: "Pernambuco", PI: "Piauí", RJ: "Rio de Janeiro", RN: "Rio Grande do Norte",
+  RS: "Rio Grande do Sul", RO: "Rondônia", RR: "Roraima", SC: "Santa Catarina",
+  SP: "São Paulo", SE: "Sergipe", TO: "Tocantins"
+};
 
-  try {
-    const response = await fetch(`https://nominatim.openstreetmap.org/search?format=jsonv2&addressdetails=1&countrycodes=br&limit=5&q=${encodeURIComponent(address)}`, {
-      headers: { Accept: "application/json", "User-Agent": "VozUrbana/1.0 (contact@vozurbana.local)" }
-    });
-    if (!response.ok) {
-      console.warn(`Não foi possível consultar o endereço informado: ${response.status}`);
-      return { latitude: null, longitude: null, address };
+const uniqueParts = (parts) => {
+  const seen = new Set();
+  return parts.map((part) => String(part || "").trim()).filter((part) => {
+    const key = part.toLocaleLowerCase("pt-BR");
+    if (!part || seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+};
+
+const normalizeAddressParts = (parts) => uniqueParts(
+  parts.flatMap((part) => String(part || "").split(","))
+);
+
+const geocodeAddress = async (addresses) => {
+  const queries = Array.isArray(addresses) ? addresses : [addresses];
+
+  if (!queries.some(Boolean)) return { latitude: null, longitude: null, address: null };
+
+  for (const address of queries.filter(Boolean)) {
+    try {
+      const response = await fetch(`https://nominatim.openstreetmap.org/search?format=jsonv2&addressdetails=1&countrycodes=br&limit=5&q=${encodeURIComponent(address)}`, {
+        headers: { Accept: "application/json", "User-Agent": "VozUrbana/1.0 (contact@vozurbana.local)" }
+      });
+      if (response.ok) {
+        const results = await response.json();
+        const best = results.find((result) => result.address?.country_code === "br") || results[0];
+        if (best) return { latitude: Number(best.lat), longitude: Number(best.lon), address: best.display_name };
+      }
+
+      const photonResponse = await fetch(`https://photon.komoot.io/api/?limit=5&q=${encodeURIComponent(address)}`, {
+        headers: { Accept: "application/json", "User-Agent": "VozUrbana/1.0 (contact@vozurbana.local)" }
+      });
+      if (photonResponse.ok) {
+        const feature = (await photonResponse.json()).features?.find((item) => item.properties?.countrycode === "BR");
+        if (feature?.geometry?.coordinates?.length === 2) {
+          const [longitude, latitude] = feature.geometry.coordinates;
+          return { latitude: Number(latitude), longitude: Number(longitude), address };
+        }
+      }
+    } catch (error) {
+      console.warn("Falha ao consultar o endereço.", error.message);
     }
-
-    const results = await response.json();
-    const best = results.find((result) => result.address?.country_code === "br") || results[0];
-    if (!best) return { latitude: null, longitude: null, address };
-
-    return { latitude: Number(best.lat), longitude: Number(best.lon), address: best.display_name };
-  } catch (error) {
-    console.warn("Falha ao consultar o endereço; o problema será salvo sem ponto no mapa.", error.message);
-    return { latitude: null, longitude: null, address };
   }
+  return { latitude: null, longitude: null, address: queries[0] || null };
 };
 
 const geocodeCache = new Map();
-const geocodeRegion = async ({ address, city, state }) => {
-  const context = [address, city, state, "Brasil"].filter(Boolean).join(", ");
-  if (!context) return { latitude: null, longitude: null, address: null };
-  if (geocodeCache.has(context)) return geocodeCache.get(context);
-  const result = await geocodeAddress(context);
-  geocodeCache.set(context, result);
+const geocodeRegion = async ({ address, city, state, cep }) => {
+  const stateName = stateNames[String(state || "").toUpperCase()] || state;
+  const parts = normalizeAddressParts([address, city, stateName, "Brasil"]);
+  if (!address) return { latitude: null, longitude: null, address: null };
+  const queries = uniqueParts([
+    parts.join(", "),
+    normalizeAddressParts([address, city, stateName, "Brasil"]).join(", "),
+    normalizeAddressParts([address, city, "Brasil"]).join(", "),
+    cep ? `${cep}, Brasil` : ""
+  ]);
+  const cacheKey = queries.join("|");
+  if (geocodeCache.has(cacheKey)) return geocodeCache.get(cacheKey);
+  const result = await geocodeAddress(queries);
+  geocodeCache.set(cacheKey, result);
   return result;
 };
 
@@ -94,7 +135,8 @@ const serializeProblem = (problem) => ({
   ...problem,
   title: problem.titulo,
   description: problem.descricao,
-  address: problem.endereco,
+  address: uniqueParts(String(problem.endereco || "").split(",")).join(", ") || null,
+  cep: problem.cep,
   state: problem.estado,
   city: problem.cidade,
   createdAt: problem.dataCriacao,
@@ -221,7 +263,7 @@ router.post(
   authMiddleware,
   upload.array("images"),
   asyncHandler(async (req, res) => {
-    const { title, description, latitude, longitude, address, categoryId, occurrenceDate, occurrenceTime, city, state } =
+    const { title, description, latitude, longitude, address, street, number, neighborhood, cep, categoryId, occurrenceDate, occurrenceTime, city, state } =
       req.body;
     const userId = req.userId;
 
@@ -234,11 +276,11 @@ router.post(
     }
     const occurrenceDateTime = parseOccurrenceDateTime(occurrenceDate, occurrenceTime);
     let resolvedLocation;
-    const rawAddress = String(address || "").trim();
+    const rawAddress = normalizeAddressParts([street, number, neighborhood, address]).join(", ");
     if (hasValidCoordinates(latitude, longitude)) {
       resolvedLocation = { latitude: Number(latitude), longitude: Number(longitude), address: rawAddress || null };
     } else {
-      resolvedLocation = await geocodeRegion({ address: rawAddress, city: String(city || "").trim(), state: String(state || "").trim() });
+      resolvedLocation = await geocodeRegion({ address: rawAddress, city: String(city || "").trim(), state: String(state || "").trim(), cep: String(cep || "").trim() });
     }
     if (!hasValidCoordinates(resolvedLocation.latitude, resolvedLocation.longitude) && rawAddress) {
       return res.status(422).json({ error: "Não foi possível identificar esse local. Revise o endereço, a cidade e o estado." });
@@ -251,6 +293,7 @@ router.post(
         latitude: resolvedLocation.latitude,
         longitude: resolvedLocation.longitude,
         endereco: resolvedLocation.address,
+        cep: String(cep || "").replace(/\D/g, "") || null,
         cidade: String(city || "").trim() || null,
         estado: String(state || "").trim() || null,
         ...(occurrenceDate || occurrenceTime ? { dataOcorrencia: occurrenceDateTime } : {}),
@@ -301,7 +344,7 @@ router.put(
     if (!current) return res.status(404).json({ error: "Problema não encontrado" });
     if (current.usuarioId !== req.userId) return res.status(403).json({ error: "Somente o autor pode editar esta publicação." });
 
-    const { title, description, categoryId, address, occurrenceDate, occurrenceTime, city, state } = req.body;
+    const { title, description, categoryId, address, street, number, neighborhood, cep, occurrenceDate, occurrenceTime, city, state } = req.body;
     if (!title?.trim() || !description?.trim() || !categoryId) {
       return res.status(400).json({ error: "Título, descrição e categoria são obrigatórios." });
     }
@@ -316,7 +359,16 @@ router.put(
       return res.status(400).json({ error: "Lista de imagens removidas inválida." });
     }
     const ownedRemovedIds = current.imagens.filter((image) => removedImageIds.includes(image.id)).map((image) => image.id);
-    const location = await geocodeRegion({ address: String(address || "").trim(), city: String(city || "").trim(), state: String(state || "").trim() });
+    const location = await geocodeRegion({
+      address: normalizeAddressParts([street, number, neighborhood, address]).join(", "),
+      city: String(city || "").trim(),
+      state: String(state || "").trim(),
+      cep: String(cep || "").trim()
+    });
+    const rawAddress = normalizeAddressParts([street, number, neighborhood, address]).join(", ");
+    if (!hasValidCoordinates(location.latitude, location.longitude) && rawAddress) {
+      return res.status(422).json({ error: "Não foi possível identificar esse local. Revise o endereço, a cidade e o estado." });
+    }
 
     await prisma.$transaction(async (transaction) => {
       await transaction.problema.update({
@@ -326,6 +378,7 @@ router.put(
           descricao: description.trim(),
           categoriaId: categoryId,
           endereco: location.address,
+          cep: String(cep || "").replace(/\D/g, "") || null,
           cidade: String(city || "").trim() || null,
           estado: String(state || "").trim() || null,
           ...(occurrenceDate || occurrenceTime ? { dataOcorrencia: occurrenceDateTime } : {}),
