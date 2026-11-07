@@ -55,7 +55,16 @@ export const problemsAPI = {
 
 // Categories
 export const categoriesAPI = {
-  list: () => api.get('/categories'),
+  list: () => api.get('/categories').then((response) => ({
+    ...response,
+    data: [...(response.data || [])].sort((a, b) => {
+      const aIsOther = a.name?.toLocaleLowerCase() === 'outros';
+      const bIsOther = b.name?.toLocaleLowerCase() === 'outros';
+
+      if (aIsOther !== bIsOther) return aIsOther ? 1 : -1;
+      return (a.name || '').localeCompare(b.name || '', 'pt-BR');
+    }),
+  })),
 };
 
 // Votes

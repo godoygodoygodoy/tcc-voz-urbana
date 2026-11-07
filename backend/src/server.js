@@ -37,6 +37,7 @@ const corsOrigins = [process.env.CORS_ORIGIN, process.env.FRONTEND_URL ? new URL
 
 if (process.env.NODE_ENV !== "production") {
   corsOrigins.push("http://localhost:3000");
+  corsOrigins.push("http://127.0.0.1:3000");
 }
 
 // Middleware de segurança e parsing
