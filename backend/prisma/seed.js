@@ -4,17 +4,17 @@ import { hashPassword } from "../src/utils/password.js";
 import Joi from "joi";
 
 const categories = [
-  { nome: "Asfalto", icone: "⚫", cor: "#4B5563" },
-  { nome: "Lixo", icone: "🟢", cor: "#166534" },
-  { nome: "Vegetação", icone: "🌿", cor: "#22C55E" },
-  { nome: "Iluminação", icone: "💡", cor: "#FACC15" },
-  { nome: "Sinalização", icone: "🔵", cor: "#2563EB" },
-  { nome: "Saneamento", icone: "🩵", cor: "#06B6D4" },
-  { nome: "Área com grande quantidade de furto", icone: "🟣", cor: "#7C3AED" },
-  { nome: "Acidentes de carros", icone: "🔴", cor: "#DC2626" },
-  { nome: "Outros", icone: "⚪", cor: "#6B7280" },
-  { nome: "Limpeza", icone: "🧹", cor: "#15803D" },
-  { nome: "Acessibilidade", icone: "♿", cor: "#0EA5E9" }
+  { nome: "Asfalto", descricao: "Problemas em ruas, vias e pavimentação.", icone: "⚫", cor: "#4B5563" },
+  { nome: "Lixo", descricao: "Acúmulo, descarte irregular e coleta de lixo.", icone: "🟢", cor: "#166534" },
+  { nome: "Vegetação", descricao: "Problemas relacionados a árvores, mato e áreas verdes.", icone: "🌿", cor: "#22C55E" },
+  { nome: "Iluminação", descricao: "Falhas ou ausência de iluminação pública.", icone: "💡", cor: "#FACC15" },
+  { nome: "Sinalização", descricao: "Problemas em placas, semáforos e sinalização viária.", icone: "🔵", cor: "#2563EB" },
+  { nome: "Saneamento", descricao: "Problemas de água, esgoto e drenagem urbana.", icone: "🩵", cor: "#06B6D4" },
+  { nome: "Área com grande quantidade de furto", descricao: "Locais com recorrência de furtos ou roubos.", icone: "🟣", cor: "#7C3AED" },
+  { nome: "Acidentes de carros", descricao: "Locais ou situações com acidentes de trânsito.", icone: "🔴", cor: "#DC2626" },
+  { nome: "Outros", descricao: "Problemas que não se enquadram nas demais categorias.", icone: "⚪", cor: "#6B7280" },
+  { nome: "Limpeza", descricao: "Problemas de limpeza e conservação urbana.", icone: "🧹", cor: "#15803D" },
+  { nome: "Acessibilidade", descricao: "Barreiras e problemas de acessibilidade urbana.", icone: "♿", cor: "#0EA5E9" }
 ];
 
 const seed = async () => {

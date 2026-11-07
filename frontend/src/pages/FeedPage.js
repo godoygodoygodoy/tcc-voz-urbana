@@ -83,6 +83,7 @@ const FeedPage = () => {
   const navigate = useNavigate();
   const [posts, setPosts] = useState([]);
   const [categories, setCategories] = useState([]);
+  const [categoryError, setCategoryError] = useState(false);
   const [category, setCategory] = useState('');
   const [status, setStatus] = useState('');
   const [search, setSearch] = useState('');
@@ -130,15 +131,27 @@ const FeedPage = () => {
   const loadFeed = useCallback(async () => {
     try {
       setLoading(true);
-      const [problemsResponse, categoriesResponse] = await Promise.all([
+      const [problemsResult, categoriesResult] = await Promise.allSettled([
         problemsAPI.list({ category: category || undefined, status: status || undefined, sort, page, limit: 9 }),
         categoriesAPI.list(),
       ]);
+      if (problemsResult.status === 'rejected') throw problemsResult.reason;
+      const problemsResponse = problemsResult.value;
       setPosts(problemsResponse.data?.data || []);
       setLikedPosts(new Set((problemsResponse.data?.data || []).filter((post) => post.supportedByMe).map((post) => post.id)));
       setTotal(problemsResponse.data?.total || 0);
-      setCategories(categoriesResponse.data || []);
+      if (categoriesResult.status === 'rejected'
+        || !Array.isArray(categoriesResult.value.data)
+        || categoriesResult.value.data.length === 0) {
+        setCategories([]);
+        setCategoryError(true);
+        toast.error('Não foi possível carregar as categorias.');
+      } else {
+        setCategories(categoriesResult.value.data);
+        setCategoryError(false);
+      }
     } catch (error) {
+      setCategoryError(true);
       toast.error(t('noPosts'));
     } finally {
       setLoading(false);
@@ -454,7 +467,7 @@ const FeedPage = () => {
     <section id="search" className="feed-filters">
       <label className="feed-search"><Search size={16} /><input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Buscar no feed..." /></label>
       <FloatingSelect value={status} onChange={(value) => { setStatus(value); setPage(1); }} options={[{ value: '', label: 'Todos os status' }, { value: 'ABERTO', label: t('openStatus') }, { value: 'EM_ANDAMENTO', label: t('progressStatus') }, { value: 'RESOLVIDO', label: t('resolvedStatus') }]} />
-      <FloatingSelect value={category} onChange={(value) => { setCategory(value); setPage(1); }} options={[{ value: '', label: 'Todas as categorias' }, ...categories.map((item) => ({ value: item.id, label: item.name }))]} />
+      <FloatingSelect value={category} onChange={(value) => { setCategory(value); setPage(1); }} options={[{ value: '', label: categoryError ? 'Categorias indisponíveis' : 'Todas as categorias' }, ...categories.map((item) => ({ value: item.id, label: item.name }))]} />
       <FloatingSelect value={sort} onChange={(value) => { setSort(value); setPage(1); }} options={[{ value: 'recent', label: 'Ocorrências recentes' }, { value: 'votes', label: 'Mais apoiadas' }]} />
     </section>
     {loading ? <div className="feed-empty">{t('loadingPosts')}</div> : filteredPosts.length === 0 ? <div className="feed-empty"><ImageIcon size={30} />{t('noPosts')}</div> : <div className="space-y-5">{filteredPosts.map(renderPost)}</div>}
@@ -506,7 +519,7 @@ const FeedPage = () => {
     <FeedHeader title={t('createPostTitle')} description="Registre um problema urbano e coloque a sua comunidade em movimento." />
     <form onSubmit={handleCreate} className="feed-create-form">
       <div className="feed-create-intro"><span className="feed-avatar"><Plus size={18} /></span><div><strong>Nova identificação urbana</strong><small>Compartilhe o que precisa mudar perto de você.</small></div></div>
-      <label>Categoria<FloatingSelect value={createForm.categoryId} onChange={(value) => setCreateForm((current) => ({ ...current, categoryId: value }))} options={[{ value: '', label: 'Selecione uma categoria' }, ...categories.map((item) => ({ value: item.id, label: item.name }))]} /></label>
+      <label>Categoria<FloatingSelect value={createForm.categoryId} onChange={(value) => setCreateForm((current) => ({ ...current, categoryId: value }))} options={[{ value: '', label: categoryError ? 'Categorias indisponíveis' : 'Selecione uma categoria' }, ...categories.map((item) => ({ value: item.id, label: item.name }))]} /></label>
       <label>Título<input name="title" value={createForm.title} onChange={updateCreateForm} placeholder="Ex: Buraco na rua principal" required /></label>
       <label>Descrição<textarea name="description" value={createForm.description} onChange={updateCreateForm} placeholder="Descreva o que está acontecendo..." rows="5" required /></label>
       <fieldset className="feed-fieldset">
