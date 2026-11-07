@@ -9,14 +9,16 @@ const monthNames = [
 ];
 const weekDays = ['D', 'S', 'T', 'Q', 'Q', 'S', 'S'];
 
-const useFloatingField = (open, setOpen, panelSize = { width: 280, height: 360 }) => {
+const useFloatingField = (open, setOpen, panelSize = { width: 280, height: 360, matchTriggerWidth: false }) => {
   const ref = useRef(null);
   const panelRef = useRef(null);
   const [position, setPosition] = useState(null);
   const updatePosition = () => {
     if (!ref.current) return;
     const rect = ref.current.getBoundingClientRect();
-    const panelWidth = panelRef.current?.offsetWidth || panelSize.width;
+    const panelWidth = panelSize.matchTriggerWidth
+      ? ref.current.getBoundingClientRect().width
+      : panelRef.current?.offsetWidth || panelSize.width;
     const panelHeight = panelRef.current?.offsetHeight || panelSize.height;
     const gap = 8;
     const left = Math.min(Math.max(8, rect.left), Math.max(8, window.innerWidth - panelWidth - 8));
@@ -24,7 +26,7 @@ const useFloatingField = (open, setOpen, panelSize = { width: 280, height: 360 }
     const top = below >= Math.min(panelHeight, window.innerHeight - 16)
       ? rect.bottom + gap
       : Math.max(8, rect.top - panelHeight - gap);
-    setPosition({ left, top, maxHeight: Math.max(160, window.innerHeight - top - 8) });
+    setPosition({ left, top, width: panelWidth, maxHeight: Math.max(160, window.innerHeight - top - 8) });
   };
   useEffect(() => {
     if (!open) return undefined;
@@ -54,13 +56,13 @@ const useFloatingField = (open, setOpen, panelSize = { width: 280, height: 360 }
 
 const FloatingPortal = ({ panelRef, position, className, children, ...props }) => {
   if (!position) return null;
-  return createPortal(<div ref={panelRef} className={`floating-portal ${className}`} style={{ left: position.left, top: position.top, maxHeight: position.maxHeight }} {...props}>{children}</div>, document.body);
+  return createPortal(<div ref={panelRef} className={`floating-portal ${className}`} style={{ left: position.left, top: position.top, width: position.width, maxHeight: position.maxHeight }} {...props}>{children}</div>, document.body);
 };
 
 export const FloatingSelect = ({ value, onChange, options, placeholder = 'Selecione uma opção', className = '' }) => {
   const [open, setOpen] = useState(false);
   const [highlighted, setHighlighted] = useState(Math.max(0, options.findIndex((option) => option.value === value)));
-  const { ref, panelRef, position } = useFloatingField(open, setOpen, { width: 240, height: 280 });
+  const { ref, panelRef, position } = useFloatingField(open, setOpen, { width: 240, height: 280, matchTriggerWidth: true });
   const selected = options.find((option) => option.value === value);
   const selectOption = (option) => {
     onChange(option.value);
