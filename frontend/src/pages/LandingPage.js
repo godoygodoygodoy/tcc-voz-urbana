@@ -31,6 +31,7 @@ import Header from '../components/Header';
 import { useI18n } from '../i18n';
 import LandingHero from '../components/LandingHero';
 import AmbientContour from '../components/AmbientContour';
+import { formatBrazilianPhone } from '../utils/formatters';
 
 const fadeUp = {
   hidden: { opacity: 0, y: 28 },
@@ -492,7 +493,12 @@ export default function LandingPage() {
               <div className="grid gap-4 md:grid-cols-2">
                 <input className="rounded-2xl border border-white/10 bg-black/20 p-3 text-white placeholder:text-white/35 outline-none transition focus:border-violet-300/60" placeholder={t('name')} />
                 <input className="rounded-2xl border border-white/10 bg-black/20 p-3 text-white placeholder:text-white/35 outline-none transition focus:border-violet-300/60" placeholder={t('email')} />
-                <input className="rounded-2xl border border-white/10 bg-black/20 p-3 text-white placeholder:text-white/35 outline-none transition focus:border-violet-300/60" placeholder={t('phone')} />
+                <input
+                  className="rounded-2xl border border-white/10 bg-black/20 p-3 text-white placeholder:text-white/35 outline-none transition focus:border-violet-300/60"
+                  placeholder={t('phone')}
+                  type="tel"
+                  onChange={(event) => { event.target.value = formatBrazilianPhone(event.target.value); }}
+                />
                 <input className="rounded-2xl border border-white/10 bg-black/20 p-3 text-white placeholder:text-white/35 outline-none transition focus:border-violet-300/60 md:col-span-2" placeholder={t('password')} />
               </div>
 

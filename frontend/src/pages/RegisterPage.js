@@ -6,6 +6,7 @@ import { Card, CardContent } from '../components/ui/card';
 import { Button } from '../components/ui/button';
 import { useI18n } from '../i18n';
 import PasswordField from '../components/PasswordField';
+import { formatBrazilianPhone, normalizeDigits } from '../utils/formatters';
 
 const RegisterPage = () => {
   const [formData, setFormData] = useState({
@@ -22,9 +23,10 @@ const RegisterPage = () => {
   const { t } = useI18n();
 
   const handleChange = (e) => {
+    const value = e.target.name === 'phone' ? formatBrazilianPhone(e.target.value) : e.target.value;
     setFormData({
       ...formData,
-      [e.target.name]: e.target.value,
+      [e.target.name]: value,
     });
   };
 
@@ -42,7 +44,7 @@ const RegisterPage = () => {
       await register({
         name: formData.name,
         email: formData.email,
-        phone: formData.phone,
+        phone: normalizeDigits(formData.phone),
         password: formData.password,
         username: formData.username.replace(/^@/, '').trim(),
       });

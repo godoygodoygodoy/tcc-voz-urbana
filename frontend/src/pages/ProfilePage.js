@@ -4,6 +4,7 @@ import { toast } from 'react-toastify';
 import { useAuthStore } from '../store';
 import { useI18n } from '../i18n';
 import { UploadField } from '../components/FloatingFields';
+import { formatBrazilianPhone, normalizeDigits } from '../utils/formatters';
 
 const ProfilePage = () => {
   const [profile, setProfile] = useState(null);
@@ -30,7 +31,7 @@ const ProfilePage = () => {
         setFormData({
           name: res.data.name || res.data.nome || '',
           username: res.data.username || '',
-          phone: res.data.phone || res.data.telefone || '',
+          phone: formatBrazilianPhone(res.data.phone || res.data.telefone || ''),
           bio: res.data.bio || '',
           avatar: res.data.avatar || res.data.fotoPerfil || '',
         });
@@ -46,7 +47,11 @@ const ProfilePage = () => {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value, ...(name === 'avatar' ? { avatarFile: null } : {}) }));
+    setFormData((prev) => ({
+      ...prev,
+      [name]: name === 'phone' ? formatBrazilianPhone(value) : value,
+      ...(name === 'avatar' ? { avatarFile: null } : {}),
+    }));
   };
 
   const selectAvatar = (file) => {
@@ -89,7 +94,7 @@ const ProfilePage = () => {
       const payload = new FormData();
       payload.append('name', formData.name);
       payload.append('username', formData.username);
-      payload.append('phone', formData.phone);
+      payload.append('phone', normalizeDigits(formData.phone));
       payload.append('bio', formData.bio);
       if (formData.avatarFile) payload.append('avatarFile', await createCroppedAvatar());
       else payload.append('avatar', formData.avatar);

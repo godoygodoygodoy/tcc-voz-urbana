@@ -216,18 +216,48 @@ code {
 }
 
 .urban-map .leaflet-control-zoom {
-  border: none;
-  box-shadow: 0 16px 30px rgba(18, 11, 32, 0.25);
+  display: grid;
+  gap: 0.35rem;
+  border: 0;
+  border-radius: 0.9rem;
+  background: transparent;
+  box-shadow: 0 16px 30px rgba(18, 11, 32, 0.35);
 }
 
 .urban-map .leaflet-control-zoom a {
-  background: rgba(28, 15, 45, 0.9);
-  color: #fff;
-  border: none;
+  display: grid;
+  width: 2.5rem;
+  height: 2.5rem;
+  place-items: center;
+  border: 1px solid rgba(216, 180, 255, 0.28);
+  border-radius: 0.75rem;
+  background: rgba(28, 15, 45, 0.94);
+  color: #f4eaff;
+  font-size: 1.35rem;
+  font-weight: 700;
+  line-height: 1;
+  transition: background-color 160ms ease, border-color 160ms ease, color 160ms ease, transform 160ms ease;
 }
 
 .urban-map .leaflet-control-zoom a:hover {
-  background: rgba(124, 58, 237, 0.9);
+  border-color: rgba(216, 180, 255, 0.75);
+  background: rgba(84, 33, 123, 0.96);
+  color: #fff;
+}
+
+.urban-map .leaflet-control-zoom a:active {
+  background: rgba(124, 58, 237, 0.98);
+  transform: scale(0.94);
+}
+
+.urban-map .leaflet-control-zoom a:focus-visible {
+  outline: 2px solid #d8b4fe;
+  outline-offset: 2px;
+}
+
+.urban-map .leaflet-control-zoom-in,
+.urban-map .leaflet-control-zoom-out {
+  border-radius: 0.75rem;
 }
 
 .urban-map .leaflet-popup-content-wrapper,
@@ -938,17 +968,19 @@ code {
 
 .urban-map .leaflet-control-zoom a {
   display: grid;
-  width: 2rem;
-  height: 2rem;
+  width: 2.5rem;
+  height: 2.5rem;
   place-items: center;
-  border: 0;
-  background: #281536;
+  border: 1px solid rgba(216, 180, 255, 0.28);
+  border-radius: 0.75rem;
+  background: rgba(28, 15, 45, 0.94);
   color: #f4eaff;
   font-size: 1.15rem;
   line-height: 1;
 }
 
 .urban-map .leaflet-control-zoom a:hover {
+  border-color: rgba(216, 180, 255, 0.75);
   background: #54217b;
   color: #fff;
 }

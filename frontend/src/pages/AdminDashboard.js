@@ -3,6 +3,7 @@ import { AlertCircle, BarChart3, FileText, Search, ShieldCheck, Trash2, Users } 
 import { toast } from 'react-toastify';
 import { adminAPI, mediaUrl } from '../services/api';
 import { useI18n } from '../i18n';
+import { formatBrazilianPhone } from '../utils/formatters';
 
 const AdminDashboard = () => {
   const { t } = useI18n();
@@ -89,7 +90,7 @@ const AdminDashboard = () => {
 
           {(tab === 'users' || tab === 'problems') && <section className="site-panel rounded-3xl p-6">
             <form onSubmit={search} className="mb-6 flex gap-2"><label className="feed-search flex-1"><Search size={16} /><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder={tab === 'users' ? t('searchUsers') : t('searchPublications')} /></label><button className="feed-report-button" type="submit">{t('searchTitle')}</button></form>
-            {tab === 'users' && <div className="space-y-3">{users.map((item) => <div key={item.id} className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-white/10 bg-white/5 p-4"><div className="flex items-center gap-3">{item.fotoPerfil ? <img src={mediaUrl(item.fotoPerfil)} alt="" className="h-10 w-10 rounded-full object-cover" /> : <span className="feed-avatar">{item.nome.charAt(0)}</span>}<div><strong>{item.nome}</strong><p className="text-xs text-white/55">{item.username ? `@${item.username}` : item.email}</p></div></div><div className="text-right text-xs text-white/55"><span>{item.role}</span><br />{item.publicationCount} {t('publications')}</div></div>)}</div>}
+            {tab === 'users' && <div className="space-y-3">{users.map((item) => <div key={item.id} className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-white/10 bg-white/5 p-4"><div className="flex items-center gap-3">{item.fotoPerfil ? <img src={mediaUrl(item.fotoPerfil)} alt="" className="h-10 w-10 rounded-full object-cover" /> : <span className="feed-avatar">{item.nome.charAt(0)}</span>}<div><strong>{item.nome}</strong><p className="text-xs text-white/55">{item.username ? `@${item.username}` : item.email}</p></div></div>            <div className="text-right text-xs text-white/55"><span>{item.role}</span><br />{item.telefone ? formatBrazilianPhone(item.telefone) : 'Telefone não informado'}<br />{item.publicationCount} {t('publications')}</div></div>)}</div>}
             {tab === 'problems' && <div className="space-y-3">{problems.map((item) => <div key={item.id} className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-white/10 bg-white/5 p-4"><div><strong>{item.title}</strong><p className="text-xs text-white/55">{item.author?.nome} · {item.city || item.address || t('locationNotSpecified')}</p></div><button type="button" className="rounded-lg border border-red-300/30 p-2 text-red-200" aria-label={t('deletePublication')} onClick={() => deleteProblem(item)}><Trash2 size={16} /></button></div>)}</div>}
           </section>}
         </>}

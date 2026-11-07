@@ -8,6 +8,7 @@ import fs from "fs";
 import { uploadsRoot } from "../config/uploads.js";
 
 const router = express.Router();
+const normalizePhone = (value) => String(value || "").replace(/\D/g, "");
 const profileUploadDir = path.join(uploadsRoot, "profiles");
 fs.mkdirSync(profileUploadDir, { recursive: true });
 const imageExtensions = { "image/jpeg": ".jpg", "image/png": ".png", "image/webp": ".webp", "image/gif": ".gif" };
@@ -58,7 +59,7 @@ router.put(
       data: {
         ...(name !== undefined && { nome: name.trim() }),
         ...(username !== undefined && { username: username ? username.replace(/^@/, "").trim().toLowerCase() : null }),
-        ...(phone !== undefined && { telefone: phone || null }),
+        ...(phone !== undefined && { telefone: phone ? normalizePhone(phone) || null : null }),
         ...(bio !== undefined && { bio: bio || null }),
         ...(avatar !== undefined && { fotoPerfil: avatar || null }),
         ...(req.file && { fotoPerfil: `/uploads/profiles/${req.file.filename}` })
