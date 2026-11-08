@@ -18,6 +18,7 @@ import adminRoutes from "./routes/admin.js";
 import commentRoutes from "./routes/comments.js";
 import notificationRoutes from "./routes/notifications.js";
 import socialRoutes from "./routes/social.js";
+import savedRoutes from "./routes/saved.js";
 import rateLimit from "express-rate-limit";
 import { uploadedMedia } from "./config/media.js";
 
@@ -81,6 +82,7 @@ app.use("/api/votes", authMiddleware, voteRoutes);
 app.use("/api/admin", authMiddleware, adminMiddleware, adminRoutes);
 app.use("/api/notifications", notificationRoutes);
 app.use("/api/social", authMiddleware, socialRoutes);
+app.use("/api/saved", savedRoutes);
 
 // 404 handler
 app.use((req, res) => {

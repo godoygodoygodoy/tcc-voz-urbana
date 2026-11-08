@@ -28,6 +28,7 @@ model Usuario {
   notificacoes           Notificacao[]
   problemas              Problema[]
   votos                  Voto[]
+  publicacoesSalvas      PublicacaoSalva[]
   amizadesEnviadas       Amizade[]             @relation("amizadeSolicitante")
   amizadesRecebidas      Amizade[]             @relation("amizadeDestinatario")
 
@@ -67,6 +68,7 @@ model Problema {
   categoria      Categoria             @relation(fields: [categoriaId], references: [id])
   usuario        Usuario               @relation(fields: [usuarioId], references: [id])
   votos          Voto[]
+  salvos         PublicacaoSalva[]
 
   @@index([latitude, longitude])
   @@index([status])
@@ -76,11 +78,25 @@ model Problema {
   @@map("problemas")
 }
 
+model PublicacaoSalva {
+  id          String   @id @default(uuid()) @db.Char(36)
+  usuarioId   String   @map("usuario_id") @db.Char(36)
+  problemaId  String   @map("problema_id") @db.Char(36)
+  criadaEm    DateTime @default(now()) @map("criada_em")
+  usuario     Usuario  @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+  problema    Problema @relation(fields: [problemaId], references: [id], onDelete: Cascade)
+
+  @@unique([usuarioId, problemaId])
+  @@index([usuarioId, criadaEm])
+  @@map("publicacoes_salvas")
+}
+
 model Imagem {
   id         String     @id @default(uuid()) @db.Char(36)
   url        String     @db.VarChar(500)
   problemaId String     @map("problema_id") @db.Char(36)
   tipo       TipoImagem @default(ANTES)
+  proporcao  String?    @db.VarChar(10)
   problema   Problema   @relation(fields: [problemaId], references: [id], onDelete: Cascade)
 
   @@index([problemaId], map: "imagens_problema_id_fkey")

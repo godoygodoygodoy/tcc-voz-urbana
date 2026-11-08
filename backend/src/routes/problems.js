@@ -59,7 +59,30 @@ const normalizeAddressParts = (parts) => uniqueParts(
   parts.flatMap((part) => String(part || "").split(","))
 );
 
-const geocodeAddress = async (addresses) => {
+const normalizeText = (value) => String(value || "")
+  .normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLocaleLowerCase("pt-BR").trim();
+
+const scoreCandidate = (candidate, expected) => {
+  const address = candidate.address || {};
+  const display = normalizeText(candidate.display_name || candidate.label || "");
+  const city = normalizeText(expected.city);
+  const state = normalizeText(stateNames[String(expected.state || "").toUpperCase()] || expected.state);
+  const neighborhood = normalizeText(expected.neighborhood);
+  const street = normalizeText(expected.street);
+  const number = normalizeText(expected.number);
+  const candidateCity = normalizeText(address.city || address.town || address.village || address.municipality || candidate.city);
+  const candidateState = normalizeText(address.state || candidate.state);
+  let score = 0;
+  if (city && candidateCity === city) score += 5;
+  else if (city && (candidateCity.includes(city) || city.includes(candidateCity))) score += 2;
+  if (state && (candidateState === state || candidateState.includes(state) || state.includes(candidateState))) score += 4;
+  if (neighborhood && display.includes(neighborhood)) score += 2;
+  if (street && display.includes(street)) score += 3;
+  if (number && (display.match(new RegExp(`(^|[^0-9])${number}([^0-9]|$)`)) || address.house_number === number)) score += 2;
+  return score;
+};
+
+const geocodeAddress = async (addresses, expected) => {
   const queries = Array.isArray(addresses) ? addresses : [addresses];
 
   if (!queries.some(Boolean)) return { latitude: null, longitude: null, address: null };
@@ -71,16 +94,24 @@ const geocodeAddress = async (addresses) => {
       });
       if (response.ok) {
         const results = await response.json();
-        const best = results.find((result) => result.address?.country_code === "br") || results[0];
-        if (best) return { latitude: Number(best.lat), longitude: Number(best.lon), address: best.display_name };
+        const best = results
+          .filter((result) => result.address?.country_code === "br")
+          .sort((left, right) => scoreCandidate(right, expected) - scoreCandidate(left, expected))[0];
+        if (best && scoreCandidate(best, expected) >= (expected.city && expected.state ? 9 : 4)) {
+          return { latitude: Number(best.lat), longitude: Number(best.lon), address: best.display_name };
+        }
       }
 
       const photonResponse = await fetch(`https://photon.komoot.io/api/?limit=5&q=${encodeURIComponent(address)}`, {
         headers: { Accept: "application/json", "User-Agent": "VozUrbana/1.0 (contact@vozurbana.local)" }
       });
       if (photonResponse.ok) {
-        const feature = (await photonResponse.json()).features?.find((item) => item.properties?.countrycode === "BR");
-        if (feature?.geometry?.coordinates?.length === 2) {
+        const feature = (await photonResponse.json()).features
+          ?.filter((item) => item.properties?.countrycode === "BR")
+          ?.sort((left, right) => scoreCandidate({ address: left.properties, display_name: left.properties?.name }, expected)
+            - scoreCandidate({ address: right.properties, display_name: right.properties?.name }, expected))[0];
+        if (feature?.geometry?.coordinates?.length === 2
+          && scoreCandidate({ address: feature.properties, display_name: feature.properties?.name }, expected) >= (expected.city && expected.state ? 9 : 4)) {
           const [longitude, latitude] = feature.geometry.coordinates;
           return { latitude: Number(latitude), longitude: Number(longitude), address };
         }
@@ -101,11 +132,18 @@ const geocodeRegion = async ({ address, city, state, cep }) => {
     parts.join(", "),
     normalizeAddressParts([address, city, stateName, "Brasil"]).join(", "),
     normalizeAddressParts([address, city, "Brasil"]).join(", "),
-    cep ? `${cep}, Brasil` : ""
+    cep && addressParts.length < 2 ? `${cep}, Brasil` : ""
   ]);
   const cacheKey = queries.join("|");
   if (geocodeCache.has(cacheKey)) return geocodeCache.get(cacheKey);
-  const result = await geocodeAddress(queries);
+  const addressParts = normalizeAddressParts(String(address || "").split(","));
+  const result = await geocodeAddress(queries, {
+    city,
+    state,
+    street: addressParts[0],
+    number: addressParts[1],
+    neighborhood: addressParts[2]
+  });
   geocodeCache.set(cacheKey, result);
   return result;
 };
@@ -319,6 +357,7 @@ router.post(
         data: req.files.map((file) => ({
           url: `/uploads/problems/${file.filename}`,
           tipo: req.body.imageType === "DEPOIS" ? "DEPOIS" : "ANTES",
+          proporcao: req.body.imageAspect || "1:1",
           problemaId: problem.id
         }))
       });
@@ -342,7 +381,8 @@ router.put(
       include: { imagens: true }
     });
     if (!current) return res.status(404).json({ error: "Problema não encontrado" });
-    if (current.usuarioId !== req.userId) return res.status(403).json({ error: "Somente o autor pode editar esta publicação." });
+    const isAdmin = Boolean(await prisma.admin.findUnique({ where: { usuarioId: req.userId } }));
+    if (current.usuarioId !== req.userId && !isAdmin) return res.status(403).json({ error: "Somente o autor ou um administrador pode editar esta publicação." });
 
     const { title, description, categoryId, address, street, number, neighborhood, cep, occurrenceDate, occurrenceTime, city, state } = req.body;
     if (!title?.trim() || !description?.trim() || !categoryId) {
@@ -390,7 +430,7 @@ router.put(
       if (ownedRemovedIds.length) await transaction.imagem.deleteMany({ where: { id: { in: ownedRemovedIds }, problemaId: current.id } });
       if (req.files?.length) {
         await transaction.imagem.createMany({
-          data: req.files.map((file) => ({ url: `/uploads/problems/${file.filename}`, tipo: "ANTES", problemaId: current.id }))
+          data:           req.files.map((file) => ({ url: `/uploads/problems/${file.filename}`, tipo: "ANTES", proporcao: req.body.imageAspect || "1:1", problemaId: current.id }))
         });
       }
     });

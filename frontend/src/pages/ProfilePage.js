@@ -5,6 +5,7 @@ import { useAuthStore } from '../store';
 import { useI18n } from '../i18n';
 import { UploadField } from '../components/FloatingFields';
 import { formatBrazilianPhone, normalizeDigits } from '../utils/formatters';
+import ImageCropper from '../components/ImageCropper';
 
 const ProfilePage = () => {
   const [profile, setProfile] = useState(null);
@@ -20,6 +21,7 @@ const ProfilePage = () => {
   const [saving, setSaving] = useState(false);
   const [crop, setCrop] = useState({ zoom: 1, x: 0, y: 0 });
   const [dragStart, setDragStart] = useState(null);
+  const [cropFile, setCropFile] = useState(null);
   const setUser = useAuthStore((state) => state.setUser);
   const { t } = useI18n();
 
@@ -56,8 +58,12 @@ const ProfilePage = () => {
 
   const selectAvatar = (file) => {
     if (!file) return;
-    setCrop({ zoom: 1, x: 0, y: 0 });
+    setCropFile(file);
+  };
+
+  const confirmAvatarCrop = (file) => {
     setFormData((current) => ({ ...current, avatarFile: file, avatar: URL.createObjectURL(file) }));
+    setCropFile(null);
   };
 
   const createCroppedAvatar = () => new Promise((resolve, reject) => {
@@ -204,6 +210,7 @@ const ProfilePage = () => {
                   {formData.avatar && <button type="button" onClick={() => { setCrop({ zoom: 1, x: 0, y: 0 }); setFormData((current) => ({ ...current, avatar: '', avatarFile: null })); }} className="text-sm text-fuchsia-300">{t('removePhoto')}</button>}
                 </div>
               </div>
+              {cropFile && <ImageCropper file={cropFile} initialAspect="1:1" onCancel={() => setCropFile(null)} onConfirm={confirmAvatarCrop} />}
             </div>
 
             <div>

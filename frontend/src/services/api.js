@@ -53,6 +53,12 @@ export const problemsAPI = {
   remove: (id) => api.delete(`/problems/${id}`),
 };
 
+export const savedAPI = {
+  list: () => api.get('/saved'),
+  save: (problemId) => api.post(`/saved/${problemId}`),
+  remove: (problemId) => api.delete(`/saved/${problemId}`),
+};
+
 // Categories
 export const categoriesAPI = {
   list: () => api.get('/categories').then((response) => ({

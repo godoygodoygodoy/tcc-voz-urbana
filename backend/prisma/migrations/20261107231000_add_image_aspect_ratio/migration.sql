@@ -1,0 +1,1 @@
+ALTER TABLE `imagens` ADD COLUMN `proporcao` VARCHAR(10) NULL;

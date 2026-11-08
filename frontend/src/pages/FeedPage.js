@@ -1,6 +1,9 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   Bell,
+  Bookmark,
+  Check,
+  Copy,
   ChevronLeft,
   ChevronRight,
   Ellipsis,
@@ -13,18 +16,21 @@ import {
   Search,
   Send,
   Trash2,
+  Flag,
   Users,
 } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
-import { categoriesAPI, mediaUrl, notificationsAPI, problemsAPI, socialAPI, votesAPI } from '../services/api';
+import { categoriesAPI, mediaUrl, notificationsAPI, problemsAPI, savedAPI, socialAPI, votesAPI } from '../services/api';
 import { useAuthStore } from '../store';
 import { useI18n } from '../i18n';
 import AmbientContour from '../components/AmbientContour';
 import { FloatingDatePicker, FloatingSelect, FloatingTimePicker, UploadField } from '../components/FloatingFields';
 import { brazilStates, fetchCep, fetchCities, formatCep, normalizeCep } from '../utils/brazil';
+import Avatar from '../components/Avatar';
+import ImageCropper from '../components/ImageCropper';
 
 const actionAsset = (name) => `${import.meta.env.BASE_URL}feed-actions/${name}.png`;
 
@@ -33,6 +39,7 @@ const navItems = [
   { key: 'conversations', label: 'conversationsTitle', icon: Mail },
   { key: 'search', label: 'searchTitle', icon: Search },
   { key: 'notifications', label: 'notifications', icon: Bell },
+  { key: 'saved', label: 'Publicações salvas', icon: Bookmark },
   { key: 'create', label: 'create', icon: Plus },
 ];
 
@@ -116,6 +123,13 @@ const FeedPage = () => {
   const [removedEditImages, setRemovedEditImages] = useState([]);
   const [savingEdit, setSavingEdit] = useState(false);
   const [lightboxImage, setLightboxImage] = useState(null);
+  const [savedPosts, setSavedPosts] = useState([]);
+  const [openMenu, setOpenMenu] = useState(null);
+  const [cropFile, setCropFile] = useState(null);
+  const [cropQueue, setCropQueue] = useState([]);
+  const [cropTarget, setCropTarget] = useState('create');
+  const [createImageAspect, setCreateImageAspect] = useState('1:1');
+  const [editImageAspect, setEditImageAspect] = useState('1:1');
   const lastCepLookup = useRef('');
 
   const activeTab = navItems.some((item) => item.key === location.hash.slice(1)) ? location.hash.slice(1) : 'home';
@@ -162,6 +176,29 @@ const FeedPage = () => {
   }, [category, page, sort, status, t]);
 
   useEffect(() => { loadFeed(); }, [loadFeed]);
+
+  useEffect(() => {
+    if (!user) {
+      setSavedPosts([]);
+      return undefined;
+    }
+    savedAPI.list().then((response) => setSavedPosts(response.data || []))
+      .catch((error) => toast.error(error.response?.data?.error || 'Não foi possível carregar as publicações salvas.'));
+    return undefined;
+  }, [activeTab, user]);
+
+  useEffect(() => {
+    if (!openMenu) return undefined;
+    const close = (event) => {
+      if (event.key === 'Escape' || !event.target.closest('.feed-post-head')) setOpenMenu(null);
+    };
+    document.addEventListener('keydown', close);
+    document.addEventListener('pointerdown', close);
+    return () => {
+      document.removeEventListener('keydown', close);
+      document.removeEventListener('pointerdown', close);
+    };
+  }, [openMenu]);
 
   useEffect(() => {
     let cancelled = false;
@@ -230,11 +267,30 @@ const FeedPage = () => {
 
   const handleCreateImages = (event) => {
     try {
-      setCreateImages((current) => [...current, ...validateImages(event.target.files, current.length)]);
+      const selected = validateImages(event.target.files, createImages.length);
+      if (selected.length) {
+        setCropTarget('create');
+        setCropFile(selected[0]);
+        setCropQueue(selected.slice(1));
+      }
     } catch (error) {
       toast.error(error.message);
     } finally {
       event.target.value = '';
+    }
+  };
+
+  const handleCroppedImage = (file, aspect) => {
+    if (cropTarget === 'create') setCreateImages((current) => [...current, file]);
+    else setEditImages((current) => [...current, file]);
+    if (cropTarget === 'create') setCreateImageAspect(aspect);
+    else setEditImageAspect(aspect);
+    const [next, ...rest] = cropQueue;
+    if (next) {
+      setCropFile(next);
+      setCropQueue(rest);
+    } else {
+      setCropFile(null);
     }
   };
 
@@ -258,6 +314,7 @@ const FeedPage = () => {
       const payload = new FormData();
       ['title', 'description', 'address', 'categoryId'].forEach((key) => payload.append(key, editingPost[key]));
       payload.append('removedImageIds', JSON.stringify(removedEditImages));
+      payload.append('imageAspect', editImageAspect);
       editImages.forEach((file) => payload.append('images', file));
       const response = await problemsAPI.update(editingPost.id, payload);
       setPosts((current) => current.map((post) => post.id === editingPost.id ? response.data : post));
@@ -308,7 +365,6 @@ const FeedPage = () => {
   }, [posts, search]);
 
   const displayName = user?.username ? `@${user.username.replace(/^@/, '')}` : user?.name || user?.nome || 'Perfil';
-  const displayAvatar = mediaUrl(user?.avatar || user?.fotoPerfil);
 
   const selectTab = (key) => {
     navigate(`/feed#${key}`);
@@ -354,6 +410,33 @@ const FeedPage = () => {
     }
   };
 
+  const toggleSaved = async (post) => {
+    if (!user) {
+      toast.info('Entre na sua conta para salvar publicações.');
+      return;
+    }
+    try {
+      const saved = savedPosts.some((item) => item.id === post.id);
+      if (saved) {
+        await savedAPI.remove(post.id);
+        setSavedPosts((current) => current.filter((item) => item.id !== post.id));
+      } else {
+        await savedAPI.save(post.id);
+        setSavedPosts((current) => [{ ...post, savedByMe: true }, ...current]);
+      }
+      setOpenMenu(null);
+      toast.success(saved ? 'Publicação removida dos salvos.' : 'Publicação salva.');
+    } catch (error) {
+      toast.error(error.response?.data?.error || 'Não foi possível atualizar os salvos.');
+    }
+  };
+
+  const copyPostLink = async (post) => {
+    await navigator.clipboard?.writeText(`${window.location.origin}${import.meta.env.BASE_URL}problem/${post.id}`);
+    setOpenMenu(null);
+    toast.success('Link da publicação copiado.');
+  };
+
   const updateCreateForm = (event) => setCreateForm((current) => ({ ...current, [event.target.name]: event.target.value }));
 
   const handleCreate = async (event) => {
@@ -381,6 +464,7 @@ const FeedPage = () => {
       payload.append('number', createForm.number);
       payload.append('neighborhood', createForm.neighborhood);
       payload.append('cep', normalizeCep(createForm.cep));
+      payload.append('imageAspect', createImageAspect);
       payload.append('occurrenceDate', createForm.occurrenceDate);
       payload.append('occurrenceTime', createForm.occurrenceTime);
       payload.append('city', createForm.city);
@@ -464,23 +548,27 @@ const FeedPage = () => {
     const shared = sharedPosts.has(post.id);
     const authorName = post.author?.name || 'Usuário';
     const authorHandle = post.author?.username ? `@${post.author.username.replace(/^@/, '')}` : 'perfil sem @';
-    const authorAvatar = mediaUrl(post.author?.avatar);
     return <article key={post.id} className="feed-post">
       <div className="feed-post-head">
-        <Link to={`/profile/${post.author?.id}`} className="feed-post-author">
-          {authorAvatar ? <img className="feed-avatar object-cover" src={authorAvatar} alt="" /> : <div className="feed-avatar">{authorName.charAt(0).toUpperCase()}</div>}
-        </Link>
+        <Link to={`/profile/${post.author?.id}`} className="feed-post-author"><Avatar user={post.author} className="feed-avatar" /></Link>
         <Link to={`/profile/${post.author?.id}`} className="min-w-0 feed-post-author-copy"><strong>{authorHandle}</strong><span>{authorName} · {post.createdAt ? formatDistanceToNow(new Date(post.createdAt), { locale: language === 'pt-BR' ? ptBR : undefined, addSuffix: true }) : t('now')}</span></Link>
-        <div className="relative">
-          <button type="button" className="feed-more" aria-label="Mais opções" onClick={() => post.author?.id === user?.id && startEditing(post)}><Ellipsis size={18} /></button>
-          {post.author?.id === user?.id && <button type="button" className="sr-only" onClick={() => startEditing(post)}>{t('editPostTitle')}</button>}
+        <div className="relative flex items-center gap-1">
+          <button type="button" className="feed-more" aria-label="Mais opções" onClick={() => setOpenMenu((current) => current === post.id ? null : post.id)}><Ellipsis size={18} /></button>
           {(post.author?.id === user?.id || user?.role === 'admin') && <button type="button" className="feed-more text-red-200" aria-label={t('deletePublication')} disabled={deletingPost === post.id} onClick={() => deletePost(post)}><Trash2 size={16} /></button>}
+          {openMenu === post.id && <div className="feed-post-menu" role="menu">
+            {(post.author?.id === user?.id || user?.role === 'admin') && <button type="button" onClick={() => { startEditing(post); setOpenMenu(null); }}><Ellipsis size={14} /> Editar publicação</button>}
+            {(post.author?.id === user?.id || user?.role === 'admin') && <button type="button" onClick={() => { setOpenMenu(null); deletePost(post); }}><Trash2 size={14} /> Apagar publicação</button>}
+            <button type="button" onClick={() => toggleSaved(post)}><Bookmark size={14} /> {savedPosts.some((item) => item.id === post.id) ? 'Remover dos salvos' : 'Salvar publicação'}</button>
+            <button type="button" onClick={() => copyPostLink(post)}><Copy size={14} /> Copiar link</button>
+            <button type="button" onClick={() => { setOpenMenu(null); navigate(`/problem/${post.id}`); }}><Check size={14} /> Ver detalhes</button>
+            <button type="button" onClick={() => { setOpenMenu(null); toast.info('Obrigado. A denúncia será analisada.'); }}><Flag size={14} /> Denunciar</button>
+          </div>}
         </div>
       </div>
       <Link to={`/problem/${post.id}`} className="block">
         <div className="feed-post-copy"><span className="feed-category">{post.category?.name || t('noCategory')}</span><h2>{post.title}{post.isEdited && <small className="ml-2 text-xs text-white/45">(editado)</small>}</h2><p>{post.description}</p><span className="feed-location"><MapPin size={13} />{post.address || t('locationOnMap')}</span></div>
-        <div className="feed-media">
-          {images.length > 0 ? <button type="button" className="block h-full w-full" onClick={(event) => { event.preventDefault(); setLightboxImage(mediaUrl(images[slide].url)); }}><img src={mediaUrl(images[slide].url)} alt={post.title} /></button> : <div className="feed-media-placeholder"><span>Voz Urbana</span><strong>{post.title}</strong><small>{statusLabels[post.status] || post.status}</small></div>}
+        <div className="feed-media" style={{ aspectRatio: images.length ? (images[slide].proporcao === '16:9' ? '16 / 9' : images[slide].proporcao === '9:16' ? '9 / 16' : images[slide].proporcao === '4:5' ? '4 / 5' : images[slide].proporcao === '5:4' ? '5 / 4' : '1 / 1') : '1.85 / 1' }}>
+          {images.length > 0 ? <button type="button" className="block h-full w-full" style={{ aspectRatio: images[slide].proporcao === '16:9' ? '16 / 9' : images[slide].proporcao === '9:16' ? '9 / 16' : images[slide].proporcao === '4:5' ? '4 / 5' : images[slide].proporcao === '5:4' ? '5 / 4' : '1 / 1' }} onClick={(event) => { event.preventDefault(); setLightboxImage(mediaUrl(images[slide].url)); }}><img src={mediaUrl(images[slide].url)} alt={post.title} /></button> : <div className="feed-media-placeholder"><span>Voz Urbana</span><strong>{post.title}</strong><small>{statusLabels[post.status] || post.status}</small></div>}
           {images.length > 1 && <><button type="button" onClick={(event) => { event.preventDefault(); changeSlide(post.id, -1, images.length); }} className="feed-slide feed-slide-left" aria-label="Imagem anterior"><ChevronLeft size={20} /></button><button type="button" onClick={(event) => { event.preventDefault(); changeSlide(post.id, 1, images.length); }} className="feed-slide feed-slide-right" aria-label="Próxima imagem"><ChevronRight size={20} /></button><div className="feed-dots">{images.map((image, index) => <span key={image.id || index} className={index === slide ? 'is-current' : ''} />)}</div></>}
         </div>
       </Link>
@@ -530,7 +618,7 @@ const FeedPage = () => {
         return <div key={person.id} className="feed-search-person">
           <div className="feed-search-person-main">
             <Link to={`/profile/${person.id}`} className="feed-search-person-main">
-              {person.fotoPerfil ? <img src={mediaUrl(person.fotoPerfil)} alt="" /> : <span>{person.nome.charAt(0).toUpperCase()}</span>}
+              <Avatar user={person} />
               <span><strong>{person.nome}</strong><small>{person.username ? `@${person.username}` : t('noUsername')}</small></span>
             </Link>
           </div>
@@ -547,6 +635,11 @@ const FeedPage = () => {
       <div className="feed-notification-head"><span><Bell size={17} /> Sua atividade</span><strong>{notifications.filter((item) => !item.lida).length} novas</strong></div>
       {loadingNotifications ? <div className="feed-empty">Carregando notificações...</div> : notifications.length === 0 ? <div className="feed-notification-empty"><Bell size={30} /><strong>Nenhuma notificação por enquanto</strong><span>Quando a comunidade interagir com seus relatos, elas aparecerão aqui.</span></div> : notifications.map((item) => <div key={item.id} className={`feed-notification ${item.lida ? '' : 'is-unread'}`}><span className="feed-notification-icon"><Bell size={15} /></span><div><strong>{item.titulo}</strong><p>{item.mensagem}</p><small>{item.dataCriacao ? formatDistanceToNow(new Date(item.dataCriacao), { locale: ptBR, addSuffix: true }) : 'agora'}</small></div></div>)}
     </div>
+  </>;
+
+  const renderSaved = () => <>
+    <FeedHeader title="Publicações salvas" description="Acesse rapidamente os relatos que você escolheu acompanhar." />
+    {savedPosts.length ? <div className="space-y-5">{savedPosts.map(renderPost)}</div> : <div className="feed-empty"><Bookmark size={30} />Nenhuma publicação salva.</div>}
   </>;
 
   const renderCreate = () => <>
@@ -580,7 +673,7 @@ const FeedPage = () => {
     </form>
   </>;
 
-  const renderTab = { home: renderHome, conversations: renderConversations, search: renderSearch, notifications: renderNotifications, create: renderCreate }[activeTab];
+  const renderTab = { home: renderHome, conversations: renderConversations, search: renderSearch, notifications: renderNotifications, saved: renderSaved, create: renderCreate }[activeTab];
 
   return (
     <main className="feed-shell min-h-screen bg-[#090b0e] text-white">
@@ -589,7 +682,7 @@ const FeedPage = () => {
         <aside className="feed-rail hidden lg:flex">
           <Link to="/" className="feed-brand" aria-label="Voz Urbana"><span className="feed-brand-mark">VU</span><span><strong>Voz</strong><em>URBANA</em></span></Link>
           <nav className="mt-14 space-y-2">{navItems.map((item) => { const Icon = item.icon; return <button type="button" key={item.key} onClick={() => selectTab(item.key)} className={`feed-nav-item ${activeTab === item.key ? 'is-active' : ''}`}><Icon className="feed-nav-icon" size={29} strokeWidth={1.8} /><span>{t(item.label)}</span></button>; })}</nav>
-          <Link to="/profile" className="feed-profile mt-auto">{displayAvatar ? <img src={displayAvatar} alt="" /> : <span>{displayName.slice(1, 2).toUpperCase()}</span>}<small>{displayName}</small><span className="feed-profile-edit">&#9998;</span></Link>
+          <Link to="/profile" className="feed-profile mt-auto"><Avatar user={user} /><small>{displayName}</small><span className="feed-profile-edit">&#9998;</span></Link>
         </aside>
         <nav className="feed-mobile-nav lg:hidden" aria-label="Navegação do feed">{navItems.map((item) => { const Icon = item.icon; return <button type="button" key={item.key} onClick={() => selectTab(item.key)} className={activeTab === item.key ? 'is-active' : ''}><Icon size={18} /><span>{t(item.label)}</span></button>; })}</nav>
         <section className="feed-main">{renderTab()}</section>
@@ -603,11 +696,12 @@ const FeedPage = () => {
           <input value={editingPost.address} onChange={(event) => setEditingPost((current) => ({ ...current, address: event.target.value }))} className="site-form-input w-full rounded p-3" placeholder="Endereço (opcional)" />
           <FloatingSelect value={editingPost.categoryId} onChange={(value) => setEditingPost((current) => ({ ...current, categoryId: value }))} options={categories.map((item) => ({ value: item.id, label: item.name }))} />
           <div className="grid grid-cols-4 gap-2">{(editingPost.images || []).filter((image) => !removedEditImages.includes(image.id)).map((image) => <div key={image.id} className="relative"><img src={mediaUrl(image.url)} alt="" className="h-20 w-full rounded object-cover" /><button type="button" onClick={() => setRemovedEditImages((current) => [...current, image.id])} className="absolute right-1 top-1">×</button></div>)}</div>
-          <UploadField accept={IMAGE_TYPES.join(',')} multiple files={editImages} maxFiles={MAX_IMAGE_COUNT} maxSizeMb={5} label="Adicionar fotos" onChange={(event) => { try { setEditImages((current) => [...current, ...validateImages(event.target.files, (editingPost.images || []).length - removedEditImages.length + current.length)]); } catch (error) { toast.error(error.message); } }} />
+          <UploadField accept={IMAGE_TYPES.join(',')} multiple files={editImages} maxFiles={MAX_IMAGE_COUNT} maxSizeMb={5} label="Adicionar fotos" onChange={(event) => { try { const selected = validateImages(event.target.files, (editingPost.images || []).length - removedEditImages.length + editImages.length); if (selected.length) { setCropTarget('edit'); setCropFile(selected[0]); setCropQueue(selected.slice(1)); } } catch (error) { toast.error(error.message); } }} />
           <div className="flex justify-end gap-3"><button type="button" onClick={() => setEditingPost(null)}>Cancelar</button><button type="submit" disabled={savingEdit} className="feed-create-submit">{savingEdit ? 'Salvando...' : 'Salvar alterações'}</button></div>
         </form>
       </div>}
       {lightboxImage && <button type="button" className="context-modal fixed inset-0 z-[1500] grid place-items-center bg-black/90 p-6" onClick={() => setLightboxImage(null)} aria-label="Fechar imagem"><img src={lightboxImage} alt="" className="max-h-full max-w-full object-contain" /></button>}
+      {cropFile && <ImageCropper file={cropFile} onCancel={() => { setCropFile(null); setCropQueue([]); }} onConfirm={handleCroppedImage} />}
     </main>
   );
 };
