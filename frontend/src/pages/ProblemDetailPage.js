@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { problemsAPI, votesAPI, commentsAPI, mediaUrl } from '../services/api';
+import Avatar from '../components/Avatar';
 import { toast } from 'react-toastify';
 import { FiThumbsUp, FiMapPin, FiCalendar, FiUser } from 'react-icons/fi';
 import { formatDistanceToNow } from 'date-fns';
@@ -142,7 +143,7 @@ const ProblemDetailPage = () => {
                 <FiUser className="text-purple-600" />
                 <div>
                   <p className="site-muted text-xs">{t('reportedBy')}</p>
-                  <p className="font-semibold text-white">{problem.author?.name}</p>
+                  <div className="flex items-center gap-2"><Avatar user={problem.author} className="h-8 w-8" /><p className="font-semibold text-white">{problem.author?.name}</p></div>
                 </div>
               </div>
 
@@ -190,7 +191,7 @@ const ProblemDetailPage = () => {
               <div className="mt-5 space-y-4">
                 {comments.length === 0 ? <p className="site-muted">{t('noComments')}</p> : comments.map((comment) => (
                   <article key={comment.id} className="site-comment rounded-lg p-4">
-                    <div className="flex items-center justify-between gap-3"><strong>{comment.usuario?.username ? `@${comment.usuario.username}` : comment.usuario?.nome}</strong><span className="site-muted text-xs">{formatDistanceToNow(new Date(comment.dataCriacao), { locale: ptBR, addSuffix: true })}</span></div>
+                    <div className="flex items-center justify-between gap-3"><div className="flex items-center gap-2"><Avatar user={comment.usuario} className="h-8 w-8" /><strong>{comment.usuario?.username ? `@${comment.usuario.username}` : comment.usuario?.nome}</strong></div><span className="site-muted text-xs">{formatDistanceToNow(new Date(comment.dataCriacao), { locale: ptBR, addSuffix: true })}</span></div>
                     <p className="mt-2 text-white/70">{comment.texto}</p>
                   </article>
                 ))}

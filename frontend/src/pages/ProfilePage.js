@@ -6,6 +6,7 @@ import { useI18n } from '../i18n';
 import { UploadField } from '../components/FloatingFields';
 import { formatBrazilianPhone, normalizeDigits } from '../utils/formatters';
 import ImageCropper from '../components/ImageCropper';
+import Avatar from '../components/Avatar';
 
 const ProfilePage = () => {
   const [profile, setProfile] = useState(null);
@@ -19,8 +20,6 @@ const ProfilePage = () => {
   });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [crop, setCrop] = useState({ zoom: 1, x: 0, y: 0 });
-  const [dragStart, setDragStart] = useState(null);
   const [cropFile, setCropFile] = useState(null);
   const setUser = useAuthStore((state) => state.setUser);
   const { t } = useI18n();
@@ -66,32 +65,6 @@ const ProfilePage = () => {
     setCropFile(null);
   };
 
-  const createCroppedAvatar = () => new Promise((resolve, reject) => {
-    const image = new Image();
-    image.onload = () => {
-      const outputSize = 400;
-      const previewSize = 256;
-      const scale = Math.max(outputSize / image.width, outputSize / image.height) * crop.zoom;
-      const canvas = document.createElement('canvas');
-      canvas.width = outputSize;
-      canvas.height = outputSize;
-      const context = canvas.getContext('2d');
-      context.drawImage(
-        image,
-        outputSize / 2 + crop.x * (outputSize / previewSize) - (image.width * scale) / 2,
-        outputSize / 2 + crop.y * (outputSize / previewSize) - (image.height * scale) / 2,
-        image.width * scale,
-        image.height * scale,
-      );
-      canvas.toBlob((blob) => {
-        if (!blob) return reject(new Error('Não foi possível preparar a imagem.'));
-        resolve(new File([blob], `perfil-${Date.now()}.jpg`, { type: 'image/jpeg' }));
-      }, 'image/jpeg', 0.9);
-    };
-    image.onerror = () => reject(new Error('Não foi possível abrir a imagem.'));
-    image.src = formData.avatar;
-  });
-
   const handleSubmit = async (e) => {
     e.preventDefault();
     setSaving(true);
@@ -102,7 +75,7 @@ const ProfilePage = () => {
       payload.append('username', formData.username);
       payload.append('phone', normalizeDigits(formData.phone));
       payload.append('bio', formData.bio);
-      if (formData.avatarFile) payload.append('avatarFile', await createCroppedAvatar());
+      if (formData.avatarFile) payload.append('avatarFile', formData.avatarFile);
       else payload.append('avatar', formData.avatar);
       const response = await usersAPI.updateMe(payload);
       const updatedProfile = response.data;
@@ -171,20 +144,9 @@ const ProfilePage = () => {
               <label className="block text-sm font-semibold mb-2">{t('profilePhoto')}</label>
               <div className="flex flex-col gap-4 sm:flex-row">
                 {formData.avatar ? (
-                  <div
-                    className="relative h-64 w-64 shrink-0 cursor-move overflow-hidden rounded-full border-2 border-violet-500 bg-zinc-950 touch-none"
-                    onPointerDown={(event) => setDragStart({ x: event.clientX, y: event.clientY, cropX: crop.x, cropY: crop.y })}
-                    onPointerMove={(event) => {
-                      if (!dragStart) return;
-                      setCrop((current) => ({ ...current, x: dragStart.cropX + event.clientX - dragStart.x, y: dragStart.cropY + event.clientY - dragStart.y }));
-                    }}
-                    onPointerUp={() => setDragStart(null)}
-                    onPointerLeave={() => setDragStart(null)}
-                  >
-                    <img src={formData.avatar.startsWith('blob:') ? formData.avatar : mediaUrl(formData.avatar)} alt="Prévia editável do perfil" className="h-full w-full select-none object-cover" draggable="false" style={{ transform: `translate(${crop.x}px, ${crop.y}px) scale(${crop.zoom})` }} />
-                  </div>
+                  <img src={formData.avatar.startsWith('blob:') ? formData.avatar : mediaUrl(formData.avatar)} alt="Prévia do perfil" className="h-64 w-64 shrink-0 rounded-full border-2 border-violet-500 object-cover" />
                 ) : (
-                  <div className="h-64 w-64 shrink-0 rounded-full bg-violet-950 flex items-center justify-center text-5xl text-violet-200 font-bold">{formData.name?.[0] || '?'}</div>
+                  <Avatar user={{ name: formData.name }} className="h-64 w-64 shrink-0 text-5xl" />
                 )}
                 <div className="flex-1 space-y-3">
                   <UploadField accept="image/*" files={formData.avatarFile ? [formData.avatarFile] : []} maxSizeMb={5} label="Escolher foto" onChange={(event) => {
@@ -199,13 +161,6 @@ const ProfilePage = () => {
                     }
                     selectAvatar(file);
                   }} />
-                  {formData.avatarFile && <>
-                    <div>
-                      <label className="mb-1 block text-sm font-medium">{t('zoom')}</label>
-                      <input type="range" min="1" max="3" step="0.01" value={crop.zoom} onChange={(event) => setCrop((current) => ({ ...current, zoom: Number(event.target.value) }))} className="w-full accent-violet-600" />
-                    </div>
-                    <p className="site-muted text-xs">Arraste a foto para reposicioná-la e use o controle para alterar o tamanho.</p>
-                  </>}
                   <input type="url" name="avatar" value={formData.avatarFile ? '' : formData.avatar} onChange={handleChange} className="site-form-input mt-2 w-full border rounded-lg p-3" placeholder="Ou use uma URL de imagem" />
                   {formData.avatar && <button type="button" onClick={() => { setCrop({ zoom: 1, x: 0, y: 0 }); setFormData((current) => ({ ...current, avatar: '', avatarFile: null })); }} className="text-sm text-fuchsia-300">{t('removePhoto')}</button>}
                 </div>

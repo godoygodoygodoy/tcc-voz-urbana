@@ -108,8 +108,8 @@ const geocodeAddress = async (addresses, expected) => {
       if (photonResponse.ok) {
         const feature = (await photonResponse.json()).features
           ?.filter((item) => item.properties?.countrycode === "BR")
-          ?.sort((left, right) => scoreCandidate({ address: left.properties, display_name: left.properties?.name }, expected)
-            - scoreCandidate({ address: right.properties, display_name: right.properties?.name }, expected))[0];
+        ?.sort((left, right) => scoreCandidate({ address: right.properties, display_name: right.properties?.name }, expected)
+          - scoreCandidate({ address: left.properties, display_name: left.properties?.name }, expected))[0];
         if (feature?.geometry?.coordinates?.length === 2
           && scoreCandidate({ address: feature.properties, display_name: feature.properties?.name }, expected) >= (expected.city && expected.state ? 9 : 4)) {
           const [longitude, latitude] = feature.geometry.coordinates;
@@ -126,17 +126,17 @@ const geocodeAddress = async (addresses, expected) => {
 const geocodeCache = new Map();
 const geocodeRegion = async ({ address, city, state, cep }) => {
   const stateName = stateNames[String(state || "").toUpperCase()] || state;
-  const parts = normalizeAddressParts([address, city, stateName, "Brasil"]);
   if (!address) return { latitude: null, longitude: null, address: null };
+  const addressParts = normalizeAddressParts(String(address || "").split(","));
+  const parts = normalizeAddressParts([address, city, stateName, cep, "Brasil"]);
   const queries = uniqueParts([
     parts.join(", "),
-    normalizeAddressParts([address, city, stateName, "Brasil"]).join(", "),
+    normalizeAddressParts([address, city, stateName, cep, "Brasil"]).join(", "),
     normalizeAddressParts([address, city, "Brasil"]).join(", "),
-    cep && addressParts.length < 2 ? `${cep}, Brasil` : ""
+    cep ? `${address}, ${cep}, ${city}, ${stateName}, Brasil` : ""
   ]);
   const cacheKey = queries.join("|");
   if (geocodeCache.has(cacheKey)) return geocodeCache.get(cacheKey);
-  const addressParts = normalizeAddressParts(String(address || "").split(","));
   const result = await geocodeAddress(queries, {
     city,
     state,
@@ -174,6 +174,7 @@ const serializeProblem = (problem) => ({
   title: problem.titulo,
   description: problem.descricao,
   address: uniqueParts(String(problem.endereco || "").split(",")).join(", ") || null,
+  complement: problem.complemento,
   cep: problem.cep,
   state: problem.estado,
   city: problem.cidade,
@@ -301,7 +302,7 @@ router.post(
   authMiddleware,
   upload.array("images"),
   asyncHandler(async (req, res) => {
-    const { title, description, latitude, longitude, address, street, number, neighborhood, cep, categoryId, occurrenceDate, occurrenceTime, city, state } =
+    const { title, description, latitude, longitude, address, street, number, neighborhood, complemento, cep, categoryId, occurrenceDate, occurrenceTime, city, state } =
       req.body;
     const userId = req.userId;
 
@@ -314,8 +315,8 @@ router.post(
     }
     const occurrenceDateTime = parseOccurrenceDateTime(occurrenceDate, occurrenceTime);
     let resolvedLocation;
-    const rawAddress = normalizeAddressParts([street, number, neighborhood, address]).join(", ");
-    if (hasValidCoordinates(latitude, longitude)) {
+    const rawAddress = normalizeAddressParts([street, number, neighborhood, address, complemento]).join(", ");
+    if (!rawAddress && hasValidCoordinates(latitude, longitude)) {
       resolvedLocation = { latitude: Number(latitude), longitude: Number(longitude), address: rawAddress || null };
     } else {
       resolvedLocation = await geocodeRegion({ address: rawAddress, city: String(city || "").trim(), state: String(state || "").trim(), cep: String(cep || "").trim() });
@@ -331,6 +332,7 @@ router.post(
         latitude: resolvedLocation.latitude,
         longitude: resolvedLocation.longitude,
         endereco: resolvedLocation.address,
+        complemento: String(complemento || "").trim() || null,
         cep: String(cep || "").replace(/\D/g, "") || null,
         cidade: String(city || "").trim() || null,
         estado: String(state || "").trim() || null,
@@ -384,7 +386,7 @@ router.put(
     const isAdmin = Boolean(await prisma.admin.findUnique({ where: { usuarioId: req.userId } }));
     if (current.usuarioId !== req.userId && !isAdmin) return res.status(403).json({ error: "Somente o autor ou um administrador pode editar esta publicação." });
 
-    const { title, description, categoryId, address, street, number, neighborhood, cep, occurrenceDate, occurrenceTime, city, state } = req.body;
+    const { title, description, categoryId, address, street, number, neighborhood, complemento, cep, occurrenceDate, occurrenceTime, city, state } = req.body;
     if (!title?.trim() || !description?.trim() || !categoryId) {
       return res.status(400).json({ error: "Título, descrição e categoria são obrigatórios." });
     }
@@ -400,12 +402,12 @@ router.put(
     }
     const ownedRemovedIds = current.imagens.filter((image) => removedImageIds.includes(image.id)).map((image) => image.id);
     const location = await geocodeRegion({
-      address: normalizeAddressParts([street, number, neighborhood, address]).join(", "),
+      address: normalizeAddressParts([street, number, neighborhood, address, complemento]).join(", "),
       city: String(city || "").trim(),
       state: String(state || "").trim(),
       cep: String(cep || "").trim()
     });
-    const rawAddress = normalizeAddressParts([street, number, neighborhood, address]).join(", ");
+    const rawAddress = normalizeAddressParts([street, number, neighborhood, address, complemento]).join(", ");
     if (!hasValidCoordinates(location.latitude, location.longitude) && rawAddress) {
       return res.status(422).json({ error: "Não foi possível identificar esse local. Revise o endereço, a cidade e o estado." });
     }
@@ -418,6 +420,7 @@ router.put(
           descricao: description.trim(),
           categoriaId: categoryId,
           endereco: location.address,
+          complemento: String(complemento || "").trim() || null,
           cep: String(cep || "").replace(/\D/g, "") || null,
           cidade: String(city || "").trim() || null,
           estado: String(state || "").trim() || null,

@@ -15,6 +15,7 @@ import {
   Plus,
   Search,
   Send,
+  Share2,
   Trash2,
   Flag,
   Users,
@@ -51,10 +52,24 @@ const emptyCreateForm = {
   street: '',
   number: '',
   neighborhood: '',
+  complemento: '',
   city: '',
   state: '',
   occurrenceDate: '',
   occurrenceTime: ''
+};
+
+const sharePost = async (post) => {
+  const url = `${window.location.origin}${import.meta.env.BASE_URL}problem/${post.id}`;
+  try {
+    if (navigator.share) await navigator.share({ title: post.title, text: post.description, url });
+    else await navigator.clipboard?.writeText(url);
+    toast.success(navigator.share ? 'Publicação compartilhada.' : 'Link da publicação copiado.');
+  } catch (error) {
+    if (error.name !== 'AbortError') toast.error('Não foi possível compartilhar a publicação.');
+  } finally {
+    setOpenMenu(null);
+  }
 };
 const MAX_IMAGE_COUNT = 8;
 const MAX_IMAGE_SIZE = 5 * 1024 * 1024;
@@ -312,7 +327,9 @@ const FeedPage = () => {
     try {
       setSavingEdit(true);
       const payload = new FormData();
-      ['title', 'description', 'address', 'categoryId'].forEach((key) => payload.append(key, editingPost[key]));
+      ['title', 'description', 'address', 'street', 'number', 'neighborhood', 'complemento', 'cep', 'city', 'state', 'categoryId'].forEach((key) => {
+        if (editingPost[key] !== undefined && editingPost[key] !== null) payload.append(key, editingPost[key]);
+      });
       payload.append('removedImageIds', JSON.stringify(removedEditImages));
       payload.append('imageAspect', editImageAspect);
       editImages.forEach((file) => payload.append('images', file));
@@ -463,6 +480,7 @@ const FeedPage = () => {
       payload.append('street', createForm.street);
       payload.append('number', createForm.number);
       payload.append('neighborhood', createForm.neighborhood);
+      payload.append('complemento', createForm.complemento);
       payload.append('cep', normalizeCep(createForm.cep));
       payload.append('imageAspect', createImageAspect);
       payload.append('occurrenceDate', createForm.occurrenceDate);
@@ -554,12 +572,12 @@ const FeedPage = () => {
         <Link to={`/profile/${post.author?.id}`} className="min-w-0 feed-post-author-copy"><strong>{authorHandle}</strong><span>{authorName} · {post.createdAt ? formatDistanceToNow(new Date(post.createdAt), { locale: language === 'pt-BR' ? ptBR : undefined, addSuffix: true }) : t('now')}</span></Link>
         <div className="relative flex items-center gap-1">
           <button type="button" className="feed-more" aria-label="Mais opções" onClick={() => setOpenMenu((current) => current === post.id ? null : post.id)}><Ellipsis size={18} /></button>
-          {(post.author?.id === user?.id || user?.role === 'admin') && <button type="button" className="feed-more text-red-200" aria-label={t('deletePublication')} disabled={deletingPost === post.id} onClick={() => deletePost(post)}><Trash2 size={16} /></button>}
           {openMenu === post.id && <div className="feed-post-menu" role="menu">
             {(post.author?.id === user?.id || user?.role === 'admin') && <button type="button" onClick={() => { startEditing(post); setOpenMenu(null); }}><Ellipsis size={14} /> Editar publicação</button>}
             {(post.author?.id === user?.id || user?.role === 'admin') && <button type="button" onClick={() => { setOpenMenu(null); deletePost(post); }}><Trash2 size={14} /> Apagar publicação</button>}
             <button type="button" onClick={() => toggleSaved(post)}><Bookmark size={14} /> {savedPosts.some((item) => item.id === post.id) ? 'Remover dos salvos' : 'Salvar publicação'}</button>
             <button type="button" onClick={() => copyPostLink(post)}><Copy size={14} /> Copiar link</button>
+            <button type="button" onClick={() => sharePost(post)}><Share2 size={14} /> Compartilhar publicação</button>
             <button type="button" onClick={() => { setOpenMenu(null); navigate(`/problem/${post.id}`); }}><Check size={14} /> Ver detalhes</button>
             <button type="button" onClick={() => { setOpenMenu(null); toast.info('Obrigado. A denúncia será analisada.'); }}><Flag size={14} /> Denunciar</button>
           </div>}
@@ -655,6 +673,7 @@ const FeedPage = () => {
           <label className="feed-address-street">Rua<input name="street" value={createForm.street} onChange={updateCreateForm} placeholder="Nome da rua" /></label>
           <label>Número<input name="number" value={createForm.number} onChange={updateCreateForm} placeholder="Nº" /></label>
           <label>Bairro<input name="neighborhood" value={createForm.neighborhood} onChange={updateCreateForm} placeholder="Bairro" /></label>
+          <label>Complemento<input name="complemento" value={createForm.complemento} onChange={updateCreateForm} placeholder="Apto, referência..." /></label>
               <label>CEP<div className="relative"><input name="cep" value={createForm.cep} onChange={(event) => setCreateForm((current) => ({ ...current, cep: formatCep(event.target.value) }))} placeholder="00000-000" inputMode="numeric" />{loadingCep && <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-violet-200">...</span>}</div></label>
               <label>Cidade<FloatingSelect value={createForm.city} onChange={(value) => setCreateForm((current) => ({ ...current, city: value }))} options={[{ value: '', label: loadingCities ? t('loadingCities') : t('selectCity') }, ...cities]} /></label>
               <label>Estado<FloatingSelect value={createForm.state} onChange={(value) => setCreateForm((current) => ({ ...current, state: value, city: '' }))} options={[{ value: '', label: t('selectState') }, ...brazilStates]} /></label>
@@ -693,7 +712,16 @@ const FeedPage = () => {
           <div className="flex items-center justify-between"><h2 className="text-xl font-bold">{t('editPostTitle')}</h2><button type="button" onClick={() => setEditingPost(null)} aria-label="Fechar">×</button></div>
           <input value={editingPost.title} onChange={(event) => setEditingPost((current) => ({ ...current, title: event.target.value }))} required className="site-form-input w-full rounded p-3" />
           <textarea value={editingPost.description} onChange={(event) => setEditingPost((current) => ({ ...current, description: event.target.value }))} required rows="5" className="site-form-input w-full rounded p-3" />
-          <input value={editingPost.address} onChange={(event) => setEditingPost((current) => ({ ...current, address: event.target.value }))} className="site-form-input w-full rounded p-3" placeholder="Endereço (opcional)" />
+          <div className="grid gap-3 sm:grid-cols-2">
+            <input value={editingPost.street || ''} onChange={(event) => setEditingPost((current) => ({ ...current, street: event.target.value }))} className="site-form-input w-full rounded p-3" placeholder="Rua ou logradouro" />
+            <input value={editingPost.number || ''} onChange={(event) => setEditingPost((current) => ({ ...current, number: event.target.value }))} className="site-form-input w-full rounded p-3" placeholder="Número" />
+            <input value={editingPost.neighborhood || ''} onChange={(event) => setEditingPost((current) => ({ ...current, neighborhood: event.target.value }))} className="site-form-input w-full rounded p-3" placeholder="Bairro" />
+            <input value={editingPost.complemento || ''} onChange={(event) => setEditingPost((current) => ({ ...current, complemento: event.target.value }))} className="site-form-input w-full rounded p-3" placeholder="Complemento" />
+            <input value={editingPost.cep || ''} onChange={(event) => setEditingPost((current) => ({ ...current, cep: event.target.value }))} className="site-form-input w-full rounded p-3" placeholder="CEP" />
+            <input value={editingPost.city || ''} onChange={(event) => setEditingPost((current) => ({ ...current, city: event.target.value }))} className="site-form-input w-full rounded p-3" placeholder="Cidade" />
+            <input value={editingPost.state || ''} onChange={(event) => setEditingPost((current) => ({ ...current, state: event.target.value }))} className="site-form-input w-full rounded p-3" placeholder="Estado" />
+          </div>
+          <input value={editingPost.address || ''} onChange={(event) => setEditingPost((current) => ({ ...current, address: event.target.value }))} className="site-form-input w-full rounded p-3" placeholder="Endereço completo (opcional)" />
           <FloatingSelect value={editingPost.categoryId} onChange={(value) => setEditingPost((current) => ({ ...current, categoryId: value }))} options={categories.map((item) => ({ value: item.id, label: item.name }))} />
           <div className="grid grid-cols-4 gap-2">{(editingPost.images || []).filter((image) => !removedEditImages.includes(image.id)).map((image) => <div key={image.id} className="relative"><img src={mediaUrl(image.url)} alt="" className="h-20 w-full rounded object-cover" /><button type="button" onClick={() => setRemovedEditImages((current) => [...current, image.id])} className="absolute right-1 top-1">×</button></div>)}</div>
           <UploadField accept={IMAGE_TYPES.join(',')} multiple files={editImages} maxFiles={MAX_IMAGE_COUNT} maxSizeMb={5} label="Adicionar fotos" onChange={(event) => { try { const selected = validateImages(event.target.files, (editingPost.images || []).length - removedEditImages.length + editImages.length); if (selected.length) { setCropTarget('edit'); setCropFile(selected[0]); setCropQueue(selected.slice(1)); } } catch (error) { toast.error(error.message); } }} />
