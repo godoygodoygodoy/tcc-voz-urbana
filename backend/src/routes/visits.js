@@ -13,7 +13,7 @@ router.post(
     const visitanteId = String(req.body?.visitorId || "").trim();
     const caminho = String(req.body?.path || "/").trim().slice(0, 255) || "/";
 
-    if (!/^[a-zA-Z0-9._:-]{16,128}$/.test(visitorId)) {
+    if (!/^[a-zA-Z0-9._:-]{16,128}$/.test(visitanteId)) {
       return res.status(400).json({ error: "Identificador de visitante inválido." });
     }
 
