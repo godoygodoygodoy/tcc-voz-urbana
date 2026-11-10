@@ -1,6 +1,6 @@
 import React, { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { FiCompass, FiFileText, FiHome, FiInfo, FiMail, FiMenu, FiMap, FiX } from 'react-icons/fi';
+import { FiCompass, FiFileText, FiHome, FiInfo, FiMail, FiMenu, FiMap, FiShield, FiX } from 'react-icons/fi';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useI18n } from '../i18n';
 import { useAuthStore } from '../store';
@@ -30,7 +30,8 @@ const SiteMenu = () => {
     { label: t('navFeed'), href: '/feed', icon: FiFileText },
     { label: t('navAbout'), href: '/#sobre', icon: FiInfo },
     { label: t('navContact'), href: '/#contato', icon: FiMail },
-    ...(user?.role === 'admin' ? [{ label: t('adminNav'), href: '/admin', icon: FiMap }] : []),
+    ...(user ? [{ label: t('reportProblem'), href: '/report', icon: FiFileText }] : []),
+    ...(user?.role?.toLowerCase() === 'admin' ? [{ label: t('adminNav'), href: '/admin', icon: FiShield }] : []),
   ];
 
   const currentIndex = items.findIndex(({ href }) => {

@@ -6,6 +6,7 @@ import { Card, CardContent } from '../components/ui/card';
 import { Button } from '../components/ui/button';
 import { useI18n } from '../i18n';
 import PasswordField from '../components/PasswordField';
+import AuthErrorBalloon from '../components/AuthErrorBalloon';
 
 const LoginPage = () => {
   const [formData, setFormData] = useState({
@@ -13,6 +14,7 @@ const LoginPage = () => {
     password: '',
   });
   const [loading, setLoading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
   const { login } = useAuthStore();
   const navigate = useNavigate();
   const { t } = useI18n();
@@ -27,14 +29,14 @@ const LoginPage = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
+    setErrorMessage('');
 
     try {
       await login({ identifier: formData.identifier, password: formData.password });
       toast.success(t('loginSuccess'));
       navigate('/');
     } catch (error) {
-      // O redirecionamento para verificacao de e-mail foi mantido como legado, mas desativado.
-      toast.error(error.response?.data?.error || 'Erro ao fazer login');
+      setErrorMessage(error.response?.data?.error || t('loginError'));
     } finally {
       setLoading(false);
     }
@@ -51,6 +53,8 @@ const LoginPage = () => {
             <p className="text-white/60">{t('loginTitle')}</p>
           </div>
 
+          <AuthErrorBalloon message={errorMessage} onDismiss={() => setErrorMessage('')} />
+
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
               <label className="block text-sm font-semibold mb-2">{t('loginIdentifier')}</label>
@@ -59,7 +63,7 @@ const LoginPage = () => {
                 name="identifier"
                 value={formData.identifier}
                 onChange={handleChange}
-                placeholder={t('loginIdentifierPlaceholder')}
+                placeholder="e-mail, número ou usuário"
                 required
                 className="site-form-input w-full rounded-xl border-2 border-white/10 p-3 focus:outline-none focus:border-violet-500"
               />

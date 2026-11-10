@@ -343,6 +343,32 @@ code {
 
 .Toastify__toast { color: #fff; }
 
+.auth-error-balloon {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 18px;
+  border: 1px solid rgba(248, 113, 113, 0.42);
+  border-radius: 14px;
+  background: linear-gradient(135deg, rgba(127, 29, 82, 0.58), rgba(58, 18, 54, 0.78));
+  padding: 12px 13px;
+  color: #fecdd3;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.4;
+  box-shadow: 0 12px 28px rgba(190, 24, 93, 0.14), inset 0 1px 0 rgba(255,255,255,0.06);
+  animation: authErrorIn 180ms ease-out both;
+}
+
+.auth-error-balloon > svg { flex: 0 0 auto; color: #fb7185; }
+.auth-error-balloon span { flex: 1; }
+.auth-error-balloon button { flex: 0 0 auto; color: rgba(255, 255, 255, 0.62); }
+.auth-error-balloon button:hover { color: #fff; }
+@keyframes authErrorIn {
+  from { opacity: 0; transform: translateY(-5px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
 /* Small helpers for the design */
 .brand-gradient {
   background: linear-gradient(90deg,#7C3AED 0%, #6B21A8 100%);

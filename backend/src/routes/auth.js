@@ -91,6 +91,14 @@ const existingUsername = await prisma.usuario.findUnique({ where: { username } }
 if (existingUsername) {
   return res.status(409).json({ error: "Este @ já está em uso" });
 }
+if (phone) {
+  const existingPhone = await prisma.usuario.findFirst({
+    where: { telefone: normalizePhone(phone) }
+  });
+  if (existingPhone) {
+    return res.status(409).json({ error: "Este número já está em uso" });
+  }
+}
     const senhaHash = await hashPassword(password);
     const user = await prisma.usuario.create({
       data: {
@@ -149,11 +157,11 @@ router.post(
     const user = await findUserByIdentifier(identifier);
 
     if (!user) {
-      return res.status(401).json({ error: "Credenciais inválidas" });
+      return res.status(401).json({ error: "Credenciais inválidas: conta não encontrada. Confira seu e-mail, número ou usuário." });
     }
     const isValid = await comparePassword(password, user.senhaHash);
     if (!isValid) {
-      return res.status(401).json({ error: "Credenciais inválidas" });
+      return res.status(401).json({ error: "Credenciais inválidas: e-mail, número ou usuário ou senha incorreta." });
     }
 
     // A verificacao de e-mail permanece disponivel como legado, mas nao bloqueia o login.

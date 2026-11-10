@@ -42,6 +42,10 @@ export const authAPI = {
   // resendVerification: (email) => api.post('/auth/resend-verification', { email }),
 };
 
+export const visitsAPI = {
+  record: (data) => api.post('/visits', data),
+};
+
 // Problems
 export const problemsAPI = {
   list: (params) => api.get('/problems', { params }),
@@ -118,12 +122,16 @@ export const usersAPI = {
 // Admin
 export const adminAPI = {
   getStats: () => api.get('/admin/stats'),
+  getStatsByPeriod: (period) => api.get('/admin/stats', { params: { period } }),
   updateProblem: (id, data) => api.put(`/admin/problems/${id}`, data),
   createCategory: (data) => api.post('/admin/categories', data),
   listUsers: (params) => api.get('/admin/users', { params }),
   listProblems: (params) => api.get('/admin/problems', { params }),
   deleteProblem: (id) => api.delete(`/admin/problems/${id}`),
   getAnalytics: () => api.get('/admin/analytics'),
+  getLogs: (params) => api.get('/admin/logs', { params }),
+  getSystem: () => api.get('/admin/system'),
+  updateUserRole: (id, role) => api.put(`/admin/users/${id}/role`, { role }),
 };
 
 export default api;

@@ -1,38 +1,11 @@
 import express from "express";
-import path from "path";
-import fs from "fs";
-import multer from "multer";
-import { uploadsRoot } from "../config/uploads.js";
+import { memoryImageUpload } from "../middleware/memoryUpload.js";
+import { removeStoredFiles, storeFiles } from "../config/storage.js";
 import { prisma } from "../config/prisma.js";
 import { asyncHandler } from "../middlewares/errorHandler.js";
 import { authMiddleware, optionalAuthMiddleware } from "../middlewares/auth.js";
 
-// Preparar pasta de uploads
-const UPLOAD_DIR = path.join(uploadsRoot, "problems");
-if (!fs.existsSync(UPLOAD_DIR)) {
-  fs.mkdirSync(UPLOAD_DIR, { recursive: true });
-}
-
-const imageExtensions = { "image/jpeg": ".jpg", "image/png": ".png", "image/webp": ".webp", "image/gif": ".gif" };
-
-const storage = multer.diskStorage({
-  destination: function (req, file, cb) {
-    cb(null, UPLOAD_DIR);
-  },
-  filename: function (req, file, cb) {
-    const ext = imageExtensions[file.mimetype];
-    const name = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}${ext}`;
-    cb(null, name);
-  }
-});
-
-const upload = multer({
-  storage,
-  limits: { fileSize: Number(process.env.MAX_FILE_SIZE || 5 * 1024 * 1024), files: 8 },
-  fileFilter: (req, file, cb) => imageExtensions[file.mimetype]
-    ? cb(null, true)
-    : cb(Object.assign(new Error("Formato de imagem não suportado. Use JPG, PNG, WEBP ou GIF."), { status: 400 }))
-});
+const upload = memoryImageUpload({ limits: { files: 8 } });
 
 const router = express.Router();
 
@@ -324,45 +297,44 @@ router.post(
     if (!hasValidCoordinates(resolvedLocation.latitude, resolvedLocation.longitude) && rawAddress) {
       return res.status(422).json({ error: "Não foi possível identificar esse local. Revise o endereço, a cidade e o estado." });
     }
+    const storedImages = await storeFiles(req.files, "reports", userId);
 
-    const problem = await prisma.problema.create({
-      data: {
-        titulo: title,
-        descricao: description,
-        latitude: resolvedLocation.latitude,
-        longitude: resolvedLocation.longitude,
-        endereco: resolvedLocation.address,
-        complemento: String(complemento || "").trim() || null,
-        cep: String(cep || "").replace(/\D/g, "") || null,
-        cidade: String(city || "").trim() || null,
-        estado: String(state || "").trim() || null,
-        ...(occurrenceDate || occurrenceTime ? { dataOcorrencia: occurrenceDateTime } : {}),
-        categoriaId: categoryId,
-        usuarioId: userId
-      },
-      include: {
-        categoria: true,
-        usuario: {
-          select: {
-            id: true,
-            nome: true,
-            fotoPerfil: true,
-            username: true
+    let problem;
+    try {
+      problem = await prisma.$transaction(async (transaction) => {
+        const created = await transaction.problema.create({
+          data: {
+            titulo: title,
+            descricao: description,
+            latitude: resolvedLocation.latitude,
+            longitude: resolvedLocation.longitude,
+            endereco: resolvedLocation.address,
+            complemento: String(complemento || "").trim() || null,
+            cep: String(cep || "").replace(/\D/g, "") || null,
+            cidade: String(city || "").trim() || null,
+            estado: String(state || "").trim() || null,
+            ...(occurrenceDate || occurrenceTime ? { dataOcorrencia: occurrenceDateTime } : {}),
+            categoriaId: categoryId,
+            usuarioId: userId
           }
-          },
-        imagens: true
-      }
-    });
-
-    if (req.files?.length) {
-      await prisma.imagem.createMany({
-        data: req.files.map((file) => ({
-          url: `/uploads/problems/${file.filename}`,
-          tipo: req.body.imageType === "DEPOIS" ? "DEPOIS" : "ANTES",
-          proporcao: req.body.imageAspect || "1:1",
-          problemaId: problem.id
-        }))
+        });
+        if (storedImages.length) {
+          await transaction.imagem.createMany({
+            data: storedImages.map((file) => ({
+              url: file.url,
+              tipo: req.body.imageType === "DEPOIS" ? "DEPOIS" : "ANTES",
+              proporcao: req.body.imageAspect || "1:1",
+              problemaId: created.id
+            }))
+          });
+        }
+        return created;
       });
+    } catch (error) {
+      await removeStoredFiles(storedImages.map((file) => file.url)).catch((cleanupError) => {
+        console.error("Falha ao limpar imagens após erro de publicação:", cleanupError.message);
+      });
+      throw error;
     }
 
     const createdProblem = await prisma.problema.findUnique({
@@ -411,9 +383,11 @@ router.put(
     if (!hasValidCoordinates(location.latitude, location.longitude) && rawAddress) {
       return res.status(422).json({ error: "Não foi possível identificar esse local. Revise o endereço, a cidade e o estado." });
     }
+    const storedImages = await storeFiles(req.files, "reports", req.userId);
 
-    await prisma.$transaction(async (transaction) => {
-      await transaction.problema.update({
+    try {
+      await prisma.$transaction(async (transaction) => {
+        await transaction.problema.update({
         where: { id: current.id },
         data: {
           titulo: title.trim(),
@@ -429,22 +403,24 @@ router.put(
           longitude: location.longitude,
           editadaEm: new Date()
         }
+        });
+        if (ownedRemovedIds.length) await transaction.imagem.deleteMany({ where: { id: { in: ownedRemovedIds }, problemaId: current.id } });
+        if (storedImages.length) {
+          await transaction.imagem.createMany({
+            data: storedImages.map((file) => ({ url: file.url, tipo: "ANTES", proporcao: req.body.imageAspect || "1:1", problemaId: current.id }))
+          });
+        }
       });
-      if (ownedRemovedIds.length) await transaction.imagem.deleteMany({ where: { id: { in: ownedRemovedIds }, problemaId: current.id } });
-      if (req.files?.length) {
-        await transaction.imagem.createMany({
-          data:           req.files.map((file) => ({ url: `/uploads/problems/${file.filename}`, tipo: "ANTES", proporcao: req.body.imageAspect || "1:1", problemaId: current.id }))
-        });
-      }
-    });
-    await Promise.all(current.imagens
+    } catch (error) {
+      await removeStoredFiles(storedImages.map((file) => file.url)).catch((cleanupError) => {
+        console.error("Falha ao limpar imagens após erro de edição:", cleanupError.message);
+      });
+      throw error;
+    }
+    await removeStoredFiles(current.imagens
       .filter((image) => ownedRemovedIds.includes(image.id))
-      .map((image) => {
-        const filePath = path.join(uploadsRoot, image.url.replace(/^\/uploads\//, ""));
-        return fs.promises.unlink(filePath).catch((error) => {
-          if (error.code !== "ENOENT") throw error;
-        });
-      }));
+      .map((image) => image.url))
+      .catch((error) => console.error("Falha ao remover imagens substituídas:", error.message));
 
     const updated = await prisma.problema.findUnique({
       where: { id: current.id },
@@ -480,12 +456,8 @@ router.delete(
         ? [prisma.log.create({ data: { acao: `Publicação ${problem.id} excluída por administrador`, usuarioId: req.userId } })]
         : [])
     ]);
-    await Promise.all(problem.imagens.map((image) => {
-      const filePath = path.join(uploadsRoot, image.url.replace(/^\/uploads\//, ""));
-      return fs.promises.unlink(filePath).catch((error) => {
-        if (error.code !== "ENOENT") throw error;
-      });
-    }));
+    await removeStoredFiles(problem.imagens.map((image) => image.url))
+      .catch((error) => console.error("Falha ao remover imagens da publicação:", error.message));
     return res.json({ message: "Publicação excluída com sucesso." });
   })
 );

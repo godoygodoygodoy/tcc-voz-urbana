@@ -20,6 +20,7 @@ import notificationRoutes from "./routes/notifications.js";
 import socialRoutes from "./routes/social.js";
 import savedRoutes from "./routes/saved.js";
 import conversationRoutes from "./routes/conversations.js";
+import visitRoutes from "./routes/visits.js";
 import rateLimit from "express-rate-limit";
 import { uploadedMedia } from "./config/media.js";
 
@@ -29,12 +30,13 @@ import { authMiddleware } from "./middlewares/auth.js";
 import { adminMiddleware } from "./middlewares/auth.js";
 
 const app = express();
-if (process.env.NODE_ENV === "production") app.set("trust proxy", 1);
+app.set("trust proxy", 1);
 
 const corsOrigins = [process.env.CORS_ORIGIN, process.env.FRONTEND_URL ? new URL(process.env.FRONTEND_URL).origin : undefined]
   .filter(Boolean)
   .flatMap((origins) => origins.split(","))
   .map((origin) => origin.trim())
+  .map((origin) => origin.replace(/\/+$/, ""))
   .filter(Boolean);
 
 if (process.env.NODE_ENV !== "production") {
@@ -73,6 +75,7 @@ app.get("/api/health", (req, res) => {
 
 // Rotas públicas
 app.use("/api/auth", authRoutes);
+app.use("/api/visits", visitRoutes);
 app.use("/api/categories", categoryRoutes);
 app.use("/api/problems", problemRoutes);
 app.use("/api/comments", commentRoutes);

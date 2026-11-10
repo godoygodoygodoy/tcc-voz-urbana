@@ -90,6 +90,10 @@ Selecione a branch e habilite auto-deploy se desejar publicar novos commits auto
 | CORS_ORIGIN | Opcional; origens adicionais exatas, separadas por vírgula, como domínio com www |
 | UPLOAD_DIR | `/var/data/uploads`; exige disco persistente montado nesse caminho |
 | MAX_FILE_SIZE | Opcional; limite por foto de problema, padrão 5242880 bytes |
+| SUPABASE_URL | Opcional; URL do projeto Supabase usado somente pelo Storage |
+| SUPABASE_SERVICE_ROLE_KEY | Opcional e exclusiva do backend; nunca publique em `VITE_*` |
+| SUPABASE_STORAGE_ENABLED | Opcional; `false` desativa temporariamente o Storage e usa o fallback local |
+| SUPABASE_STORAGE_PUBLIC | Opcional; `true` cria/usa buckets públicos para imagens acessíveis, padrão `true` |
 | DATABASE_SSL | `true` se o banco exigir TLS |
 | DATABASE_SSL_CA | Caminho para certificado CA PEM, se necessário |
 | SMTP_HOST / SMTP_PORT | Servidor SMTP; padrões `smtp.gmail.com` / `587` |
@@ -100,6 +104,14 @@ Selecione a branch e habilite auto-deploy se desejar publicar novos commits auto
 FRONTEND_URL inclui a subpasta para os links de email; o CORS extrai somente sua origem (protocolo e domínio). CORS_ORIGIN, se configurado, deve conter apenas origens, sem subpastas. CORS permite localhost:3000 em desenvolvimento e as origens explicitamente configuradas. Produção não libera localhost automaticamente. Não use `*` com credenciais. `trust proxy` considera um salto para o proxy do Render; reavalie se adicionar outros proxies.
 
 **Uploads:** fotos e avatares são gravados em disco. Configure um disco persistente no Render (plano compatível, pago). O Blueprint declara 1 GB em `/var/data/uploads`. Sem persistência, arquivos somem em reinicializações/deploys. Faça backup e monitore espaço. Transfira separadamente os uploads locais que quiser preservar. URLs `/uploads` continuam iguais.
+
+**Supabase Storage opcional:** o MySQL e o Prisma continuam sendo o banco principal. Com
+`SUPABASE_URL` e `SUPABASE_SERVICE_ROLE_KEY` configurados no backend, novos avatares e
+imagens de problemas são enviados para os buckets `avatars` e `reports`; o bucket `posts`
+fica reservado para futuras publicações com imagens. As tabelas MySQL continuam guardando
+somente a URL/referência do arquivo. Sem essas variáveis, o fallback local em `UPLOAD_DIR`
+continua funcionando e os arquivos antigos em `/uploads` não são migrados nem removidos.
+Os buckets podem ser públicos para imagens públicas; não coloque a service role no frontend.
 
 Configure SMTP com um provedor e porta permitidos pelo plano do Render e teste recuperação de senha. Variáveis SMTP vazias não habilitam envio.
 

@@ -9,6 +9,7 @@ import request from 'supertest';
 test('profile upload remains readable after reloading the saved profile with a custom UPLOAD_DIR', async () => {
   const directory = await mkdtemp(path.join(os.tmpdir(), 'voz-avatar-'));
   process.env.UPLOAD_DIR = directory;
+  process.env.SUPABASE_STORAGE_ENABLED = 'false';
   const { prisma } = await import('../src/config/prisma.js');
   const { default: users } = await import('../src/routes/users.js');
   const { uploadedMedia } = await import('../src/config/media.js');
@@ -24,7 +25,7 @@ test('profile upload remains readable after reloading the saved profile with a c
     app.use('/api/users', (req, res, next) => { req.userId = 1; next(); }, users);
     const bytes = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+jRZkAAAAASUVORK5CYII=', 'base64');
     const saved = await request(app).put('/api/users/me').attach('avatarFile', bytes, {filename: 'avatar.png', contentType: 'image/png'}).expect(200);
-    assert.match(saved.body.avatar, /^\/uploads\/profiles\/.+\.png$/);
+    assert.match(saved.body.avatar, /^\/uploads\/avatars\/1\/.+\.png$/);
     const reloaded = await request(app).get('/api/users/me').expect(200);
     assert.equal(reloaded.body.avatar, saved.body.avatar);
     const image = await request(app).get(reloaded.body.avatar).set('Origin', 'https://frontend.example').expect(200).expect('Content-Type', /image\/png/);
