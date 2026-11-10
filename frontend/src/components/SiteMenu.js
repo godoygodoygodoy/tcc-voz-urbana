@@ -31,7 +31,7 @@ const SiteMenu = () => {
     { label: t('navAbout'), href: '/#sobre', icon: FiInfo },
     { label: t('navContact'), href: '/#contato', icon: FiMail },
     ...(user ? [{ label: t('reportProblem'), href: '/report', icon: FiFileText }] : []),
-    ...(user?.role === 'admin' ? [{ label: t('adminNav'), href: '/admin', icon: FiShield }] : []),
+    ...(user?.role?.toLowerCase() === 'admin' ? [{ label: t('adminNav'), href: '/admin', icon: FiShield }] : []),
   ];
 
   const currentIndex = items.findIndex(({ href }) => {

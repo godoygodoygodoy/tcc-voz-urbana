@@ -25,7 +25,7 @@ import UserProfilePage from './pages/UserProfilePage';
 import Header from './components/Header';
 import ProtectedRoute from './components/ProtectedRoute';
 import ReactiveAtmosphere from './components/ReactiveAtmosphere';
-import { visitsAPI } from './services/api';
+import { usersAPI, visitsAPI } from './services/api';
 
 const VisitTracker = () => {
   const location = useLocation();
@@ -49,7 +49,22 @@ const VisitTracker = () => {
 };
 
 function App() {
-  const { user } = useAuthStore();
+  const { user, token, setUser, logout } = useAuthStore();
+
+  React.useEffect(() => {
+    if (!token) return undefined;
+    let active = true;
+    usersAPI.getMe()
+      .then((response) => {
+        if (active) setUser(response.data);
+      })
+      .catch(() => {
+        if (active) logout();
+      });
+    return () => {
+      active = false;
+    };
+  }, [token, setUser, logout]);
 
   React.useEffect(() => {
     document.documentElement.dataset.theme = 'dark';
