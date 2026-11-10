@@ -28,7 +28,7 @@ import ReactiveAtmosphere from './components/ReactiveAtmosphere';
 import AuthModal from './components/AuthModal';
 import ChristmasUnlockNotice from './components/ChristmasUnlockNotice';
 import { ChristmasEffects, NativityFooter } from './components/ChristmasEffects';
-import { applySiteTheme, getSiteTheme } from './utils/christmasTheme';
+import { syncSiteTheme } from './utils/christmasTheme';
 import { usersAPI, visitsAPI } from './services/api';
 
 const VisitTracker = () => {
@@ -72,7 +72,7 @@ function App() {
 
   React.useEffect(() => {
     document.documentElement.dataset.theme = 'dark';
-    applySiteTheme(getSiteTheme());
+    syncSiteTheme();
     localStorage.setItem('theme', 'dark');
   }, []);
 

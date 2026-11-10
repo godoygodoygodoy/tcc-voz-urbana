@@ -1,6 +1,7 @@
 import React from 'react';
 import { Canvas } from '@react-three/fiber';
 import { Float, Stars } from '@react-three/drei';
+import { useChristmasTheme } from '../utils/christmasTheme';
 
 const towers = [
   { position: [-4.2, -1.1, -2.4], size: [0.8, 3.8, 0.8], color: '#2e1065' },
@@ -13,26 +14,30 @@ const towers = [
 ];
 
 const ThreeCityBackdrop = () => {
+  const { theme, effects } = useChristmasTheme();
+  const christmas = theme === 'christmas';
+  const palette = ['#164b35', '#246347', '#942b36', '#ba3540', '#d1a954', '#e0bd72', '#f1d69c'];
+  if (christmas && !effects) return null;
   return (
     <Canvas
       dpr={[1, 1.5]}
       camera={{ position: [0, 2.5, 10], fov: 36 }}
       gl={{ alpha: true, antialias: true }}
     >
-      <color attach="background" args={['#100817']} />
-      <fog attach="fog" args={['#100817', 9, 24]} />
+      <color attach="background" args={[christmas ? '#101b16' : '#100817']} />
+      <fog attach="fog" args={[christmas ? '#101b16' : '#100817', 9, 24]} />
 
       <ambientLight intensity={0.55} />
       <directionalLight position={[6, 10, 6]} intensity={1.4} color="#ffffff" />
-      <pointLight position={[-4, 2, 4]} intensity={1.8} color="#a855f7" />
-      <pointLight position={[5, 1, -4]} intensity={1.3} color="#c084fc" />
+      <pointLight position={[-4, 2, 4]} intensity={1.8} color={christmas ? '#c33c44' : '#a855f7'} />
+      <pointLight position={[5, 1, -4]} intensity={1.3} color={christmas ? '#f5cf75' : '#c084fc'} />
 
       <Float speed={1.2} rotationIntensity={0.1} floatIntensity={0.28}>
         <group position={[0, 0, 0]}>
-          {towers.map((tower) => (
+          {towers.map((tower, index) => (
             <mesh key={`${tower.position.join('-')}`} position={tower.position} scale={tower.size} castShadow receiveShadow>
               <boxGeometry args={[1, 1, 1]} />
-              <meshStandardMaterial color={tower.color} roughness={0.35} metalness={0.25} emissive="#2e1065" emissiveIntensity={0.14} />
+              <meshStandardMaterial color={christmas ? palette[index] : tower.color} roughness={0.35} metalness={0.25} emissive={christmas ? '#174c33' : '#2e1065'} emissiveIntensity={0.14} />
             </mesh>
           ))}
         </group>
@@ -40,12 +45,12 @@ const ThreeCityBackdrop = () => {
 
       <mesh position={[0, -2.2, 0]} rotation={[-Math.PI / 2, 0, 0]}>
         <planeGeometry args={[40, 40]} />
-        <meshStandardMaterial color="#120b20" roughness={1} />
+        <meshStandardMaterial color={christmas ? '#111d17' : '#120b20'} roughness={1} />
       </mesh>
 
       <mesh position={[0, -1.7, -4]} rotation={[-Math.PI / 2, 0, 0]}>
         <planeGeometry args={[28, 28]} />
-        <meshBasicMaterial color="#7c3aed" transparent opacity={0.07} />
+        <meshBasicMaterial color={christmas ? '#d1a954' : '#7c3aed'} transparent opacity={0.07} />
       </mesh>
 
       <Stars radius={55} depth={24} count={800} factor={3} saturation={0} fade speed={0.35} />

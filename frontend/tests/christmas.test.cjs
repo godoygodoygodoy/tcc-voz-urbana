@@ -1,0 +1,35 @@
+﻿const { test } = require('node:test');
+const assert = require('node:assert/strict');
+const { pathToFileURL } = require('node:url');
+const path = require('node:path');
+test('three sounds unlock once; theme and effects survive initialization and logout', async () => {
+  const storage = new Map();
+  global.localStorage = { getItem: key => storage.get(key) ?? null, setItem: (key,value) => storage.set(key,value), removeItem: key => storage.delete(key) };
+  global.window = new EventTarget();
+  global.document = { documentElement: { dataset: {} } };
+  const theme = await import(pathToFileURL(path.resolve(__dirname, '../src/utils/christmasTheme.js')));
+  let notices = 0;
+  window.addEventListener(theme.CHRISTMAS_EVENT, () => notices++);
+  assert.equal(theme.applySiteTheme('christmas'), 'normal');
+  theme.recordPigeonSound(); theme.recordPigeonSound();
+  assert.equal(theme.isChristmasUnlocked(), false);
+  theme.recordPigeonSound(); theme.recordPigeonSound();
+  assert.equal(theme.getSiteTheme(), 'christmas');
+  assert.equal(notices, 1);
+  theme.applySiteTheme('normal');
+  theme.syncSiteTheme();
+  assert.equal(document.documentElement.dataset.siteTheme, 'normal');
+  theme.applySiteTheme('christmas'); theme.setChristmasEffects(false);
+  localStorage.removeItem('token'); localStorage.removeItem('user');
+  theme.syncSiteTheme();
+  assert.equal(theme.getSiteTheme(), 'christmas');
+  assert.equal(document.documentElement.dataset.christmasEffects, 'off');
+  assert.equal(theme.unlockChristmas(), false);
+});
+test('palette covers legacy and Tailwind colors while preserving category colors', () => {
+  const {recolor}=require('../christmas-palette.cjs');
+  assert.match(recolor('#7c3aed'), /hsl\(355/);
+  assert.match(recolor('rgb(124 58 237 / var(--tw-bg-opacity))'), /var\(--tw-bg-opacity\)\)/);
+  assert.match(recolor('rgba(216,180,255,0.3)'), /hsl\(43.*\/ 0.3\)/);
+  assert.equal(recolor('#168AAD'), '#168AAD');
+});

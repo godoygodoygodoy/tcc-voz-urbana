@@ -1,0 +1,35 @@
+﻿const {chromium}=require('playwright');
+const assert=require('node:assert/strict');
+(async()=>{
+ const browser=await chromium.launch({headless:true, channel:"msedge"});
+ const page=await browser.newPage({viewport:{width:1366,height:900}});
+ await page.addInitScript(()=>{ window.__sounds=0; HTMLMediaElement.prototype.play=function(){window.__sounds++;return Promise.resolve();}; });
+ await page.goto('http://127.0.0.1:5178/tecti/2026/gpec03/');
+ const pigeon=page.getByRole('button',{name:'Interagir com o pombo'});
+ await pigeon.waitFor();
+ for(let i=0;i<30;i++) await pigeon.click({force:true});
+ await page.getByRole('status').filter({hasText:'Christmas Version desbloqueada'}).waitFor();
+ assert.equal(await page.evaluate(()=>window.__sounds),3);
+ assert.equal(await page.locator('html').getAttribute('data-site-theme'),'christmas');
+ await page.reload();
+ await page.getByRole('button',{name:'Pausar efeitos'}).click();
+ assert.equal(await page.locator('.christmas-snow').count(),0);
+ await page.reload();
+ await page.getByRole('button',{name:'Ativar efeitos'}).waitFor();
+ await page.screenshot({path:'frontend/tests/christmas-desktop.png',fullPage:true});
+ await page.setViewportSize({width:390,height:844});
+ await page.getByRole('button',{name:'Ativar efeitos'}).click();
+ assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true);
+ await page.screenshot({path:'frontend/tests/christmas-mobile.png',fullPage:true});
+ await page.screenshot({path:'frontend/tests/christmas-mobile-viewport.png'});
+ await page.mouse.move(350,200);
+ assert.notEqual(await page.evaluate(()=>document.documentElement.style.getPropertyValue('--snow-drift')), '');
+ await page.evaluate(async()=>{const theme=await import('/tecti/2026/gpec03/src/utils/christmasTheme.js');theme.applySiteTheme('normal');});
+ assert.equal(await page.locator('.christmas-effects-toggle').count(),0);
+ assert.equal(await page.locator('html').getAttribute('data-site-theme'),'normal');
+ await page.reload();
+ assert.equal(await page.locator('html').getAttribute('data-site-theme'),'normal');
+ console.log('PASS: three real interaction sequences, unlock notice, reload persistence, effects toggle, mobile overflow');
+ await browser.close();
+})().catch(e=>{console.error(e);process.exitCode=1;});
+

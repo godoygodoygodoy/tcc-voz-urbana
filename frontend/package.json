@@ -30,7 +30,8 @@
     "dev": "vite",
     "start": "vite",
     "build": "vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "test:christmas": "node --test tests/christmas.test.cjs"
   },
   "browserslist": {
     "production": [

@@ -7,7 +7,7 @@ import { UploadField } from '../components/FloatingFields';
 import { formatBrazilianPhone, normalizeDigits } from '../utils/formatters';
 import ImageCropper from '../components/ImageCropper';
 import Avatar from '../components/Avatar';
-import { applySiteTheme, getSiteTheme, isChristmasUnlocked } from '../utils/christmasTheme';
+import { applySiteTheme, useChristmasTheme, setChristmasEffects } from '../utils/christmasTheme';
 
 const ProfilePage = () => {
   const [profile, setProfile] = useState(null);
@@ -26,9 +26,8 @@ const ProfilePage = () => {
   const [sentRequests, setSentRequests] = useState([]);
   const setUser = useAuthStore((state) => state.setUser);
   const { t } = useI18n();
-  const [siteTheme, setSiteTheme] = useState(() => getSiteTheme());
-  const christmasUnlocked = isChristmasUnlocked();
-  const changeSiteTheme = (event) => setSiteTheme(applySiteTheme(event.target.value));
+  const { theme: siteTheme, unlocked: christmasUnlocked, effects } = useChristmasTheme();
+  const changeSiteTheme = (event) => applySiteTheme(event.target.value);
 
   useEffect(() => {
     const fetchProfile = async () => {
@@ -235,6 +234,8 @@ const ProfilePage = () => {
             <p className="site-muted mb-4 text-sm">Personalize a aparência do Voz Urbana.</p>
             <label className="block text-sm font-semibold mb-2" htmlFor="site-theme">Versão</label>
             <select id="site-theme" value={siteTheme} onChange={changeSiteTheme} className="site-form-input w-full border rounded-lg p-3"><option value="normal">Voz Urbana Normal</option><option value="christmas">Christmas Version</option></select>
+            <label className="mt-4 flex items-center gap-3 text-sm"><input type="checkbox" checked={effects} onChange={(event) => setChristmasEffects(event.target.checked)} />Ativar neve e animações natalinas</label>
+            <p className="site-muted mt-2 text-xs">Preferências salvas neste navegador, mesmo após sair da conta.</p>
           </section>}
           <section className="mt-10 border-t border-white/10 pt-6">
             <h2 className="mb-4 text-xl font-bold">Solicitações de amizade</h2>

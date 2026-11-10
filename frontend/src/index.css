@@ -3358,3 +3358,25 @@ code {
 @keyframes snowfall { to { transform:translate3d(var(--snow-drift, 0px),110vh,0) rotate(360deg); } } @keyframes christmasGlow { to { filter:brightness(1.45); opacity:.7; } } @keyframes hatWiggle { 50% { transform:rotate(-12deg) translateY(-1px); } } @keyframes unlockIn { from { opacity:0; transform:translateY(25px) scale(.9); } }
 @media (max-width:640px) { .christmas-lights i:nth-child(n+13) { display:none; } .christmas-snow span:nth-child(n+18) { display:none; } }
 @media (prefers-reduced-motion: reduce) { .christmas-snow span,.christmas-lights i,.pigeon-santa-hat { animation:none !important; } }
+/* Seasonal details are isolated from the original edition. */
+:root[data-site-theme='christmas'] { --hero-purple: #d34846; --hero-lilac: #f5cf75; accent-color: #bd3540; }
+:root[data-site-theme='christmas'] .christmas-snow span { width: var(--snow-size); height: var(--snow-size); animation-duration: var(--snow-duration); opacity: .65; }
+:root[data-site-theme='christmas'] .nativity { width: min(260px, 75vw); height: 150px; margin: 0 auto 12px; overflow: visible; }
+:root[data-site-theme='christmas'] .nativity-star { animation: christmasGlow 3s ease-in-out infinite alternate; }
+:root[data-site-theme='christmas'] .pigeon-santa-hat { pointer-events:none; top: 8%; left: 43%; width: 28%; height: 20%; border-bottom-width: 3px; border-radius: 80% 12% 18% 18%; transform: rotate(20deg); animation: santaSway 4s ease-in-out infinite; }
+@keyframes santaSway { 50% { transform:rotate(14deg) translateY(-1px); } }
+.christmas-effects-toggle { position:fixed; z-index:61; bottom:12px; left:12px; padding:7px 12px; border:1px solid #b89a55; border-radius:999px; background:#142a20ed; color:#ffe3a0; font-size:11px; box-shadow:0 4px 20px #0004; }
+:root[data-site-theme='christmas'] .site-header::after { content:'✦'; position:absolute; right:12px; bottom:-9px; color:#f5cf75; font-size:16px; pointer-events:none; text-shadow:0 0 12px #e7b642; }
+:root[data-site-theme='christmas'] .site-footer::before { content:'✧ ── ✦ ── ✧'; display:block; margin-bottom:10px; color:#bfa163; letter-spacing:8px; }
+:root[data-site-theme='christmas'] .site-footer { padding-bottom:3.5rem; }
+:root[data-site-theme='christmas'] :is(.site-panel,.glass-panel,.feed-card) { transition:background-color .35s ease,border-color .35s ease; }
+:root[data-site-theme='christmas'][data-christmas-effects='off'] :is(.christmas-lights i,.pigeon-santa-hat,.nativity-star,.christmas-unlock) { animation:none !important; }
+:root[data-site-theme='christmas'][data-christmas-effects='off'] .reactive-atmosphere { display:none; }
+.is-page-hidden :is(.christmas-snow span,.christmas-lights i,.pigeon-santa-hat,.nativity-star) { animation-play-state:paused !important; }
+@media (prefers-reduced-motion:reduce) { .christmas-snow { display:none; } :root[data-site-theme='christmas'] :is(.nativity-star,.christmas-unlock) { animation:none !important; } }
+:root[data-site-theme='christmas'] .urban-map path[stroke='#A855F7'] { stroke:#c63b45; }
+:root[data-site-theme='christmas'] .urban-map path[stroke='#C084FC'] { stroke:#f5cf75; }
+:root[data-site-theme='christmas'] .urban-map path[fill='#7C3AED'], :root[data-site-theme='christmas'] .urban-map path[fill='#A855F7'] { fill:#c63b45; }
+:root[data-site-theme='christmas'] .site-header-wordmark { filter: hue-rotate(90deg) saturate(.7); }
+:root[data-site-theme='christmas'] .christmas-effects { z-index: 3; }
+:root[data-site-theme='christmas'] select { background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%23f5cf75' stroke-width='2.5'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E"); }

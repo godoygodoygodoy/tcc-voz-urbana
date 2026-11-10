@@ -3,6 +3,8 @@ import ReactDOM from 'react-dom/client';
 import Lenis from 'lenis';
 import './index.css';
 import App from './App';
+import { syncSiteTheme } from './utils/christmasTheme';
+syncSiteTheme();
 import { I18nProvider } from './i18n';
 
 function AppShell() {
