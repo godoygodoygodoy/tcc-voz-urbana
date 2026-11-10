@@ -1,13 +1,40 @@
 ﻿import React from 'react';
 import { useChristmasTheme, setChristmasEffects } from '../utils/christmasTheme';
+import { createPortal } from 'react-dom';
+import { useLocation } from 'react-router-dom';
+
+const ChristmasGarlands = () => {
+  const { pathname } = useLocation();
+  const [targets, setTargets] = React.useState([]);
+  React.useEffect(() => {
+    const update = () => {
+      const next = [...document.querySelectorAll('section[id], .site-footer, .site-panel, .feed-sidebar')]
+        .filter(element => element.getBoundingClientRect().width > 0)
+        .filter((element, index, all) => !all.some(other => other !== element && other.contains(element)))
+        .slice(0, 16);
+      setTargets(current => current.length === next.length && current.every((element, index) => element === next[index]) ? current : next);
+    };
+    update();
+    const observer = new MutationObserver(update);
+    observer.observe(document.body, { childList: true, subtree: true });
+    return () => observer.disconnect();
+  }, [pathname]);
+  return targets.map((target, index) => createPortal(
+    <div className="christmas-garland" aria-hidden="true">
+      <div className="christmas-garland-pine" />
+      <div className="christmas-lights christmas-lights--section">{Array.from({ length: 16 }, (_, bulb) => <i key={bulb} />)}</div>
+      <span className="christmas-garland-bow">✦</span>
+    </div>, target, `garland-${index}`));
+};
 export const ChristmasEffects = () => {
   const { theme, effects } = useChristmasTheme();
   if (theme !== 'christmas') return null;
   return <>
     <div className="christmas-effects" aria-hidden="true">
-      <div className="christmas-lights">{Array.from({ length: 18 }, (_, index) => <i key={index} />)}</div>
-      {effects && <div className="christmas-snow">{Array.from({ length: 26 }, (_, index) => <span key={index} style={{ '--snow-left': `${index * 3.85 + 1}%`, '--snow-delay': `${index * -0.67}s`, '--snow-duration': `${12 + index % 7}s`, '--snow-size': `${2 + index % 4}px` }} />)}</div>}
+      <div className="christmas-lights">{Array.from({ length: 30 }, (_, index) => <i key={index} />)}</div>
+      {effects && <div className="christmas-snow">{Array.from({ length: 80 }, (_, index) => <span key={index} style={{ '--snow-left': `${(index * 37.7) % 100}%`, '--snow-delay': `${index * -0.73}s`, '--snow-duration': `${10 + index % 11}s`, '--snow-size': `${2 + index % 5}px` }} />)}</div>}
     </div>
+    <ChristmasGarlands />
     <button className="christmas-effects-toggle" type="button" aria-pressed={effects} onClick={() => setChristmasEffects(!effects)}>{effects ? '❄ Pausar efeitos' : '❄ Ativar efeitos'}</button>
   </>;
 };
