@@ -1,5 +1,5 @@
 import React from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import 'leaflet/dist/leaflet.css';
@@ -25,6 +25,28 @@ import UserProfilePage from './pages/UserProfilePage';
 import Header from './components/Header';
 import ProtectedRoute from './components/ProtectedRoute';
 import ReactiveAtmosphere from './components/ReactiveAtmosphere';
+import { visitsAPI } from './services/api';
+
+const VisitTracker = () => {
+  const location = useLocation();
+
+  React.useEffect(() => {
+    const storageKey = 'voz-urbana-visitor-id';
+    const visitorId = localStorage.getItem(storageKey) || (typeof crypto !== 'undefined' && crypto.randomUUID
+      ? crypto.randomUUID()
+      : `visitor-${Date.now()}-${Math.random().toString(36).slice(2)}`);
+    localStorage.setItem(storageKey, visitorId);
+    const path = `${location.pathname}${location.search}`;
+    const visitKey = `voz-urbana-last-visit:${path}`;
+    const lastVisit = Number(sessionStorage.getItem(visitKey) || 0);
+    if (Date.now() - lastVisit < 30_000) return undefined;
+    sessionStorage.setItem(visitKey, String(Date.now()));
+    visitsAPI.record({ visitorId, path }).catch(() => undefined);
+    return undefined;
+  }, [location.pathname, location.search]);
+
+  return null;
+};
 
 function App() {
   const { user } = useAuthStore();
@@ -37,6 +59,7 @@ function App() {
   return (
     <Router basename={import.meta.env.BASE_URL}>
       <div>
+        <VisitTracker />
         <ReactiveAtmosphere />
         <Routes>
           {/* Landing page - sem header customizado, ela tem seu próprio */}

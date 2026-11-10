@@ -29,6 +29,7 @@ model Usuario {
   problemas              Problema[]
   votos                  Voto[]
   publicacoesSalvas      PublicacaoSalva[]
+  visitas                Visita[]
   amizadesEnviadas       Amizade[]             @relation("amizadeSolicitante")
   amizadesRecebidas      Amizade[]             @relation("amizadeDestinatario")
 
@@ -200,6 +201,21 @@ model Log {
 
   @@index([usuarioId])
   @@map("logs")
+}
+
+model Visita {
+  id          String   @id @default(uuid()) @db.Char(36)
+  visitanteId String   @map("visitante_id") @db.VarChar(128)
+  caminho     String   @db.VarChar(255)
+  usuarioId   String?  @map("usuario_id") @db.Char(36)
+  criadaEm    DateTime @default(now()) @map("criada_em")
+  usuario     Usuario? @relation(fields: [usuarioId], references: [id], onDelete: SetNull)
+
+  @@index([criadaEm])
+  @@index([visitanteId, criadaEm])
+  @@index([caminho, criadaEm])
+  @@index([usuarioId, criadaEm])
+  @@map("visitas")
 }
 
 enum StatusProblema {

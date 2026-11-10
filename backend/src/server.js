@@ -19,6 +19,7 @@ import commentRoutes from "./routes/comments.js";
 import notificationRoutes from "./routes/notifications.js";
 import socialRoutes from "./routes/social.js";
 import savedRoutes from "./routes/saved.js";
+import visitRoutes from "./routes/visits.js";
 import rateLimit from "express-rate-limit";
 import { uploadedMedia } from "./config/media.js";
 
@@ -72,6 +73,7 @@ app.get("/api/health", (req, res) => {
 
 // Rotas públicas
 app.use("/api/auth", authRoutes);
+app.use("/api/visits", visitRoutes);
 app.use("/api/categories", categoryRoutes);
 app.use("/api/problems", problemRoutes);
 app.use("/api/comments", commentRoutes);
