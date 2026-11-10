@@ -7,6 +7,7 @@ import { UploadField } from '../components/FloatingFields';
 import { formatBrazilianPhone, normalizeDigits } from '../utils/formatters';
 import ImageCropper from '../components/ImageCropper';
 import Avatar from '../components/Avatar';
+import { applySiteTheme, getSiteTheme, isChristmasUnlocked } from '../utils/christmasTheme';
 
 const ProfilePage = () => {
   const [profile, setProfile] = useState(null);
@@ -25,6 +26,9 @@ const ProfilePage = () => {
   const [sentRequests, setSentRequests] = useState([]);
   const setUser = useAuthStore((state) => state.setUser);
   const { t } = useI18n();
+  const [siteTheme, setSiteTheme] = useState(() => getSiteTheme());
+  const christmasUnlocked = isChristmasUnlocked();
+  const changeSiteTheme = (event) => setSiteTheme(applySiteTheme(event.target.value));
 
   useEffect(() => {
     const fetchProfile = async () => {
@@ -226,6 +230,12 @@ const ProfilePage = () => {
               {saving ? t('saving') : t('saveProfile')}
             </button>
           </form>
+          {christmasUnlocked && <section className="theme-settings mt-8 border-t border-white/10 pt-6">
+            <h2 className="mb-2 text-xl font-bold">Tema do site</h2>
+            <p className="site-muted mb-4 text-sm">Personalize a aparência do Voz Urbana.</p>
+            <label className="block text-sm font-semibold mb-2" htmlFor="site-theme">Versão</label>
+            <select id="site-theme" value={siteTheme} onChange={changeSiteTheme} className="site-form-input w-full border rounded-lg p-3"><option value="normal">Voz Urbana Normal</option><option value="christmas">Christmas Version</option></select>
+          </section>}
           <section className="mt-10 border-t border-white/10 pt-6">
             <h2 className="mb-4 text-xl font-bold">Solicitações de amizade</h2>
             {friendRequests.length === 0 && sentRequests.length === 0 && <p className="text-sm text-white/55">Nenhuma solicitação pendente.</p>}

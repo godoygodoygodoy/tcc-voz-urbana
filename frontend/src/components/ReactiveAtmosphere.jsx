@@ -12,6 +12,7 @@ const ReactiveAtmosphere = () => {
       frame = requestAnimationFrame(() => {
         root.style.setProperty('--cursor-x', `${(event.clientX / window.innerWidth) * 100}%`);
         root.style.setProperty('--cursor-y', `${(event.clientY / window.innerHeight) * 100}%`);
+        root.style.setProperty('--snow-drift', `${((event.clientX / window.innerWidth) - 0.5) * 20}px`);
       });
     };
     const updateScroll = () => {

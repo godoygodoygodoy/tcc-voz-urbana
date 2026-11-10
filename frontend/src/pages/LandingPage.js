@@ -32,6 +32,7 @@ import { useI18n } from '../i18n';
 import LandingHero from '../components/LandingHero';
 import AmbientContour from '../components/AmbientContour';
 import { formatBrazilianPhone } from '../utils/formatters';
+import { NativityFooter } from '../components/ChristmasEffects';
 
 const fadeUp = {
   hidden: { opacity: 0, y: 28 },
@@ -699,9 +700,10 @@ export default function LandingPage() {
         </div>
       </motion.section>
 
-      <footer className="border-t border-white/10 bg-black py-8 text-center text-sm text-white/55">
+      <NativityFooter />
+      {/*
         © Voz Urbana 2026 - Sua voz melhora a cidade
-      </footer>
+      */}
     </div>
   );
 }

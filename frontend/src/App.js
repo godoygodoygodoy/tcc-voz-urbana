@@ -26,6 +26,9 @@ import Header from './components/Header';
 import ProtectedRoute from './components/ProtectedRoute';
 import ReactiveAtmosphere from './components/ReactiveAtmosphere';
 import AuthModal from './components/AuthModal';
+import ChristmasUnlockNotice from './components/ChristmasUnlockNotice';
+import { ChristmasEffects, NativityFooter } from './components/ChristmasEffects';
+import { applySiteTheme, getSiteTheme } from './utils/christmasTheme';
 import { usersAPI, visitsAPI } from './services/api';
 
 const VisitTracker = () => {
@@ -69,6 +72,7 @@ function App() {
 
   React.useEffect(() => {
     document.documentElement.dataset.theme = 'dark';
+    applySiteTheme(getSiteTheme());
     localStorage.setItem('theme', 'dark');
   }, []);
 
@@ -77,6 +81,7 @@ function App() {
       <div>
         <VisitTracker />
         <ReactiveAtmosphere />
+        <ChristmasEffects />
         <Routes>
           {/* Landing page - sem header customizado, ela tem seu próprio */}
           <Route path="/" element={<LandingPage />} />
@@ -104,12 +109,14 @@ function App() {
                   <Route path="/profile/:id" element={<ProtectedRoute component={UserProfilePage} />} />
                   <Route path="/admin" element={<ProtectedRoute component={AdminDashboard} roles={['admin']} />} />
                 </Routes>
+                <NativityFooter />
               </div>
             }
           />
         </Routes>
       </div>
       <ToastContainer position="bottom-right" />
+      <ChristmasUnlockNotice />
       <AuthModal />
     </Router>
   );
