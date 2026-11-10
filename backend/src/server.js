@@ -35,6 +35,7 @@ const corsOrigins = [process.env.CORS_ORIGIN, process.env.FRONTEND_URL ? new URL
   .filter(Boolean)
   .flatMap((origins) => origins.split(","))
   .map((origin) => origin.trim())
+  .map((origin) => origin.replace(/\/+$/, ""))
   .filter(Boolean);
 
 if (process.env.NODE_ENV !== "production") {

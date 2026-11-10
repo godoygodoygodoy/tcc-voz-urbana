@@ -29,16 +29,18 @@ const HomePage = () => {
     const fetchData = async () => {
       try {
         setLoading(true);
-        const [problemsRes, categoriesRes] = await Promise.all([
+        const [problemsRes, mapProblemsRes, categoriesRes] = await Promise.all([
           problemsAPI.list({ status: selectedStatus, category: selectedCategory, from, to, sort, radius, page, limit: 9 }),
+          problemsAPI.list({ category: selectedCategory, from, to, sort, radius, limit: 100 }),
           categoriesAPI.list(),
         ]);
         const fetchedProblems = problemsRes.data.data || [];
+        const fetchedMapProblems = mapProblemsRes.data.data || [];
         const fetchedCategories = categoriesRes.data || [];
         setTotal(problemsRes.data.total || 0);
 
         setProblems(fetchedProblems);
-        setMapProblems(fetchedProblems);
+        setMapProblems(fetchedMapProblems);
         setSelectedProblem((currentSelected) => currentSelected || fetchedProblems[0] || null);
         setCategories(fetchedCategories);
       } catch (error) {

@@ -45,7 +45,8 @@ const toPoint = (problem) => {
   const latitude = Number(problem.latitude);
   const longitude = Number(problem.longitude);
 
-  if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) {
+  if (!Number.isFinite(latitude) || !Number.isFinite(longitude)
+    || latitude < -90 || latitude > 90 || longitude < -180 || longitude > 180) {
     return null;
   }
   return [latitude, longitude];
