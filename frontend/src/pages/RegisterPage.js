@@ -6,6 +6,7 @@ import { Card, CardContent } from '../components/ui/card';
 import { Button } from '../components/ui/button';
 import { useI18n } from '../i18n';
 import PasswordField from '../components/PasswordField';
+import AuthErrorBalloon from '../components/AuthErrorBalloon';
 import { formatBrazilianPhone, normalizeDigits } from '../utils/formatters';
 
 const RegisterPage = () => {
@@ -18,6 +19,7 @@ const RegisterPage = () => {
     passwordConfirm: '',
   });
   const [loading, setLoading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
   const { register } = useAuthStore();
   const navigate = useNavigate();
   const { t } = useI18n();
@@ -34,11 +36,12 @@ const RegisterPage = () => {
     e.preventDefault();
 
     if (formData.password !== formData.passwordConfirm) {
-      toast.error(t('passwordMismatch'));
+      setErrorMessage(t('passwordMismatch'));
       return;
     }
 
     setLoading(true);
+    setErrorMessage('');
 
     try {
       await register({
@@ -51,7 +54,7 @@ const RegisterPage = () => {
       toast.success(t('registerSuccess'));
       navigate('/');
     } catch (error) {
-      toast.error(error.response?.data?.error || t('registerError'));
+      setErrorMessage(error.response?.data?.error || t('registerError'));
     } finally {
       setLoading(false);
     }
@@ -67,6 +70,8 @@ const RegisterPage = () => {
             </h1>
             <p className="text-white/60">{t('registerTitle')}</p>
           </div>
+
+          <AuthErrorBalloon message={errorMessage} onDismiss={() => setErrorMessage('')} />
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
