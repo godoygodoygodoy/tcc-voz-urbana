@@ -14,9 +14,9 @@ router.get("/users/search", asyncHandler(async (req, res) => {
   const searchTerm = query.replace(/^@/, "");
   const where = {
     OR: [
-      { nome: { contains: query } },
+      { nome: { contains: searchTerm } },
       { username: { contains: searchTerm } },
-      { email: { contains: query } }
+      { email: { contains: searchTerm } }
     ]
   };
   const [total, users] = await Promise.all([
@@ -87,7 +87,10 @@ router.post("/users/:id/friendship", asyncHandler(async (req, res) => {
   const target = await prisma.usuario.findUnique({ where: { id: targetId }, select: publicUser });
   if (!target) return res.status(404).json({ error: "Usuário não encontrado." });
   const existing = await prisma.amizade.findFirst({ where: { OR: [{ solicitanteId: req.userId, destinatarioId: targetId }, { solicitanteId: targetId, destinatarioId: req.userId }] } });
-  if (existing) return res.status(409).json({ error: "Já existe uma solicitação ou amizade.", friendship: existing });
+  if (existing?.status === "PENDENTE" || existing?.status === "ACEITA") {
+    return res.status(409).json({ error: "Já existe uma solicitação ou amizade.", friendship: existing });
+  }
+  if (existing?.status === "RECUSADA") await prisma.amizade.delete({ where: { id: existing.id } });
   const friendship = await prisma.amizade.create({ data: { solicitanteId: req.userId, destinatarioId: targetId } });
   await createNotification({ usuarioId: targetId, tipo: "AMIZADE_SOLICITACAO", titulo: "Nova solicitação de amizade", mensagem: "Alguém quer fazer parte da sua rede.", link: `/profile/${req.userId}` });
   res.status(201).json(friendship);
@@ -122,6 +125,11 @@ router.get("/friends", asyncHandler(async (req, res) => {
 
 router.get("/friend-requests", asyncHandler(async (req, res) => {
   const requests = await prisma.amizade.findMany({ where: { destinatarioId: req.userId, status: "PENDENTE" }, include: { solicitante: { select: publicUser } }, orderBy: { criadaEm: "desc" } });
+  res.json(requests);
+}));
+
+router.get("/friend-requests/sent", asyncHandler(async (req, res) => {
+  const requests = await prisma.amizade.findMany({ where: { solicitanteId: req.userId, status: "PENDENTE" }, include: { destinatario: { select: publicUser } }, orderBy: { criadaEm: "desc" } });
   res.json(requests);
 }));
 

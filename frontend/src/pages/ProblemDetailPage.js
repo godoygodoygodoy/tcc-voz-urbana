@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useParams } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { problemsAPI, votesAPI, commentsAPI, mediaUrl } from '../services/api';
 import Avatar from '../components/Avatar';
 import { toast } from 'react-toastify';
@@ -17,7 +17,8 @@ const ProblemDetailPage = () => {
   const [comments, setComments] = useState([]);
   const [commentText, setCommentText] = useState('');
   const [commentLoading, setCommentLoading] = useState(false);
-  const { user } = useAuthStore();
+  const { user, openAuthModal } = useAuthStore();
+  const navigate = useNavigate();
   const { t } = useI18n();
 
   useEffect(() => {
@@ -40,7 +41,7 @@ const ProblemDetailPage = () => {
 
   const handleVote = async (type) => {
     if (!user) {
-      toast.error(t('loginToVote'));
+      openAuthModal('login');
       return;
     }
 
@@ -58,7 +59,10 @@ const ProblemDetailPage = () => {
 
   const handleComment = async (event) => {
     event.preventDefault();
-    if (!user) return toast.error(t('loginToComment'));
+    if (!user) {
+      openAuthModal('login');
+      return;
+    }
     if (commentText.trim().length < 2) return toast.error(t('writeComment'));
     try {
       setCommentLoading(true);
@@ -102,6 +106,7 @@ const ProblemDetailPage = () => {
   return (
     <div className="site-page min-h-screen py-8 text-white">
       <div className="container mx-auto px-4">
+        <button type="button" onClick={() => navigate(-1)} className="mb-4 inline-flex items-center gap-2 rounded-xl border border-white/10 px-4 py-2 text-sm font-bold hover:bg-white/10">← Voltar</button>
         <div className="site-detail overflow-hidden rounded-3xl shadow-md">
           {/* Imagens */}
           {problem.images?.length > 0 && (

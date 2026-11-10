@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { usersAPI, mediaUrl } from '../services/api';
+import { socialAPI, usersAPI, mediaUrl } from '../services/api';
 import { toast } from 'react-toastify';
 import { useAuthStore } from '../store';
 import { useI18n } from '../i18n';
@@ -21,6 +21,8 @@ const ProfilePage = () => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [cropFile, setCropFile] = useState(null);
+  const [friendRequests, setFriendRequests] = useState([]);
+  const [sentRequests, setSentRequests] = useState([]);
   const setUser = useAuthStore((state) => state.setUser);
   const { t } = useI18n();
 
@@ -44,6 +46,9 @@ const ProfilePage = () => {
     };
 
     fetchProfile();
+    Promise.all([socialAPI.requests(), socialAPI.sentRequests()])
+      .then(([received, sent]) => { setFriendRequests(received.data || []); setSentRequests(sent.data || []); })
+      .catch(() => {});
   }, [t]);
 
   const handleChange = (e) => {
@@ -87,6 +92,16 @@ const ProfilePage = () => {
       toast.error(error.response?.data?.error || t('profileError'));
     } finally {
       setSaving(false);
+    }
+  };
+
+  const updateRequest = async (request, action) => {
+    try {
+      await socialAPI.updateFriendship(request.id, action);
+      setFriendRequests((current) => current.filter((item) => item.id !== request.id));
+      if (action === 'accept') toast.success('Amizade confirmada.');
+    } catch (error) {
+      toast.error(error.response?.data?.error || 'Não foi possível atualizar a solicitação.');
     }
   };
 
@@ -211,6 +226,12 @@ const ProfilePage = () => {
               {saving ? t('saving') : t('saveProfile')}
             </button>
           </form>
+          <section className="mt-10 border-t border-white/10 pt-6">
+            <h2 className="mb-4 text-xl font-bold">Solicitações de amizade</h2>
+            {friendRequests.length === 0 && sentRequests.length === 0 && <p className="text-sm text-white/55">Nenhuma solicitação pendente.</p>}
+            <div className="space-y-3">{friendRequests.map((request) => <div key={request.id} className="flex items-center justify-between gap-3 rounded-xl bg-white/5 p-3"><span><strong>{request.solicitante.nome}</strong><small className="ml-2 text-white/50">{request.solicitante.username ? `@${request.solicitante.username}` : ''}</small></span><span className="flex gap-2"><button type="button" onClick={() => updateRequest(request, 'accept')} className="rounded-lg bg-violet-600 px-3 py-1 text-xs font-bold">Aceitar</button><button type="button" onClick={() => updateRequest(request, 'reject')} className="rounded-lg border border-white/10 px-3 py-1 text-xs">Recusar</button></span></div>)}</div>
+            <div className="mt-3 space-y-3">{sentRequests.map((request) => <div key={request.id} className="flex items-center justify-between rounded-xl bg-white/5 p-3 text-sm"><span>Para <strong>{request.destinatario.nome}</strong></span><button type="button" onClick={() => updateRequest(request, 'cancel')} className="rounded-lg border border-white/10 px-3 py-1 text-xs">Cancelar</button></div>)}</div>
+          </section>
         </div>
       </div>
     </div>

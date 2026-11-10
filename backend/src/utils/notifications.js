@@ -3,6 +3,10 @@ import { sendNotificationEmail } from "./email.js";
 
 export const createNotification = async ({ usuarioId, tipo, titulo, mensagem, link }) => {
   if (!usuarioId) return null;
+  const existing = await prisma.notificacao.findFirst({
+    where: { usuarioId, tipo, link: link || null, lida: false }
+  });
+  if (existing) return existing;
   const notification = await prisma.notificacao.create({
     data: { usuarioId, tipo, titulo, mensagem, link }
   });

@@ -6,6 +6,9 @@ export const useAuthStore = create((set, get) => ({
   token: localStorage.getItem('token') || null,
   loading: false,
   error: null,
+  authModal: null,
+  openAuthModal: (mode = 'login') => set({ authModal: mode }),
+  closeAuthModal: () => set({ authModal: null }),
 
   setUser: (user) => {
     localStorage.setItem('user', JSON.stringify(user));

@@ -7,7 +7,7 @@ import PigeonLogo from './PigeonLogo';
 import SiteMenu from './SiteMenu';
 
 const Header = () => {
-  const { user, logout } = useAuthStore();
+  const { user, logout, openAuthModal } = useAuthStore();
   const navigate = useNavigate();
   const [compact, setCompact] = React.useState(false);
   const handleLogout = () => {
@@ -35,7 +35,7 @@ const Header = () => {
 
           <div className="site-header-actions flex items-center gap-3">
             {user && <NotificationBell />}
-            <AccessMenu compact={compact} authenticated={Boolean(user)} user={user} onLogout={handleLogout} />
+            <AccessMenu compact={compact} authenticated={Boolean(user)} user={user} onLogout={handleLogout} onOpenAuth={openAuthModal} />
           </div>
         </div>
       </div>

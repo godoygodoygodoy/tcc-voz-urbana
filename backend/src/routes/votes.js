@@ -68,10 +68,27 @@ router.post(
 
     const updatedProblem = await prisma.problema.findUnique({
       where: { id: problemId },
-      include: { _count: { select: { votos: true } } }
+      include: {
+        categoria: true,
+        usuario: { select: { id: true, nome: true, username: true, fotoPerfil: true } },
+        imagens: true,
+        atualizacoes: { orderBy: { dataCriacao: "desc" } },
+        _count: { select: { votos: true } }
+      }
     });
 
-    res.json({ ...updatedProblem, votes: updatedProblem._count.votos });
+    res.json({
+      ...updatedProblem,
+      title: updatedProblem.titulo,
+      description: updatedProblem.descricao,
+      address: updatedProblem.endereco,
+      createdAt: updatedProblem.dataCriacao,
+      category: { id: updatedProblem.categoria.id, name: updatedProblem.categoria.nome, color: updatedProblem.categoria.cor },
+      author: { id: updatedProblem.usuario.id, name: updatedProblem.usuario.nome, username: updatedProblem.usuario.username, avatar: updatedProblem.usuario.fotoPerfil },
+      images: updatedProblem.imagens,
+      updates: updatedProblem.atualizacoes,
+      votes: updatedProblem._count.votos
+    });
   })
 );
 

@@ -5,6 +5,7 @@ import { toast } from 'react-toastify';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { mediaUrl, socialAPI } from '../services/api';
+import { useAuthStore } from '../store';
 import { useI18n } from '../i18n';
 
 const UserProfilePage = () => {
@@ -12,6 +13,8 @@ const UserProfilePage = () => {
   const { language, t } = useI18n();
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [friendship, setFriendship] = useState(null);
+  const { user } = useAuthStore();
 
   useEffect(() => {
     let cancelled = false;
@@ -20,8 +23,31 @@ const UserProfilePage = () => {
       .then((response) => { if (!cancelled) setProfile(response.data); })
       .catch((error) => { if (!cancelled) toast.error(error.response?.data?.error || t('profileError')); })
       .finally(() => { if (!cancelled) setLoading(false); });
+    if (user && user.id !== id) {
+      socialAPI.friendship(id).then((response) => { if (!cancelled) setFriendship(response.data); }).catch(() => {});
+    }
     return () => { cancelled = true; };
-  }, [id, t]);
+  }, [id, t, user]);
+
+  const updateFriendship = async () => {
+    try {
+      if (!friendship || friendship.status === 'NONE') {
+        const response = await socialAPI.requestFriendship(id);
+        setFriendship(response.data);
+      } else if (friendship.status === 'PENDENTE' && friendship.destinatarioId === user.id) {
+        const response = await socialAPI.updateFriendship(friendship.id, 'accept');
+        setFriendship(response.data);
+      } else if (friendship.status === 'PENDENTE') {
+        const response = await socialAPI.updateFriendship(friendship.id, 'cancel');
+        setFriendship({ status: 'NONE' });
+      } else {
+        await socialAPI.updateFriendship(friendship.id, 'remove');
+        setFriendship({ status: 'NONE' });
+      }
+    } catch (error) {
+      toast.error(error.response?.data?.error || 'Não foi possível atualizar a amizade.');
+    }
+  };
 
   if (loading) return <div className="site-page flex min-h-screen items-center justify-center text-white"><p className="site-muted">{t('loading')}</p></div>;
   if (!profile) return <div className="site-page flex min-h-screen items-center justify-center text-white"><p>{t('profileNotFound')}</p></div>;
@@ -43,6 +69,9 @@ const UserProfilePage = () => {
                 <span className="inline-flex items-center gap-2"><CalendarDays size={15} />{t('joinedAt')} {format(joinedAt, 'dd/MM/yyyy', { locale: dateLocale })}</span>
                 <span className="inline-flex items-center gap-2"><FileText size={15} />{profile.publicationCount} {t('publications')}</span>
               </div>
+              {user && user.id !== profile.id && <button type="button" onClick={updateFriendship} className="mt-5 rounded-xl bg-violet-600 px-4 py-2 text-sm font-bold text-white hover:bg-violet-700">
+                {!friendship || friendship.status === 'NONE' ? 'Adicionar amigo' : friendship.status === 'ACEITA' ? 'Remover amigo' : friendship.destinatarioId === user.id ? 'Aceitar solicitação' : 'Cancelar solicitação'}
+              </button>}
             </div>
           </div>
         </section>

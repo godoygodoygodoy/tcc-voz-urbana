@@ -25,6 +25,7 @@ import UserProfilePage from './pages/UserProfilePage';
 import Header from './components/Header';
 import ProtectedRoute from './components/ProtectedRoute';
 import ReactiveAtmosphere from './components/ReactiveAtmosphere';
+import AuthModal from './components/AuthModal';
 
 function App() {
   const { user } = useAuthStore();
@@ -71,6 +72,7 @@ function App() {
         </Routes>
       </div>
       <ToastContainer position="bottom-right" />
+      <AuthModal />
     </Router>
   );
 }

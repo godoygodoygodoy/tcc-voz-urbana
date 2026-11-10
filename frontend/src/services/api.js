@@ -96,7 +96,15 @@ export const socialAPI = {
   updateFriendship: (id, action) => api.patch(`/social/friendships/${id}`, { action }),
   friends: () => api.get('/social/friends'),
   requests: () => api.get('/social/friend-requests'),
+  sentRequests: () => api.get('/social/friend-requests/sent'),
   profile: (id) => api.get(`/social/users/${id}/profile`),
+};
+
+export const conversationsAPI = {
+  list: () => api.get('/conversations'),
+  create: (userId) => api.post(`/conversations/${userId}`),
+  messages: (id) => api.get(`/conversations/${id}/messages`),
+  send: (id, data) => api.post(`/conversations/${id}/messages`, data),
 };
 
 // Users

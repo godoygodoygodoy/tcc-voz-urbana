@@ -24,7 +24,7 @@ import { formatDistanceToNow } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
-import { categoriesAPI, mediaUrl, notificationsAPI, problemsAPI, savedAPI, socialAPI, votesAPI } from '../services/api';
+import { categoriesAPI, conversationsAPI, mediaUrl, notificationsAPI, problemsAPI, savedAPI, socialAPI, votesAPI } from '../services/api';
 import { useAuthStore } from '../store';
 import { useI18n } from '../i18n';
 import AmbientContour from '../components/AmbientContour';
@@ -101,7 +101,7 @@ const FeedHeader = ({ title, description, children }) => (
 
 const FeedPage = () => {
   const { t, language } = useI18n();
-  const { user } = useAuthStore();
+  const { user, openAuthModal } = useAuthStore();
   const location = useLocation();
   const navigate = useNavigate();
   const [posts, setPosts] = useState([]);
@@ -124,6 +124,7 @@ const FeedPage = () => {
   const [loadingUsers, setLoadingUsers] = useState(false);
   const [friendships, setFriendships] = useState({});
   const [messages, setMessages] = useState([]);
+  const [conversations, setConversations] = useState([]);
   const [selectedConversation, setSelectedConversation] = useState(null);
   const [messageText, setMessageText] = useState('');
   const [createForm, setCreateForm] = useState(emptyCreateForm);
@@ -199,6 +200,14 @@ const FeedPage = () => {
     }
     savedAPI.list().then((response) => setSavedPosts(response.data || []))
       .catch((error) => toast.error(error.response?.data?.error || 'Não foi possível carregar as publicações salvas.'));
+    return undefined;
+  }, [activeTab, user]);
+
+  useEffect(() => {
+    if (!user || activeTab !== 'conversations') return undefined;
+    conversationsAPI.list()
+      .then((response) => setConversations(response.data || []))
+      .catch((error) => toast.error(error.response?.data?.error || 'Não foi possível carregar as conversas.'));
     return undefined;
   }, [activeTab, user]);
 
@@ -390,7 +399,7 @@ const FeedPage = () => {
 
   const handleVote = async (post) => {
     if (!user) {
-      toast.info(t('loginToVote'));
+      openAuthModal('login');
       return;
     }
     try {
@@ -459,7 +468,7 @@ const FeedPage = () => {
   const handleCreate = async (event) => {
     event.preventDefault();
     if (!user) {
-      toast.info('Entre na sua conta para criar uma postagem.');
+      openAuthModal('login');
       return;
     }
     if (!createForm.title || !createForm.description || !createForm.categoryId
@@ -516,11 +525,28 @@ const FeedPage = () => {
     }
   };
 
-  const sendMessage = (event) => {
+  const openConversation = async (friend) => {
+    try {
+      const response = await conversationsAPI.create(friend.id);
+      setSelectedConversation(response.data);
+      const messagesResponse = await conversationsAPI.messages(response.data.id);
+      setMessages(messagesResponse.data || []);
+      setConversations((current) => current.some((item) => item.id === response.data.id) ? current : [response.data, ...current]);
+    } catch (error) {
+      toast.error(error.response?.data?.error || 'A amizade precisa estar confirmada para conversar.');
+    }
+  };
+
+  const sendMessage = async (event) => {
     event.preventDefault();
-    if (!messageText.trim()) return;
-    setMessages((current) => [...current, { from: 'Você', text: messageText.trim(), time: 'agora' }]);
-    setMessageText('');
+    if (!messageText.trim() || !selectedConversation) return;
+    try {
+      const response = await conversationsAPI.send(selectedConversation.id, { texto: messageText.trim() });
+      setMessages((current) => [...current, response.data]);
+      setMessageText('');
+    } catch (error) {
+      toast.error(error.response?.data?.error || 'Não foi possível enviar a mensagem.');
+    }
   };
 
   const markNotificationsRead = async () => {
@@ -572,7 +598,7 @@ const FeedPage = () => {
         <Link to={`/profile/${post.author?.id}`} className="min-w-0 feed-post-author-copy"><strong>{authorHandle}</strong><span>{authorName} · {post.createdAt ? formatDistanceToNow(new Date(post.createdAt), { locale: language === 'pt-BR' ? ptBR : undefined, addSuffix: true }) : t('now')}</span></Link>
         <div className="relative flex items-center gap-1">
           <button type="button" className="feed-more" aria-label="Mais opções" onClick={() => setOpenMenu((current) => current === post.id ? null : post.id)}><Ellipsis size={18} /></button>
-          {openMenu === post.id && <div className="feed-post-menu" role="menu">
+              {openMenu === post.id && <div className="feed-post-menu" role="menu">
             {(post.author?.id === user?.id || user?.role === 'admin') && <button type="button" onClick={() => { startEditing(post); setOpenMenu(null); }}><Ellipsis size={14} /> Editar publicação</button>}
             {(post.author?.id === user?.id || user?.role === 'admin') && <button type="button" onClick={() => { setOpenMenu(null); deletePost(post); }}><Trash2 size={14} /> Apagar publicação</button>}
             <button type="button" onClick={() => toggleSaved(post)}><Bookmark size={14} /> {savedPosts.some((item) => item.id === post.id) ? 'Remover dos salvos' : 'Salvar publicação'}</button>
@@ -619,9 +645,9 @@ const FeedPage = () => {
     <div className="feed-dm-shell">
       <div className="feed-dm-list">
         <div className="feed-dm-list-head"><strong>Mensagens</strong><button type="button" aria-label="Nova conversa"><Plus size={17} /></button></div>
-        {selectedConversation ? null : <div className="feed-empty">Você ainda não tem conversas.</div>}
+        {conversations.length === 0 ? <div className="feed-empty">Adicione e confirme uma amizade para iniciar conversas.</div> : conversations.map((conversation) => <button key={conversation.id} type="button" className={`feed-dm-contact ${selectedConversation?.id === conversation.id ? 'is-selected' : ''}`} onClick={async () => { setSelectedConversation(conversation); const response = await conversationsAPI.messages(conversation.id); setMessages(response.data || []); }}><Avatar user={conversation.amigo} /><span><strong>{conversation.amigo?.nome}</strong><small>{conversation.ultimaMensagem?.texto || 'Nenhuma mensagem ainda'}</small></span></button>)}
       </div>
-      <div className="feed-dm-thread"><div className="feed-dm-thread-head"><span className="feed-avatar">—</span><div><strong>Nenhuma conversa selecionada</strong><small>As mensagens reais aparecerão aqui.</small></div></div><div className="feed-dm-messages">{messages.length ? messages.map((message, index) => <div key={`${message.time}-${index}`} className={`feed-message ${message.from === 'Você' ? 'is-own' : ''}`}><span>{message.text}</span><small>{message.time}</small></div>) : <div className="feed-empty">Nenhuma mensagem.</div>}</div><form onSubmit={sendMessage} className="feed-dm-compose"><input value={messageText} onChange={(event) => setMessageText(event.target.value)} placeholder="Mensagens estarão disponíveis quando houver uma conversa." disabled /><button type="submit" aria-label="Enviar mensagem" disabled><Send size={17} /></button></form></div>
+      <div className="feed-dm-thread"><div className="feed-dm-thread-head"><Avatar user={selectedConversation?.amigo} /><div><strong>{selectedConversation?.amigo?.nome || 'Nenhuma conversa selecionada'}</strong><small>{selectedConversation ? 'Amizade confirmada' : 'Confirme uma amizade para conversar.'}</small></div></div><div className="feed-dm-messages">{messages.length ? messages.map((message) => <div key={message.id} className={`feed-message ${message.remetenteId === user?.id ? 'is-own' : ''}`}><span>{message.texto}</span><small>{new Date(message.criadaEm).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</small></div>) : <div className="feed-empty">Nenhuma mensagem.</div>}</div><form onSubmit={sendMessage} className="feed-dm-compose"><input value={messageText} onChange={(event) => setMessageText(event.target.value)} placeholder={selectedConversation ? 'Escreva uma mensagem...' : 'Mensagens disponíveis para amigos confirmados.'} disabled={!selectedConversation} /><button type="submit" aria-label="Enviar mensagem" disabled={!selectedConversation}><Send size={17} /></button></form></div>
     </div>
   </>;
 

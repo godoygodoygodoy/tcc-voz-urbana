@@ -31,6 +31,9 @@ model Usuario {
   publicacoesSalvas      PublicacaoSalva[]
   amizadesEnviadas       Amizade[]             @relation("amizadeSolicitante")
   amizadesRecebidas      Amizade[]             @relation("amizadeDestinatario")
+  conversasIniciadas     Conversa[]             @relation("conversaRemetente")
+  conversasRecebidas     Conversa[]             @relation("conversaDestinatario")
+  mensagensEnviadas      Mensagem[]
 
   @@map("usuarios")
 }
@@ -174,6 +177,36 @@ model Amizade {
   @@unique([solicitanteId, destinatarioId])
   @@index([destinatarioId, status])
   @@map("amizades")
+}
+
+model Conversa {
+  id              String    @id @default(uuid()) @db.Char(36)
+  usuarioAId      String    @map("usuario_a_id") @db.Char(36)
+  usuarioBId      String    @map("usuario_b_id") @db.Char(36)
+  criadaEm        DateTime  @default(now()) @map("criada_em")
+  atualizadaEm    DateTime  @updatedAt @map("atualizada_em")
+  usuarioA        Usuario   @relation("conversaRemetente", fields: [usuarioAId], references: [id], onDelete: Cascade)
+  usuarioB        Usuario   @relation("conversaDestinatario", fields: [usuarioBId], references: [id], onDelete: Cascade)
+  mensagens       Mensagem[]
+
+  @@unique([usuarioAId, usuarioBId])
+  @@index([usuarioAId, atualizadaEm])
+  @@index([usuarioBId, atualizadaEm])
+  @@map("conversas")
+}
+
+model Mensagem {
+  id          String   @id @default(uuid()) @db.Char(36)
+  texto       String   @db.Text
+  criadaEm    DateTime @default(now()) @map("criada_em")
+  conversaId  String   @map("conversa_id") @db.Char(36)
+  remetenteId String   @map("remetente_id") @db.Char(36)
+  conversa    Conversa @relation(fields: [conversaId], references: [id], onDelete: Cascade)
+  remetente   Usuario  @relation(fields: [remetenteId], references: [id], onDelete: Cascade)
+
+  @@index([conversaId, criadaEm])
+  @@index([remetenteId, criadaEm])
+  @@map("mensagens")
 }
 
 enum StatusAmizade {
