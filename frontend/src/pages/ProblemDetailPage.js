@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { Link, useNavigate, useParams } from 'react-router-dom';
 import { problemsAPI, votesAPI, commentsAPI, mediaUrl } from '../services/api';
 import Avatar from '../components/Avatar';
 import { toast } from 'react-toastify';
@@ -8,6 +8,7 @@ import { formatDistanceToNow } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { useAuthStore } from '../store';
 import { useI18n } from '../i18n';
+import { profilePath } from '../utils/profileLinks';
 
 const ProblemDetailPage = () => {
   const { id } = useParams();
@@ -148,7 +149,7 @@ const ProblemDetailPage = () => {
                 <FiUser className="text-purple-600" />
                 <div>
                   <p className="site-muted text-xs">{t('reportedBy')}</p>
-                  <div className="flex items-center gap-2"><Avatar user={problem.author} className="h-8 w-8" /><p className="font-semibold text-white">{problem.author?.name}</p></div>
+                  <Link to={profilePath(problem.author)} className="flex items-center gap-2"><Avatar user={problem.author} className="h-8 w-8" /><p className="font-semibold text-white">{problem.author?.name}</p></Link>
                 </div>
               </div>
 
@@ -196,7 +197,7 @@ const ProblemDetailPage = () => {
               <div className="mt-5 space-y-4">
                 {comments.length === 0 ? <p className="site-muted">{t('noComments')}</p> : comments.map((comment) => (
                   <article key={comment.id} className="site-comment rounded-lg p-4">
-                    <div className="flex items-center justify-between gap-3"><div className="flex items-center gap-2"><Avatar user={comment.usuario} className="h-8 w-8" /><strong>{comment.usuario?.username ? `@${comment.usuario.username}` : comment.usuario?.nome}</strong></div><span className="site-muted text-xs">{formatDistanceToNow(new Date(comment.dataCriacao), { locale: ptBR, addSuffix: true })}</span></div>
+                    <div className="flex items-center justify-between gap-3"><Link to={profilePath(comment.usuario)} className="flex items-center gap-2"><Avatar user={comment.usuario} className="h-8 w-8" /><strong>{comment.usuario?.username ? `@${comment.usuario.username}` : comment.usuario?.nome}</strong></Link><span className="site-muted text-xs">{formatDistanceToNow(new Date(comment.dataCriacao), { locale: ptBR, addSuffix: true })}</span></div>
                     <p className="mt-2 text-white/70">{comment.texto}</p>
                   </article>
                 ))}

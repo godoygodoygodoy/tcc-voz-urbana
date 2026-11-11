@@ -32,6 +32,7 @@ import { FloatingDatePicker, FloatingSelect, FloatingTimePicker, UploadField } f
 import { brazilStates, fetchCep, fetchCities, formatCep, normalizeCep } from '../utils/brazil';
 import Avatar from '../components/Avatar';
 import ImageCropper from '../components/ImageCropper';
+import { profilePath } from '../utils/profileLinks';
 
 const actionAsset = (name) => `${import.meta.env.BASE_URL}feed-actions/${name}.png`;
 
@@ -354,15 +355,17 @@ const FeedPage = () => {
   };
 
   useEffect(() => {
-    if (activeTab !== 'search' || search.trim().length < 2) {
+    const normalizedSearch = search.trim().replace(/^@+/, '');
+    if (activeTab !== 'search' || normalizedSearch.length < 2) {
       setUserResults([]);
+      setLoadingUsers(false);
       return undefined;
     }
     let cancelled = false;
     const loadUsers = async () => {
       try {
         setLoadingUsers(true);
-        const response = await socialAPI.searchUsers({ q: search.trim(), page: 1, limit: 12 });
+        const response = await socialAPI.searchUsers({ q: normalizedSearch, page: 1, limit: 12 });
         if (!cancelled) setUserResults(response.data?.data || []);
       } catch (error) {
         if (!cancelled) setUserResults([]);
@@ -370,8 +373,8 @@ const FeedPage = () => {
         if (!cancelled) setLoadingUsers(false);
       }
     };
-    loadUsers();
-    return () => { cancelled = true; };
+    const timer = window.setTimeout(loadUsers, 300);
+    return () => { cancelled = true; window.clearTimeout(timer); };
   }, [activeTab, search]);
 
   const statusLabels = {
@@ -594,8 +597,8 @@ const FeedPage = () => {
     const authorHandle = post.author?.username ? `@${post.author.username.replace(/^@/, '')}` : 'perfil sem @';
     return <article key={post.id} className="feed-post">
       <div className="feed-post-head">
-        <Link to={`/profile/${post.author?.id}`} className="feed-post-author"><Avatar user={post.author} className="feed-avatar" /></Link>
-        <Link to={`/profile/${post.author?.id}`} className="min-w-0 feed-post-author-copy"><strong>{authorHandle}</strong><span>{authorName} · {post.createdAt ? formatDistanceToNow(new Date(post.createdAt), { locale: language === 'pt-BR' ? ptBR : undefined, addSuffix: true }) : t('now')}</span></Link>
+        <Link to={profilePath(post.author)} className="feed-post-author"><Avatar user={post.author} className="feed-avatar" /></Link>
+        <Link to={profilePath(post.author)} className="min-w-0 feed-post-author-copy"><strong>{authorHandle}</strong><span>{authorName} · {post.createdAt ? formatDistanceToNow(new Date(post.createdAt), { locale: language === 'pt-BR' ? ptBR : undefined, addSuffix: true }) : t('now')}</span></Link>
         <div className="relative flex items-center gap-1">
           <button type="button" className="feed-more" aria-label="Mais opções" onClick={() => setOpenMenu((current) => current === post.id ? null : post.id)}><Ellipsis size={18} /></button>
               {openMenu === post.id && <div className="feed-post-menu" role="menu">
@@ -656,12 +659,12 @@ const FeedPage = () => {
     <div className="feed-discovery-search"><Search size={20} /><input autoFocus value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Busque por rua, usuário, categoria ou problema..." /></div>
     <div className="feed-search-section">
       <div className="feed-section-label"><Users size={15} /> Pessoas</div>
-      {loadingUsers ? <p className="feed-search-empty">Buscando pessoas...</p> : userResults.length === 0 ? <p className="feed-search-empty">Nenhuma pessoa encontrada.</p> : userResults.map((person) => {
+      {search.trim().replace(/^@+/, '').length < 2 ? <p className="feed-search-empty">Digite pelo menos 2 caracteres para buscar pessoas.</p> : loadingUsers ? <p className="feed-search-empty">Buscando pessoas...</p> : userResults.length === 0 ? <p className="feed-search-empty">Nenhuma pessoa encontrada.</p> : userResults.map((person) => {
         const relation = friendships[person.id];
         const relationLabel = relation?.status === 'ACEITA' ? 'Amigos' : relation?.status === 'PENDENTE' && relation.destinatarioId === user?.id ? 'Aceitar' : relation?.status === 'PENDENTE' ? 'Solicitação enviada' : 'Adicionar';
         return <div key={person.id} className="feed-search-person">
           <div className="feed-search-person-main">
-            <Link to={`/profile/${person.id}`} className="feed-search-person-main">
+            <Link to={profilePath(person)} className="feed-search-person-main">
               <Avatar user={person} />
               <span><strong>{person.nome}</strong><small>{person.username ? `@${person.username}` : t('noUsername')}</small></span>
             </Link>
@@ -727,7 +730,7 @@ const FeedPage = () => {
         <aside className="feed-rail hidden lg:flex">
           <Link to="/" className="feed-brand" aria-label="Voz Urbana"><span className="feed-brand-mark">VU</span><span><strong>Voz</strong><em>URBANA</em></span></Link>
           <nav className="mt-14 space-y-2">{navItems.map((item) => { const Icon = item.icon; return <button type="button" key={item.key} onClick={() => selectTab(item.key)} className={`feed-nav-item ${activeTab === item.key ? 'is-active' : ''}`}><Icon className="feed-nav-icon" size={29} strokeWidth={1.8} /><span>{t(item.label)}</span></button>; })}</nav>
-          <Link to="/profile" className="feed-profile mt-auto"><Avatar user={user} /><small>{displayName}</small><span className="feed-profile-edit">&#9998;</span></Link>
+          <Link to={profilePath(user)} className="feed-profile mt-auto"><Avatar user={user} /><small>{displayName}</small><span className="feed-profile-edit">&#9998;</span></Link>
         </aside>
         <nav className="feed-mobile-nav lg:hidden" aria-label="Navegação do feed">{navItems.map((item) => { const Icon = item.icon; return <button type="button" key={item.key} onClick={() => selectTab(item.key)} className={activeTab === item.key ? 'is-active' : ''}><Icon size={18} /><span>{t(item.label)}</span></button>; })}</nav>
         <section className="feed-main">{renderTab()}</section>

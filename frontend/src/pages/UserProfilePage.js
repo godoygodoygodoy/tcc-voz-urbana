@@ -1,98 +1,26 @@
-import React, { useEffect, useState } from 'react';
-import { CalendarDays, FileText } from 'lucide-react';
-import { Link, useParams } from 'react-router-dom';
+import React, { useEffect, useMemo, useState } from 'react';
+import { Bookmark, CalendarDays, FileText, Heart, MessageCircle, Settings, Share2, UserCheck, UserPlus } from 'lucide-react';
+import { Link, useNavigate, useParams } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { mediaUrl, socialAPI } from '../services/api';
+import { conversationsAPI, mediaUrl, savedAPI, socialAPI } from '../services/api';
 import { useAuthStore } from '../store';
 import { useI18n } from '../i18n';
 
 const UserProfilePage = () => {
-  const { id } = useParams();
-  const { language, t } = useI18n();
-  const [profile, setProfile] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [friendship, setFriendship] = useState(null);
-  const { user } = useAuthStore();
-
-  useEffect(() => {
-    let cancelled = false;
-    setLoading(true);
-    socialAPI.profile(id)
-      .then((response) => { if (!cancelled) setProfile(response.data); })
-      .catch((error) => { if (!cancelled) toast.error(error.response?.data?.error || t('profileError')); })
-      .finally(() => { if (!cancelled) setLoading(false); });
-    if (user && user.id !== id) {
-      socialAPI.friendship(id).then((response) => { if (!cancelled) setFriendship(response.data); }).catch(() => {});
-    }
-    return () => { cancelled = true; };
-  }, [id, t, user]);
-
-  const updateFriendship = async () => {
-    try {
-      if (!friendship || friendship.status === 'NONE') {
-        const response = await socialAPI.requestFriendship(id);
-        setFriendship(response.data);
-      } else if (friendship.status === 'PENDENTE' && friendship.destinatarioId === user.id) {
-        const response = await socialAPI.updateFriendship(friendship.id, 'accept');
-        setFriendship(response.data);
-      } else if (friendship.status === 'PENDENTE') {
-        const response = await socialAPI.updateFriendship(friendship.id, 'cancel');
-        setFriendship({ status: 'NONE' });
-      } else {
-        await socialAPI.updateFriendship(friendship.id, 'remove');
-        setFriendship({ status: 'NONE' });
-      }
-    } catch (error) {
-      toast.error(error.response?.data?.error || 'Não foi possível atualizar a amizade.');
-    }
-  };
-
+  const { id, username } = useParams(); const navigate = useNavigate(); const { language, t } = useI18n(); const { user } = useAuthStore();
+  const [profile, setProfile] = useState(null); const [loading, setLoading] = useState(true); const [friendship, setFriendship] = useState(null); const [tab, setTab] = useState('posts'); const [privatePosts, setPrivatePosts] = useState({ saved: null, liked: null }); const [loadingTab, setLoadingTab] = useState(false);
+  const profileKey = username || id; const isOwnProfile = Boolean(user && profile?.id === user.id);
+  useEffect(() => { let cancelled = false; setLoading(true); const request = username ? socialAPI.profileByUsername(username) : socialAPI.profile(id); request.then(async ({ data }) => { if (cancelled) return; setProfile(data); if (user && user.id !== data.id) { const relation = await socialAPI.friendship(data.id); if (!cancelled) setFriendship(relation.data); } }).catch((error) => { if (!cancelled) toast.error(error.response?.data?.error || t('profileError')); }).finally(() => { if (!cancelled) setLoading(false); }); return () => { cancelled = true; }; }, [id, username, profileKey, t, user]);
+  useEffect(() => { if (!isOwnProfile || tab === 'posts' || privatePosts[tab] !== null) return undefined; let cancelled = false; setLoadingTab(true); const request = tab === 'saved' ? savedAPI.list() : socialAPI.likedPublications(profile.id); request.then(({ data }) => { if (!cancelled) setPrivatePosts((current) => ({ ...current, [tab]: data || [] })); }).catch((error) => { if (!cancelled) toast.error(error.response?.data?.error || 'Não foi possível carregar este conteúdo.'); }).finally(() => { if (!cancelled) setLoadingTab(false); }); return () => { cancelled = true; }; }, [isOwnProfile, privatePosts, profile?.id, tab]);
+  const updateFriendship = async () => { try { if (!friendship || friendship.status === 'NONE') setFriendship((await socialAPI.requestFriendship(profile.id)).data); else if (friendship.status === 'PENDENTE' && friendship.destinatarioId === user.id) setFriendship((await socialAPI.updateFriendship(friendship.id, 'accept')).data); else if (friendship.status === 'PENDENTE') { await socialAPI.updateFriendship(friendship.id, 'cancel'); setFriendship({ status: 'NONE' }); } else { await socialAPI.updateFriendship(friendship.id, 'remove'); setFriendship({ status: 'NONE' }); } } catch (error) { toast.error(error.response?.data?.error || 'Não foi possível atualizar a amizade.'); } };
+  const share = async () => { try { if (navigator.share) await navigator.share({ title: profile.name, url: window.location.href }); else await navigator.clipboard.writeText(window.location.href); toast.success(navigator.share ? 'Perfil compartilhado.' : 'Link do perfil copiado.'); } catch (error) { if (error.name !== 'AbortError') toast.error('Não foi possível compartilhar o perfil.'); } };
+  const startConversation = async () => { try { await conversationsAPI.create(profile.id); navigate('/feed#conversations'); } catch (error) { toast.error(error.response?.data?.error || 'Não foi possível iniciar a conversa.'); } };
+  const posts = useMemo(() => tab === 'posts' ? profile?.publications || [] : privatePosts[tab] || [], [profile, privatePosts, tab]);
   if (loading) return <div className="site-page flex min-h-screen items-center justify-center text-white"><p className="site-muted">{t('loading')}</p></div>;
   if (!profile) return <div className="site-page flex min-h-screen items-center justify-center text-white"><p>{t('profileNotFound')}</p></div>;
-
-  const joinedAt = new Date(profile.joinedAt);
-  const dateLocale = language === 'pt-BR' ? ptBR : undefined;
-
-  return (
-    <div className="site-page min-h-screen py-10 text-white">
-      <div className="container mx-auto max-w-5xl px-4">
-        <section className="site-panel rounded-3xl p-6 sm:p-10">
-          <div className="flex flex-col gap-6 sm:flex-row sm:items-center">
-            {profile.avatar ? <img src={mediaUrl(profile.avatar)} alt={profile.name} className="h-28 w-28 rounded-full border-2 border-violet-300 object-cover" /> : <div className="flex h-28 w-28 items-center justify-center rounded-full bg-violet-950 text-4xl font-black text-violet-200">{profile.name?.charAt(0).toUpperCase()}</div>}
-            <div className="min-w-0">
-              <h1 className="text-4xl font-black">{profile.name}</h1>
-              <p className="mt-1 text-violet-200">{profile.username ? `@${profile.username}` : t('noUsername')}</p>
-              {profile.bio && <p className="mt-4 max-w-2xl text-white/70">{profile.bio}</p>}
-              <div className="mt-4 flex flex-wrap gap-4 text-sm text-white/55">
-                <span className="inline-flex items-center gap-2"><CalendarDays size={15} />{t('joinedAt')} {format(joinedAt, 'dd/MM/yyyy', { locale: dateLocale })}</span>
-                <span className="inline-flex items-center gap-2"><FileText size={15} />{profile.publicationCount} {t('publications')}</span>
-              </div>
-              {user && user.id !== profile.id && <button type="button" onClick={updateFriendship} className="mt-5 rounded-xl bg-violet-600 px-4 py-2 text-sm font-bold text-white hover:bg-violet-700">
-                {!friendship || friendship.status === 'NONE' ? 'Adicionar amigo' : friendship.status === 'ACEITA' ? 'Remover amigo' : friendship.destinatarioId === user.id ? 'Aceitar solicitação' : 'Cancelar solicitação'}
-              </button>}
-            </div>
-          </div>
-        </section>
-
-        <section className="mt-8">
-          <div className="mb-4 flex items-center justify-between">
-            <h2 className="text-2xl font-black">{t('profilePublications')}</h2>
-            <Link to="/profile" className="text-sm font-bold text-violet-200 hover:text-white">{t('myProfile')}</Link>
-          </div>
-          {profile.publications.length === 0 ? <div className="feed-empty">{t('profileNoPosts')}</div> : <div className="grid gap-5 md:grid-cols-2">{profile.publications.map((publication) => (
-            <Link key={publication.id} to={`/problem/${publication.id}`} className="feed-post block">
-              <span className="feed-category">{publication.category?.name || t('noCategory')}</span>
-              <h3 className="mt-3 text-2xl font-black">{publication.title}</h3>
-              <p className="mt-2 text-sm text-white/65">{publication.description}</p>
-              <p className="mt-4 text-xs text-white/45">{publication.city && publication.state ? `${publication.city}, ${publication.state}` : publication.address || t('locationNotSpecified')}</p>
-            </Link>
-          ))}</div>}
-        </section>
-      </div>
-    </div>
-  );
+  const isFriends = friendship?.status === 'ACEITA'; const relationLabel = !friendship || friendship.status === 'NONE' ? 'Adicionar amizade' : isFriends ? 'Amigos' : friendship.destinatarioId === user?.id ? 'Aceitar solicitação' : 'Solicitação enviada'; const tabs = [{ key: 'posts', label: 'Publicações', icon: FileText }, ...(isOwnProfile ? [{ key: 'saved', label: 'Favoritos', icon: Bookmark }, { key: 'liked', label: 'Curtidas', icon: Heart }] : [])];
+  return <div className="site-page profile-page min-h-screen py-8 text-white"><main className="profile-shell mx-auto max-w-5xl px-4"><section className="profile-hero site-panel"><div className="profile-avatar">{profile.avatar ? <img src={mediaUrl(profile.avatar)} alt={profile.name} /> : <span>{profile.name?.charAt(0).toUpperCase()}</span>}</div><div className="profile-summary"><div className="profile-name-row"><h1>{profile.name}</h1><span>{profile.username ? `@${profile.username}` : t('noUsername')}</span></div><div className="profile-stats"><span><b>{profile.publicationCount || 0}</b> publicações</span><span><b>{profile.following || 0}</b> seguindo</span><span><b>{profile.followers || 0}</b> seguidores</span><span><b>{profile.likes || 0}</b> curtidas</span></div><div className="profile-actions">{isOwnProfile ? <><Link to="/profile" className="profile-action profile-action--primary"><Settings size={16} />Editar perfil</Link><Link to="/profile" aria-label="Configurações" className="profile-action"><Settings size={16} /></Link></> : user && <><button type="button" onClick={updateFriendship} className={`profile-action ${isFriends ? '' : 'profile-action--primary'}`}>{isFriends ? <UserCheck size={16} /> : <UserPlus size={16} />}{relationLabel}</button>{isFriends && <button type="button" onClick={startConversation} className="profile-action"><MessageCircle size={16} />Mensagem</button>}</>}<button type="button" onClick={share} className="profile-action"><Share2 size={16} /><span>Compartilhar</span></button></div>{profile.bio && <p className="profile-bio">{profile.bio}</p>}<p className="profile-date"><CalendarDays size={14} />{t('joinedAt')} {format(new Date(profile.joinedAt), 'dd/MM/yyyy', { locale: language === 'pt-BR' ? ptBR : undefined })}</p></div></section><section className="profile-content"><nav className="profile-tabs" aria-label="Conteúdo do perfil">{tabs.map(({ key, label, icon: Icon }) => <button key={key} type="button" className={tab === key ? 'is-active' : ''} onClick={() => setTab(key)}><Icon size={16} />{label}</button>)}</nav>{loadingTab ? <div className="feed-empty">Carregando conteúdo…</div> : posts.length === 0 ? <div className="feed-empty">{tab === 'posts' ? t('profileNoPosts') : 'Nenhuma publicação nesta seção.'}</div> : <div className="profile-post-grid">{posts.map((publication) => <Link key={publication.id} to={`/problem/${publication.id}`} className="feed-post block"><span className="feed-category">{publication.category?.name || t('noCategory')}</span><h2>{publication.title}</h2><p>{publication.description}</p><small>{publication.city && publication.state ? `${publication.city}, ${publication.state}` : publication.address || t('locationNotSpecified')}</small></Link>)}</div>}</section></main></div>;
 };
-
 export default UserProfilePage;

@@ -107,6 +107,7 @@ function App() {
                   <Route path="/report" element={<Navigate to="/feed#create" replace />} />
                   <Route path="/profile" element={<ProtectedRoute component={ProfilePage} />} />
                   <Route path="/profile/:id" element={<ProtectedRoute component={UserProfilePage} />} />
+                  <Route path="/:username" element={<ProtectedRoute component={UserProfilePage} />} />
                   <Route path="/admin" element={<ProtectedRoute component={AdminDashboard} roles={['admin']} />} />
                 </Routes>
                 <NativityFooter />

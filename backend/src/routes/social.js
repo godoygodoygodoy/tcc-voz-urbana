@@ -11,7 +11,8 @@ router.get("/users/search", asyncHandler(async (req, res) => {
   if (query.length < 2) return res.json({ data: [], page: 1, total: 0 });
   const page = Math.max(1, Number(req.query.page) || 1);
   const limit = Math.min(30, Math.max(1, Number(req.query.limit) || 12));
-  const searchTerm = query.replace(/^@/, "");
+  const searchTerm = query.replace(/^@+/, "").trim().toLowerCase();
+  if (!searchTerm) return res.json({ data: [], page: 1, limit, total: 0 });
   const where = {
     OR: [
       { nome: { contains: searchTerm } },
@@ -26,51 +27,87 @@ router.get("/users/search", asyncHandler(async (req, res) => {
   res.json({ data: users, page, limit, total });
 }));
 
-router.get("/users/:id/profile", asyncHandler(async (req, res) => {
-  const user = await prisma.usuario.findUnique({
-    where: { id: req.params.id },
-    select: {
-      id: true,
-      nome: true,
-      username: true,
-      fotoPerfil: true,
-      bio: true,
-      dataCriacao: true,
-      _count: { select: { problemas: true } },
-      problemas: {
-        orderBy: { dataCriacao: "desc" },
-        take: 30,
-        include: {
-          categoria: true,
-          imagens: true,
-          _count: { select: { votos: true } }
-        }
-      }
+const profileSelect = {
+  id: true,
+  nome: true,
+  username: true,
+  fotoPerfil: true,
+  bio: true,
+  dataCriacao: true,
+  _count: { select: { problemas: true } },
+  problemas: {
+    orderBy: { dataCriacao: "desc" },
+    take: 30,
+    include: {
+      categoria: true,
+      imagens: true,
+      _count: { select: { votos: true } }
     }
-  });
+  }
+};
+
+const serializeProfile = (user) => ({
+  id: user.id,
+  name: user.nome,
+  username: user.username,
+  avatar: user.fotoPerfil,
+  bio: user.bio,
+  joinedAt: user.dataCriacao,
+  publicationCount: user._count.problemas,
+  publications: user.problemas.map((problem) => ({
+    id: problem.id,
+    title: problem.titulo,
+    description: problem.descricao,
+    address: problem.endereco,
+    state: problem.estado,
+    city: problem.cidade,
+    status: problem.status,
+    createdAt: problem.dataCriacao,
+    category: { id: problem.categoria.id, name: problem.categoria.nome, color: problem.categoria.cor },
+    images: problem.imagens,
+    votes: problem._count.votos
+  }))
+});
+
+const findProfile = (where) => prisma.usuario.findUnique({ where, select: profileSelect });
+
+const withProfileStats = async (user) => {
+  const [followers, following, likes] = await Promise.all([
+    prisma.amizade.count({ where: { destinatarioId: user.id, status: "ACEITA" } }),
+    prisma.amizade.count({ where: { solicitanteId: user.id, status: "ACEITA" } }),
+    prisma.voto.count({ where: { usuarioId: user.id } })
+  ]);
+  return { ...serializeProfile(user), followers, following, likes };
+};
+
+router.get("/users/username/:username/profile", asyncHandler(async (req, res) => {
+  const username = decodeURIComponent(req.params.username).replace(/^@/, "").trim().toLowerCase();
+  const user = await findProfile({ username });
   if (!user) return res.status(404).json({ error: "Usuário não encontrado." });
-  res.json({
-    id: user.id,
-    name: user.nome,
-    username: user.username,
-    avatar: user.fotoPerfil,
-    bio: user.bio,
-    joinedAt: user.dataCriacao,
-    publicationCount: user._count.problemas,
-    publications: user.problemas.map((problem) => ({
-      id: problem.id,
-      title: problem.titulo,
-      description: problem.descricao,
-      address: problem.endereco,
-      state: problem.estado,
-      city: problem.cidade,
-      status: problem.status,
-      createdAt: problem.dataCriacao,
-      category: { id: problem.categoria.id, name: problem.categoria.nome, color: problem.categoria.cor },
-      images: problem.imagens,
-      votes: problem._count.votos
-    }))
+  res.json(await withProfileStats(user));
+}));
+
+router.get("/users/:id/profile", asyncHandler(async (req, res) => {
+  const user = await findProfile({ id: req.params.id });
+  if (!user) return res.status(404).json({ error: "Usuário não encontrado." });
+  res.json(await withProfileStats(user));
+}));
+
+// Likes are personal activity. They are intentionally only available to the
+// account owner, while public profiles expose only the aggregate count.
+router.get("/users/:id/likes", asyncHandler(async (req, res) => {
+  if (req.params.id !== req.userId) return res.status(403).json({ error: "Curtidas privadas." });
+  const votes = await prisma.voto.findMany({
+    where: { usuarioId: req.userId },
+    orderBy: { id: "desc" },
+    include: { problema: { include: { categoria: true, imagens: true, _count: { select: { votos: true } } } } }
   });
+  res.json(votes.map(({ problema }) => ({
+    id: problema.id, title: problema.titulo, description: problema.descricao,
+    address: problema.endereco, state: problema.estado, city: problema.cidade,
+    category: problema.categoria ? { id: problema.categoria.id, name: problema.categoria.nome, color: problema.categoria.cor } : null,
+    images: problema.imagens, votes: problema._count.votos
+  })));
 }));
 
 router.get("/users/:id/friendship", asyncHandler(async (req, res) => {

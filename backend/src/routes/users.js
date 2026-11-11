@@ -39,6 +39,19 @@ router.put(
   profileUpload.single("avatarFile"),
   asyncHandler(async (req, res) => {
     const { name, username, phone, bio, avatar } = req.body;
+  const normalizedUsername = username === undefined
+    ? undefined
+    : username ? username.replace(/^@/, "").trim().toLowerCase() : null;
+  if (normalizedUsername && !/^[a-z0-9._]{3,30}$/.test(normalizedUsername)) {
+    return res.status(400).json({ error: "O username deve ter entre 3 e 30 caracteres e usar apenas letras, números, ponto ou sublinhado." });
+  }
+  if (normalizedUsername) {
+    const usernameOwner = await prisma.usuario.findFirst({
+      where: { username: normalizedUsername, id: { not: req.userId } },
+      select: { id: true }
+    });
+    if (usernameOwner) return res.status(409).json({ error: "Este @ já está em uso." });
+  }
     const current = await prisma.usuario.findUnique({
       where: { id: req.userId },
       select: { fotoPerfil: true }
@@ -51,7 +64,7 @@ router.put(
         where: { id: req.userId },
         data: {
           ...(name !== undefined && { nome: name.trim() }),
-          ...(username !== undefined && { username: username ? username.replace(/^@/, "").trim().toLowerCase() : null }),
+          ...(normalizedUsername !== undefined && { username: normalizedUsername }),
           ...(phone !== undefined && { telefone: phone ? normalizePhone(phone) || null : null }),
           ...(bio !== undefined && { bio: bio || null }),
           ...(avatar !== undefined && { fotoPerfil: avatar || null }),

@@ -102,6 +102,8 @@ export const socialAPI = {
   requests: () => api.get('/social/friend-requests'),
   sentRequests: () => api.get('/social/friend-requests/sent'),
   profile: (id) => api.get(`/social/users/${id}/profile`),
+  profileByUsername: (username) => api.get(`/social/users/username/${encodeURIComponent(username)}/profile`),
+  likedPublications: (id) => api.get(`/social/users/${id}/likes`),
 };
 
 export const conversationsAPI = {
