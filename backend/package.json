@@ -14,7 +14,10 @@
     "prisma:seed": "node prisma/seed.js",
     "geocode:existing": "node scripts/geocode-existing.js",
     "prisma:generate": "prisma generate",
-    "prisma:deploy": "prisma migrate deploy"
+    "prisma:deploy": "node scripts/deploy-database.js",
+    "backup:create": "node scripts/backup.js create",
+    "backup:verify": "node scripts/backup.js verify",
+    "test:safety": "node --test tests/data-safety.node.js tests/people-search.node.js"
   },
   "prisma": {
     "seed": "node prisma/seed.js"

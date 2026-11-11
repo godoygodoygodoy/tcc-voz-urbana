@@ -3335,8 +3335,8 @@ code {
 :root[data-site-theme='christmas'] .site-header { border-color: rgba(245,207,117,.28); background: rgba(29, 16, 17, .9); box-shadow: 0 10px 30px rgba(54, 8, 11, .3); }
 :root[data-site-theme='christmas'] .site-header.is-compact { background: rgba(29,16,17,.72); }
 :root[data-site-theme='christmas'] .site-panel, :root[data-site-theme='christmas'] .glass-panel, :root[data-site-theme='christmas'] .hero-grid .glass-panel { border-color: rgba(245,207,117,.19); background-color: rgba(37, 20, 19, .8); }
-:root[data-site-theme='christmas'] input, :root[data-site-theme='christmas'] textarea, :root[data-site-theme='christmas'] select, :root[data-site-theme='christmas'] option { border-color: rgba(245,207,117,.22); background-color: #261718; }
-:root[data-site-theme='christmas'] input:focus, :root[data-site-theme='christmas'] textarea:focus, :root[data-site-theme='christmas'] select:focus { outline-color: rgba(245,207,117,.75); box-shadow: 0 0 0 4px rgba(182,37,48,.22); }
+:where(:root[data-site-theme='christmas']) :is(input, textarea, select, option) { border-color: rgba(245,207,117,.22); background-color: #261718; }
+:where(:root[data-site-theme='christmas']) :is(input, textarea, select):focus { outline-color: rgba(245,207,117,.75); box-shadow: 0 0 0 4px rgba(182,37,48,.22); }
 :root[data-site-theme='christmas'] .bg-purple-600, :root[data-site-theme='christmas'] .bg-violet-600, :root[data-site-theme='christmas'] .bg-violet-700, :root[data-site-theme='christmas'] .feed-create-submit { background: linear-gradient(115deg,#a91f2a,#cf3b32) !important; }
 :root[data-site-theme='christmas'] .text-violet-300, :root[data-site-theme='christmas'] .text-violet-600, :root[data-site-theme='christmas'] .text-violet-700, :root[data-site-theme='christmas'] .text-purple-600, :root[data-site-theme='christmas'] .text-purple-700, :root[data-site-theme='christmas'] .feed-suggestion button { color: #f5cf75 !important; }
 :root[data-site-theme='christmas'] .bg-violet-50, :root[data-site-theme='christmas'] .bg-violet-500\/20, :root[data-site-theme='christmas'] .feed-dm-contact.is-selected, :root[data-site-theme='christmas'] .feed-notification.is-unread { background-color: rgba(170,33,44,.17) !important; }
@@ -3362,8 +3362,11 @@ code {
 /* Shared form baseline: components retain their own surfaces, while browser
    autofill and focus can no longer inject an unrelated colour. */
 input, textarea, select { caret-color: var(--urban-lilac); }
-input:-webkit-autofill, input:-webkit-autofill:hover, input:-webkit-autofill:focus, textarea:-webkit-autofill, select:-webkit-autofill { -webkit-text-fill-color: #f4f1fa; -webkit-box-shadow: 0 0 0 1000px #202026 inset; box-shadow: 0 0 0 1000px #202026 inset; transition: background-color 9999s ease-out 0s; }
-:root[data-site-theme='christmas'] input:-webkit-autofill, :root[data-site-theme='christmas'] textarea:-webkit-autofill, :root[data-site-theme='christmas'] select:-webkit-autofill { -webkit-text-fill-color:#fff5e6; -webkit-box-shadow:0 0 0 1000px #261718 inset; box-shadow:0 0 0 1000px #261718 inset; }
+input:-webkit-autofill, input:-webkit-autofill:hover, input:-webkit-autofill:focus, textarea:-webkit-autofill, select:-webkit-autofill { -webkit-text-fill-color: #f4f1fa; -webkit-box-shadow: 0 0 0 1000px var(--field-autofill-bg, #202026) inset; box-shadow: 0 0 0 1000px var(--field-autofill-bg, #202026) inset; transition: background-color 9999s ease-out 0s; }
+:root[data-site-theme='christmas'] input:-webkit-autofill, :root[data-site-theme='christmas'] textarea:-webkit-autofill, :root[data-site-theme='christmas'] select:-webkit-autofill { -webkit-text-fill-color:#fff5e6; -webkit-box-shadow:0 0 0 1000px var(--field-autofill-bg, #261718) inset; box-shadow:0 0 0 1000px var(--field-autofill-bg, #261718) inset; }
+/* Autofill and compound controls share one surface instead of two rectangles. */
+.feed-discovery-search, .feed-dm-compose { --field-autofill-bg: #0e1115; background-color: var(--field-autofill-bg); }
+.feed-search { --field-autofill-bg: #111217; background-color: var(--field-autofill-bg); }
 .feed-discovery-search:focus-within, .feed-dm-compose:focus-within { border-color: rgba(192,54,255,.7); box-shadow: 0 0 0 3px rgba(192,54,255,.1); }
 :root[data-site-theme='christmas'] .feed-discovery-search:focus-within, :root[data-site-theme='christmas'] .feed-dm-compose:focus-within { border-color:rgba(245,207,117,.65); box-shadow:0 0 0 3px rgba(196,45,55,.16); }
 

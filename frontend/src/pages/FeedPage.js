@@ -115,6 +115,7 @@ const FeedPage = () => {
   const [page, setPage] = useState(1);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
+  const [feedError, setFeedError] = useState(false);
   const [likedPosts, setLikedPosts] = useState(() => new Set());
   const [sharedPosts, setSharedPosts] = useState(() => new Set());
   const [slideByPost, setSlideByPost] = useState({});
@@ -122,6 +123,9 @@ const FeedPage = () => {
   const [notifications, setNotifications] = useState([]);
   const [loadingNotifications, setLoadingNotifications] = useState(false);
   const [userResults, setUserResults] = useState([]);
+  const [peopleSearchError, setPeopleSearchError] = useState(false);
+  const [peopleTotal, setPeopleTotal] = useState(0);
+  const [peoplePage, setPeoplePage] = useState(1);
   const [loadingUsers, setLoadingUsers] = useState(false);
   const [friendships, setFriendships] = useState({});
   const [messages, setMessages] = useState([]);
@@ -165,6 +169,7 @@ const FeedPage = () => {
   const loadFeed = useCallback(async () => {
     try {
       setLoading(true);
+      setFeedError(false);
       const [problemsResult, categoriesResult] = await Promise.allSettled([
         problemsAPI.list({ category: category || undefined, status: status || undefined, sort, page, limit: 9 }),
         categoriesAPI.list(),
@@ -186,7 +191,8 @@ const FeedPage = () => {
       }
     } catch (error) {
       setCategoryError(true);
-      toast.error(t('noPosts'));
+      setFeedError(true);
+      toast.error(t('apiUnavailable'));
     } finally {
       setLoading(false);
     }
@@ -358,24 +364,35 @@ const FeedPage = () => {
     const normalizedSearch = search.trim().replace(/^@+/, '');
     if (activeTab !== 'search' || normalizedSearch.length < 2) {
       setUserResults([]);
+      setPeopleTotal(0);
+      setPeopleSearchError(false);
       setLoadingUsers(false);
       return undefined;
     }
     let cancelled = false;
+    setLoadingUsers(true);
+    setPeopleSearchError(false);
+    setUserResults([]);
+    setPeopleTotal(0);
     const loadUsers = async () => {
       try {
         setLoadingUsers(true);
-        const response = await socialAPI.searchUsers({ q: normalizedSearch, page: 1, limit: 12 });
-        if (!cancelled) setUserResults(response.data?.data || []);
+        const response = await socialAPI.searchUsers({ q: normalizedSearch, page: peoplePage, limit: 12 });
+        if (!cancelled) {
+          setUserResults(response.data?.data || []);
+          setPeopleTotal(response.data?.total || 0);
+        }
       } catch (error) {
-        if (!cancelled) setUserResults([]);
+        if (!cancelled) { setUserResults([]); setPeopleSearchError(true); }
       } finally {
         if (!cancelled) setLoadingUsers(false);
       }
     };
     const timer = window.setTimeout(loadUsers, 300);
     return () => { cancelled = true; window.clearTimeout(timer); };
-  }, [activeTab, search]);
+  }, [activeTab, search, peoplePage]);
+
+  useEffect(() => { setPeoplePage(1); }, [search]);
 
   const statusLabels = {
     ABERTO: t('openStatus'),
@@ -639,7 +656,8 @@ const FeedPage = () => {
       <FloatingSelect value={category} onChange={(value) => { setCategory(value); setPage(1); }} options={[{ value: '', label: categoryError ? 'Categorias indisponíveis' : 'Todas as categorias' }, ...categories.map((item) => ({ value: item.id, label: item.name }))]} />
       <FloatingSelect value={sort} onChange={(value) => { setSort(value); setPage(1); }} options={[{ value: 'recent', label: 'Ocorrências recentes' }, { value: 'votes', label: 'Mais apoiadas' }]} />
     </section>
-    {loading ? <div className="feed-empty">{t('loadingPosts')}</div> : filteredPosts.length === 0 ? <div className="feed-empty"><ImageIcon size={30} />{t('noPosts')}</div> : <div className="space-y-5">{filteredPosts.map(renderPost)}</div>}
+    {feedError && <div className="feed-empty" role="alert">Não foi possível consultar as publicações. Isso não significa que foram apagadas.<button type="button" onClick={loadFeed}>Tentar novamente</button></div>}
+    {loading ? <div className="feed-empty">{t('loadingPosts')}</div> : feedError && filteredPosts.length === 0 ? null : filteredPosts.length === 0 ? <div className="feed-empty"><ImageIcon size={30} />{t('noPosts')}</div> : <div className="space-y-5">{filteredPosts.map(renderPost)}</div>}
     <footer className="feed-pagination"><span>{total} publicações</span><div><button type="button" disabled={page <= 1} onClick={() => setPage((value) => value - 1)}><ChevronLeft size={16} /></button><span>{page}</span><button type="button" disabled={page * 9 >= total} onClick={() => setPage((value) => value + 1)}><ChevronRight size={16} /></button></div></footer>
   </>;
 
@@ -659,7 +677,7 @@ const FeedPage = () => {
     <div className="feed-discovery-search"><Search size={20} /><input autoFocus value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Busque por rua, usuário, categoria ou problema..." /></div>
     <div className="feed-search-section">
       <div className="feed-section-label"><Users size={15} /> Pessoas</div>
-      {search.trim().replace(/^@+/, '').length < 2 ? <p className="feed-search-empty">Digite pelo menos 2 caracteres para buscar pessoas.</p> : loadingUsers ? <p className="feed-search-empty">Buscando pessoas...</p> : userResults.length === 0 ? <p className="feed-search-empty">Nenhuma pessoa encontrada.</p> : userResults.map((person) => {
+      {search.trim().replace(/^@+/, '').length < 2 ? <p className="feed-search-empty">Digite pelo menos 2 caracteres para buscar pessoas.</p> : peopleSearchError ? <p className="feed-search-empty" role="alert">Não foi possível consultar as pessoas. Verifique sua conexão e tente novamente.</p> : loadingUsers ? <p className="feed-search-empty">Buscando pessoas...</p> : userResults.length === 0 ? <p className="feed-search-empty">Nenhuma pessoa encontrada.</p> : userResults.map((person) => {
         const relation = friendships[person.id];
         const relationLabel = relation?.status === 'ACEITA' ? 'Amigos' : relation?.status === 'PENDENTE' && relation.destinatarioId === user?.id ? 'Aceitar' : relation?.status === 'PENDENTE' ? 'Solicitação enviada' : 'Adicionar';
         return <div key={person.id} className="feed-search-person">
@@ -669,9 +687,10 @@ const FeedPage = () => {
               <span><strong>{person.nome}</strong><small>{person.username ? `@${person.username}` : t('noUsername')}</small></span>
             </Link>
           </div>
-          {person.id !== user?.id && <button type="button" onClick={() => changeFriendship(person)} onMouseEnter={() => loadFriendship(person.id)}>{relationLabel}</button>}
+          {user && person.id !== user.id && <button type="button" onClick={() => changeFriendship(person)} onMouseEnter={() => loadFriendship(person.id)}>{relationLabel}</button>}
         </div>;
       })}
+      {peopleTotal > 12 && <nav className="flex items-center justify-between gap-3" aria-label="Páginas de pessoas"><button type="button" disabled={loadingUsers || peoplePage === 1} onClick={() => setPeoplePage(current => current - 1)}>Anterior</button><span>Página {peoplePage} de {Math.ceil(peopleTotal / 12)}</span><button type="button" disabled={loadingUsers || peoplePage * 12 >= peopleTotal} onClick={() => setPeoplePage(current => current + 1)}>Próxima</button></nav>}
       <div className="feed-section-label"><MapPin size={15} /> Ocorrências e locais</div>{filteredPosts.length === 0 ? <p className="feed-search-empty">Nenhum resultado encontrado.</p> : filteredPosts.map(renderPost)}
     </div>
   </>;

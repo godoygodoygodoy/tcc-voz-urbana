@@ -3,29 +3,13 @@ import { prisma } from "../config/prisma.js";
 import { asyncHandler } from "../middlewares/errorHandler.js";
 import { createNotification } from "../utils/notifications.js";
 
+import { createPeopleSearch } from '../services/peopleSearch.js';
+
 const router = express.Router();
+export const publicSocialRouter = express.Router();
 const publicUser = { id: true, nome: true, username: true, fotoPerfil: true, bio: true };
 
-router.get("/users/search", asyncHandler(async (req, res) => {
-  const query = String(req.query.q || "").trim();
-  if (query.length < 2) return res.json({ data: [], page: 1, total: 0 });
-  const page = Math.max(1, Number(req.query.page) || 1);
-  const limit = Math.min(30, Math.max(1, Number(req.query.limit) || 12));
-  const searchTerm = query.replace(/^@+/, "").trim().toLowerCase();
-  if (!searchTerm) return res.json({ data: [], page: 1, limit, total: 0 });
-  const where = {
-    OR: [
-      { nome: { contains: searchTerm } },
-      { username: { contains: searchTerm } },
-      { email: { contains: searchTerm } }
-    ]
-  };
-  const [total, users] = await Promise.all([
-    prisma.usuario.count({ where }),
-    prisma.usuario.findMany({ where, select: publicUser, orderBy: { nome: "asc" }, skip: (page - 1) * limit, take: limit })
-  ]);
-  res.json({ data: users, page, limit, total });
-}));
+publicSocialRouter.get('/users/search', asyncHandler(createPeopleSearch(prisma)));
 
 const profileSelect = {
   id: true,
@@ -80,14 +64,14 @@ const withProfileStats = async (user) => {
   return { ...serializeProfile(user), followers, following, likes };
 };
 
-router.get("/users/username/:username/profile", asyncHandler(async (req, res) => {
+publicSocialRouter.get("/users/username/:username/profile", asyncHandler(async (req, res) => {
   const username = decodeURIComponent(req.params.username).replace(/^@/, "").trim().toLowerCase();
   const user = await findProfile({ username });
   if (!user) return res.status(404).json({ error: "Usuário não encontrado." });
   res.json(await withProfileStats(user));
 }));
 
-router.get("/users/:id/profile", asyncHandler(async (req, res) => {
+publicSocialRouter.get("/users/:id/profile", asyncHandler(async (req, res) => {
   const user = await findProfile({ id: req.params.id });
   if (!user) return res.status(404).json({ error: "Usuário não encontrado." });
   res.json(await withProfileStats(user));

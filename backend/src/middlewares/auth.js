@@ -22,6 +22,7 @@ export const authMiddleware = async (req, res, next) => {
 
     next();
   } catch (error) {
+    if (!['JsonWebTokenError', 'TokenExpiredError', 'NotBeforeError'].includes(error.name)) return next(error);
     res.status(401).json({ error: "Token inválido ou expirado" });
   }
 };

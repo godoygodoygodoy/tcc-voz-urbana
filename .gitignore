@@ -31,3 +31,11 @@ uploads/
 .env.*
 !.env.example
 *.log
+release-upload/
+backups/
+*.sql.partial
+*.sql.json
+*.sql.gz
+*.sql.zst
+*.db
+*.sqlite*

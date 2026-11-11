@@ -1,3 +1,5 @@
+> Database safety: fixtures require a disposable TEST_DATABASE_URL ending in _test and TEST_DATABASE_ALLOW_CLEANUP=true. Never target the application database. For tests without a real database: npm run test:safety.
+
 # 🧪 Testes Automatizados - VOZ URBANA Backend
 
 Este diretório contém todos os testes automatizados para as rotas da API do backend.
@@ -23,7 +25,7 @@ tests/
 
    ```bash
    # O arquivo .env já deve existir no backend/
-   # Verifique se DATABASE_URL e JWT_SECRET estão definidos
+   # Configure TEST_DATABASE_URL (banco descartavel _test), TEST_DATABASE_ALLOW_CLEANUP=true e JWT_SECRET
    ```
 
 2. **Execute os testes:**
@@ -85,9 +87,10 @@ Os testes estão configurados para trabalhar com:
 Os testes usam o mesmo arquivo `.env` do desenvolvimento local. Certifique-se de ter o arquivo `.env` configurado na raiz do backend:
 
 ```env
-DATABASE_URL=mysql://usuario:senha@localhost:3306/voz_urbana
+TEST_DATABASE_URL=mysql://usuario:senha@localhost:3306/voz_urbana_test
+TEST_DATABASE_ALLOW_CLEANUP=true
 JWT_SECRET=sua-chave-secreta
-NODE_ENV=development
+NODE_ENV=test
 PORT=5000
 ```
 

@@ -17,12 +17,15 @@ import voteRoutes from "./routes/votes.js";
 import adminRoutes from "./routes/admin.js";
 import commentRoutes from "./routes/comments.js";
 import notificationRoutes from "./routes/notifications.js";
-import socialRoutes from "./routes/social.js";
+import socialRoutes, { publicSocialRouter } from "./routes/social.js";
+import publicPeopleRoutes from './routes/publicPeople.js';
 import savedRoutes from "./routes/saved.js";
 import conversationRoutes from "./routes/conversations.js";
 import visitRoutes from "./routes/visits.js";
 import rateLimit from "express-rate-limit";
 import { uploadedMedia } from "./config/media.js";
+import { startAutomaticBackup } from './services/automaticBackup.js';
+import { checkPersistenceIdentity } from './config/persistence.js';
 
 // Importar middlewares
 import { errorHandler } from "./middlewares/errorHandler.js";
@@ -79,6 +82,7 @@ app.use("/api/visits", visitRoutes);
 app.use("/api/categories", categoryRoutes);
 app.use("/api/problems", problemRoutes);
 app.use("/api/comments", commentRoutes);
+app.use('/api/social', publicSocialRouter);
 
 // Rotas protegidas
 app.use("/api/users", authMiddleware, userRoutes);
@@ -99,11 +103,14 @@ app.use(errorHandler);
 
 const PORT = process.env.PORT || 5000;
 let server;
+let stopBackups = () => {};
 
 // Conectar ao banco e iniciar servidor
 (async () => {
   try {
+    checkPersistenceIdentity();
     await prisma.$connect();
+    stopBackups = startAutomaticBackup();
     console.log("✅ Conectado ao banco de dados MySQL via Prisma");
 
     server = app.listen(PORT, "0.0.0.0", () => {
@@ -111,7 +118,7 @@ let server;
       console.log(`Ambiente: ${process.env.NODE_ENV}`);
     });
   } catch (error) {
-    console.error("❌ Erro ao conectar ao banco:", error);
+    console.error(JSON.stringify({event:'database_startup_failed', time:new Date().toISOString(), code:error.code || error.name}));
     await prisma.$disconnect();
     process.exit(1);
   }
@@ -119,6 +126,7 @@ let server;
 
 // Graceful shutdown
 const shutdown = async () => {
+  stopBackups();
   const timeout = setTimeout(() => process.exit(1), 10000);
   timeout.unref();
   if (server) await new Promise((resolve) => server.close(resolve));

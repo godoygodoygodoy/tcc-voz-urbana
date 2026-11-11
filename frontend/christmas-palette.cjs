@@ -29,7 +29,9 @@ module.exports = () => ({
       for(let p=rule.parent;p && p!==root;p=p.parent) if(p.type==='atrule' && /keyframes/.test(p.name)) return;
       const declarations=rule.nodes.filter(n=>n.type==='decl' && recolor(n.value)!==n.value).map(n=>n.clone({value:recolor(n.value)}));
       if(!declarations.length) return;
-      const clone=postcss.rule({selector:rule.selectors.map(s=>s.startsWith(':root') ? s.replace(':root', ':root[data-site-theme="christmas"]') : ':root[data-site-theme="christmas"] '+s).join(',\n')});
+      // Scope without raising specificity: component transparency/focus rules
+      // must still override generic input styles in the seasonal palette.
+      const clone=postcss.rule({selector:rule.selectors.map(s=>s.startsWith(':root') ? s.replace(':root', ':root[data-site-theme="christmas"]') : ':where(:root[data-site-theme="christmas"]) '+s).join(',\n')});
       clone.append(declarations);
       let wrapped=clone;
       for(let p=rule.parent;p && p!==root;p=p.parent) { const wrapper=p.clone({nodes:[]});wrapper.append(wrapped);wrapped=wrapper; }

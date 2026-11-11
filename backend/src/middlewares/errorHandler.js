@@ -1,5 +1,10 @@
 export const errorHandler = (err, req, res, next) => {
-  console.error("Erro:", err);
+  // Driver messages can contain SQL values and credentials. Log metadata only.
+  console.error(JSON.stringify({ event: 'request_failed', time: new Date().toISOString(), method: req.method, route: req.route?.path || 'unmatched', code: err.code || err.name, databaseCode: err.cause?.originalCode, status: err.status || 500 }));
+
+  if (err.code === 'P2002') return res.status(409).json({ error: 'Este registro já existe.' });
+  if (err.code === 'P2025') return res.status(404).json({ error: 'Registro não encontrado.' });
+  if (['P1001', 'P1002', 'P1008', 'P1017', 'P2024'].includes(err.code)) return res.status(503).json({ error: 'Banco de dados temporariamente indisponível. Tente novamente.' });
 
   if (err.code === "LIMIT_FILE_SIZE") {
     return res.status(413).json({ error: "A imagem excede o limite de 5 MB." });

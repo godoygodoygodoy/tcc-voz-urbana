@@ -1,11 +1,16 @@
 import { prisma } from "../../src/config/prisma.js";
 import jwt from "jsonwebtoken";
+import { prepareTestDatabase } from '../../src/config/testDatabaseSafety.js';
+
+// Refuse fixtures and cleanup before any write if this is not an isolated test DB.
+prepareTestDatabase();
 
 /**
  * Limpa todas as tabelas do banco de dados de teste
  * Usa deleteMany do Prisma ao invés de TRUNCATE para ser mais seguro
  */
 export const cleanDatabase = async () => {
+  prepareTestDatabase();
   // Ordem importa - deletar registros filhos antes dos pais
   const deletions = [
     prisma.voto.deleteMany(),

@@ -1,5 +1,7 @@
 # VOZ URBANA - Plataforma de Reportagem de Problemas Urbanos
 
+Publicação segura, investigação da pesquisa e backup/restauração: [procedimento atualizado](docs/PUBLICACAO-E-BACKUP.md). Para esta correção, publique o backend no Render e o frontend na escola, sem executar migrations. A ativação de backups automáticos no servidor exige configuração do destino persistente e dos clientes SQL.
+
 Plataforma colaborativa para reportar, mapear e acompanhar soluções de problemas urbanos na cidade.
 
 ## 🚀 Características
@@ -132,7 +134,7 @@ npm run prisma:generate
 npm run prisma:deploy
 ```
 
-O último comando executa `prisma migrate deploy`. **Não foi executado nesta auditoria.** Para banco existente criado fora das migrations, revise e faça baseline antes; não use reset nem db push para contornar erros. Em planos compatíveis, configure migrations como Pre-Deploy Command depois dessa revisão. O build apenas gera o cliente Prisma.
+O último comando agora bloqueia alterações por padrão. Após revisão, `npm run prisma:deploy -- --apply` exige backup novo e restauração validada em banco isolado antes de chamar Prisma. Não foi executada nenhuma migration nesta correção. Para bancos existentes criados fora das migrations, revise o baseline com um DBA; não use reset nem db push. Não execute migrations automaticamente no startup. Consulte o procedimento atualizado acima. O build apenas gera o cliente Prisma.
 
 Seed opcional: `npm run prisma:seed`. Ele atualiza categorias e promove ADMIN_EMAIL a SUPER_ADMIN. Execute somente intencionalmente, com ADMIN_EMAIL explícito e ADMIN_PASSWORD se for criar a conta; remova essas variáveis depois. Não há mais seed automático no build.
 

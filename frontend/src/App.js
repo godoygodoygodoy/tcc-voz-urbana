@@ -62,8 +62,8 @@ function App() {
       .then((response) => {
         if (active) setUser(response.data);
       })
-      .catch(() => {
-        if (active) logout();
+      .catch((error) => {
+        if (active && error.response?.status === 401) logout();
       });
     return () => {
       active = false;
@@ -106,8 +106,8 @@ function App() {
                   {/* Rotas protegidas */}
                   <Route path="/report" element={<Navigate to="/feed#create" replace />} />
                   <Route path="/profile" element={<ProtectedRoute component={ProfilePage} />} />
-                  <Route path="/profile/:id" element={<ProtectedRoute component={UserProfilePage} />} />
-                  <Route path="/:username" element={<ProtectedRoute component={UserProfilePage} />} />
+                  <Route path="/profile/:id" element={<UserProfilePage />} />
+                  <Route path="/:username" element={<UserProfilePage />} />
                   <Route path="/admin" element={<ProtectedRoute component={AdminDashboard} roles={['admin']} />} />
                 </Routes>
                 <NativityFooter />

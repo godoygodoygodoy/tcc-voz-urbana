@@ -2,6 +2,9 @@ import "dotenv/config";
 import { PrismaMariaDb } from "@prisma/adapter-mariadb";
 import { PrismaClient } from "@prisma/client";
 import fs from "node:fs";
+import { prepareTestDatabase } from './testDatabaseSafety.js';
+
+if (process.env.NODE_ENV === 'test') prepareTestDatabase();
 
 // DATABASE_URL é a mesma fonte usada pelas migrations. Variáveis separadas
 // continuam disponíveis para instalações locais existentes.
