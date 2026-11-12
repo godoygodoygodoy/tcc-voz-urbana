@@ -1,3 +1,4 @@
+import { translate as _tr, useI18n as _useLocale } from '../i18n';
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuthStore } from '../store';
@@ -10,6 +11,7 @@ import AuthErrorBalloon from '../components/AuthErrorBalloon';
 import { formatBrazilianPhone, normalizeDigits } from '../utils/formatters';
 
 const RegisterPage = () => {
+  _useLocale();
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -109,7 +111,7 @@ const RegisterPage = () => {
                   name="username"
                   value={formData.username}
                   onChange={handleChange}
-                  placeholder="seuusuario"
+                  placeholder={_tr("seuusuario")}
                   required
                   minLength="3"
                   maxLength="30"

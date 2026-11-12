@@ -1,0 +1,334 @@
+﻿0 Profile|Perfil
+1 Selected|Seleccionado
+7 Close notice|Cerrar aviso
+8 Passwords do not match.|Las contraseñas no coinciden.
+9 Logged in.|Sesión iniciada.
+10 Account created.|Cuenta creada.
+11 Could not complete authentication.|No se pudo completar la autenticación.
+12 Authentication|Autenticación
+13 Close|Cerrar
+14 Create account|Crear cuenta
+15 Continue taking part in your city.|Sigue participando en tu ciudad.
+16 Join the Voz Urbana community.|Únete a la comunidad Voz Urbana.
+17 Full name|Nombre completo
+18 Email|Correo electrónico
+19 @username|@usuario
+20 Phone (optional)|Teléfono (opcional)
+21 Email or @username|Correo o @usuario
+22 Password|Contraseña
+23 Confirm password|Confirmar contraseña
+24 I don't have an account yet|Todavía no tengo cuenta
+25 I already have an account|Ya tengo una cuenta
+26 User|Usuario
+28 ❄ Pause effects|❄ Pausar efectos
+29 ❄ Enable effects|❄ Activar efectos
+30 Birth of Jesus: Mary and Joseph beside the baby in the manger, under the star of Bethlehem|Nacimiento de Jesús: María y José junto al niño en el pesebre, bajo la estrella de Belén
+31 © Voz Urbana 2026 - Your voice improves the city|© Voz Urbana 2026 - Tu voz mejora la ciudad
+32 We celebrate the birth of Jesus Christ|Celebramos el nacimiento de Jesucristo
+33 Christmas Version unlocked!|¡Christmas Version desbloqueada!
+34 The pigeon brought Christmas to the city. Choose your theme in your profile anytime.|La paloma trajo la Navidad a la ciudad. Elige tu tema en el perfil cuando quieras.
+35 March|Marzo
+36 Select an option|Selecciona una opción
+38 Select a date|Selecciona una fecha
+39 Select date|Seleccionar fecha
+40 Previous month|Mes anterior
+41 Next month|Próximo mes
+42 Select a time|Selecciona una hora
+43 Select time|Seleccionar hora
+44 Hour|Hora
+45 Minute|Minuto
+46 Done|Listo
+47 Select files|Seleccionar archivos
+49 No file selected|Ningún archivo seleccionado
+52 Edit image crop|Editar encuadre de la imagen
+53 Adjust image|Ajustar imagen
+55 Crop preview|Vista previa del encuadre
+56 Zoom|Zoom
+57 Cancel|Cancelar
+58 Confirm|Confirmar
+59 DIGITAL CIVIC PLATFORM|PLATAFORMA CÍVICA DIGITAL
+60 SYSTEM ONLINE|SISTEMA EN LÍNEA
+61 Page shortcuts|Atajos de la página
+62 SCROLL TO EXPLORE|DESLIZA PARA EXPLORAR
+63 REPORT · LOCATE · TRANSFORM|REGISTRA · UBICA · TRANSFORMA
+64 SCROLL|DESLIZA
+67 Status:|Estado:
+68 Map temporarily unavailable.|Mapa temporalmente no disponible.
+69 Failed to load Google Maps|Error al cargar Google Maps
+70 Loading map...|Cargando mapa...
+72 Cause:|Causa:
+73 Not specified|No indicada
+74 Address:|Dirección:
+75 Not specified|No indicado
+76 Could not mark notifications as read.|No se pudieron marcar las notificaciones como leídas.
+77 Hide password|Ocultar contraseña
+78 Show password|Mostrar contraseña
+79 Interact with the pigeon|Interactuar con la paloma
+81 Close menu|Cerrar menú
+82 Open menu|Abrir menú
+83 URBAN NAVIGATION / 01|NAVEGACIÓN URBANA / 01
+84 LIVE|EN VIVO
+85 Main menu|Menú principal
+86 PURPLE IS OUR FREQUENCY|EL MORADO ES NUESTRA FRECUENCIA
+87 SCROLL / EXPLORE|DESLIZA / EXPLORA
+88 24 hours|24 horas
+89 7 days|7 días
+90 30 days|30 días
+91 90 days|90 días
+92 All time|Todo el período
+93 No data for the selected period.|Sin datos en el período seleccionado.
+94 Overview|Resumen general
+95 Users|Usuarios
+96 Publications|Publicaciones
+97 Urban problems|Problemas urbanos
+98 Statistics|Estadísticas
+99 In progress|En progreso
+100 PLATFORM CONTROL|CONTROL DE LA PLATAFORMA
+101 Administration dashboard|Panel administrativo
+102 Live platform data, with access restricted to administrators.|Datos reales de la plataforma, con acceso restringido a administradores.
+103 Metrics period|Período de los indicadores
+104 Loading administration data...|Cargando datos administrativos...
+105 Registered users|Usuarios registrados
+106 Recorded visits|Visitas registradas
+107 Problems on the map|Problemas en el mapa
+108 Resolved publications|Publicaciones resueltas
+109 Comments|Comentarios
+110 Interactions|Interacciones
+111 Saved publications|Publicaciones guardadas
+112 Visits today|Visitas hoy
+113 User growth|Crecimiento de usuarios
+114 Visits per day|Visitas por día
+115 Publications by category|Publicaciones por categoría
+116 Most visited pages|Páginas más visitadas
+117 Problem reports by period|Registros de problemas por período
+118 Administration map|Mapa administrativo
+119 Search by name, username or email|Buscar por nombre, usuario o correo
+120 Search by title, city or user|Buscar por título, ciudad o usuario
+121 Search|Buscar
+122 publication(s)|publicación(es)
+123 Location not specified|Lugar no indicado
+124 No coordinates|Sin coordenadas
+125 Delete publication|Eliminar publicación
+126 No records found.|No se encontraron registros.
+127 Administration history|Historial administrativo
+128 No administration actions recorded.|Ninguna acción administrativa registrada.
+129 Database|Base de datos
+130 Metric unavailable|Métrica no disponible
+131 Backend|Backend
+132 Errors|Errores
+133 Unavailable without an error collector.|No disponible sin un recolector de errores.
+134 Publication shared.|Publicación compartida.
+135 Publication link copied.|Enlace de la publicación copiado.
+136 Could not share the publication.|No se pudo compartir la publicación.
+137 Could not load categories.|No se pudieron cargar las categorías.
+138 Could not load saved publications.|No se pudieron cargar las publicaciones guardadas.
+139 Could not load conversations.|No se pudieron cargar las conversaciones.
+140 Use JPG, PNG, WEBP or GIF up to 5 MB per image.|Usa JPG, PNG, WEBP o GIF de hasta 5 MB por imagen.
+141 Publication updated.|Publicación actualizada.
+142 Could not edit the publication.|No se pudo editar la publicación.
+143 Report link copied|Enlace del reporte copiado
+144 Report selected for sharing|Reporte seleccionado para compartir
+145 Log in to save publications.|Inicia sesión para guardar publicaciones.
+146 Publication removed from saved items.|Publicación eliminada de guardados.
+147 Publication saved.|Publicación guardada.
+148 Could not update saved items.|No se pudieron actualizar los guardados.
+149 Enter a title, description, category and incident date/time.|Completa el título, la descripción, la categoría y la fecha/hora del incidente.
+150 Post created successfully!|¡Publicación creada con éxito!
+151 Friendship must be confirmed to chat.|La amistad debe estar confirmada para conversar.
+152 Could not send the message.|No se pudo enviar el mensaje.
+153 Could not check friendship.|No se pudo consultar la amistad.
+154 Log in to add people.|Inicia sesión para agregar personas.
+155 Could not update friendship.|No se pudo actualizar la amistad.
+156 profile without @|perfil sin @
+157 More options|Más opciones
+158 Edit publication|Editar publicación
+159 Delete publication|Eliminar publicación
+160 Remove from saved items|Quitar de guardados
+161 Save publication|Guardar publicación
+162 Copy link|Copiar enlace
+163 Share publication|Compartir publicación
+164 View details|Ver detalles
+165 Thank you. The report will be reviewed.|Gracias. Se revisará la denuncia.
+166 Report|Denunciar
+167 (edited)|(editado)
+174 Previous image|Imagen anterior
+175 Next image|Próxima imagen
+176 Like report|Me gusta el reporte
+177 Comment on report|Comentar reporte
+178 Repost report|Republicar reporte
+179 Send message|Enviar mensaje
+180 Open report|Abrir reporte
+181 Urban reports, community support and real follow-up.|Reportes urbanos, apoyo comunitario y seguimiento real.
+182 Search the feed...|Buscar en el feed...
+183 All statuses|Todos los estados
+184 Categories unavailable|Categorías no disponibles
+185 All categories|Todas las categorías
+186 Recent reports|Reportes recientes
+187 Most supported|Más apoyadas
+188 Could not retrieve publications. This does not mean they were deleted.|No se pudieron consultar las publicaciones. Esto no significa que se hayan eliminado.
+189 Try again|Intentar de nuevo
+190 publications|publicaciones
+191 Chat with people who also care for the city.|Conversa con personas que también cuidan la ciudad.
+192 Messages|Mensajes
+193 New conversation|Nueva conversación
+194 Add and confirm a friendship to start conversations.|Agrega y confirma una amistad para iniciar conversaciones.
+195 No messages yet|Aún no hay mensajes
+196 No conversation selected|Ninguna conversación seleccionada
+197 Friendship confirmed|Amistad confirmada
+198 Confirm a friendship to chat.|Confirma una amistad para conversar.
+199 No messages.|Ningún mensaje.
+200 Write a message...|Escribe un mensaje...
+201 Messages available for confirmed friends.|Mensajes disponibles para amigos confirmados.
+202 Find places, people, surroundings and problems reported in the city.|Encuentra lugares, personas, entornos y problemas publicados en la ciudad.
+203 Search by street, user, category or problem...|Busca por calle, usuario, categoría o problema...
+204 People|Personas
+205 Enter at least 2 characters to search for people.|Escribe al menos 2 caracteres para buscar personas.
+206 Could not search for people. Check your connection and try again.|No se pudieron consultar las personas. Revisa tu conexión e inténtalo de nuevo.
+207 Searching for people...|Buscando personas...
+208 No people found.|No se encontraron personas.
+209 Request sent|Solicitud enviada
+210 People pages|Páginas de personas
+211 Previous|Anterior
+212 Page|Página
+213 of|de
+214 Next|Siguiente
+215 Reports and places|Reportes y lugares
+216 No results found.|No se encontraron resultados.
+217 Follow replies, support and news about your reports.|Sigue respuestas, apoyos y novedades sobre tus reportes.
+218 Mark all as read|Marcar todo como leído
+219 Your activity|Tu actividad
+220 new|nuevas
+221 Loading notifications...|Cargando notificaciones...
+222 No notifications yet|Aún no hay notificaciones
+223 They will appear here when the community interacts with your reports.|Aparecerán aquí cuando la comunidad interactúe con tus reportes.
+224 Quickly access the reports you chose to follow.|Accede rápidamente a los reportes que elegiste seguir.
+225 No saved publications.|Ninguna publicación guardada.
+226 Report an urban problem and get your community moving.|Reporta un problema urbano y moviliza a tu comunidad.
+227 New urban report|Nuevo reporte urbano
+228 Share what needs to change near you.|Comparte lo que necesita cambiar cerca de ti.
+229 Category|Categoría
+230 Select a category|Selecciona una categoría
+231 Title|Título
+232 E.g. Pothole on the main street|Ej: Bache en la calle principal
+233 Description|Descripción
+234 Describe what is happening...|Describe lo que está pasando...
+235 Address|Dirección
+236 Street|Calle
+237 Street name|Nombre de la calle
+238 Number|Número
+239 No.|N.º
+240 Neighborhood|Barrio
+241 Additional address details|Complemento
+242 Apartment, landmark...|Apartamento, referencia...
+243 Postal code|Código postal
+245 City|Ciudad
+246 State|Estado
+247 When did it happen?|¿Cuándo ocurrió?
+248 Date|Fecha
+249 Add photos|Agregar fotos
+250 Publish report|Publicar reporte
+254 Feed navigation|Navegación del feed
+255 People to follow|Personas para seguir
+256 Search for people to find real connections.|Busca personas para encontrar conexiones reales.
+257 About · Help · Press · API · Careers|Acerca de · Ayuda · Prensa · API · Empleo
+258 Terms · Locations · Language|Términos · Ubicaciones · Idioma
+259 Connected community|Comunidad conectada
+260 Street or road|Calle o vía
+261 Full address (optional)|Dirección completa (opcional)
+262 Save changes|Guardar cambios
+263 Close image|Cerrar imagen
+264 Could not request a password reset.|No se pudo solicitar el restablecimiento.
+265 Back to login|Volver al inicio de sesión
+266 Enter your email and we will send a secure link to create a new password.|Introduce tu correo y te enviaremos un enlace seguro para crear una contraseña nueva.
+267 Check your inbox|Revisa tu bandeja de entrada
+268 If an account exists with this email, a reset link has been sent. It expires in 1 hour.|Si existe una cuenta con este correo, ya se envió el enlace. Caduca en 1 hora.
+269 Send reset link|Enviar enlace de restablecimiento
+270 Remember your password?|¿Recordaste tu contraseña?
+271 Log in|Iniciar sesión
+278 Flow|Flujo
+279 A simple experience: report, locate and follow improvements.|Una experiencia simple: registrar, ubicar y seguir las mejoras.
+280 Capture the problem with visual context to speed up review.|Registra el problema con contexto visual para acelerar la revisión.
+281 Mark the exact point on the map to help mobilize the community.|Marca el punto exacto en el mapa para facilitar la movilización.
+282 Follow status changes and progress toward resolution.|Sigue los cambios de estado y el avance de la solución.
+284 See everything on the map|Ver todo en el mapa
+285 The platform connects reports, maps and follow-up in a clear, direct flow.|La plataforma conecta reportes, mapas y seguimiento en un flujo claro y directo.
+286 This space connects the map to reporting. Find the location, submit a report and track progress in the dashboard.|Este espacio conecta el mapa con los reportes. Ubica el punto, envía el reporte y sigue su evolución en el panel.
+287 Open the map or form.|Abre el mapa o el formulario.
+288 View existing reports and click on them.|Consulta los reportes existentes y haz clic en ellos.
+289 Follow replies, votes and resolution.|Sigue respuestas, votos y soluciones.
+290 About|Acerca de
+291 Voz Urbana connects residents and public agencies through simple reports and status tracking.|Voz Urbana facilita la comunicación entre la población y los organismos públicos mediante reportes prácticos y seguimiento de estados.
+292 Map|Mapa
+293 Real markers with popups, automatic bounds and a dark theme.|Marcadores reales con ventanas emergentes, ajuste de límites y tema oscuro.
+294 Reports|Reportes
+295 Create reports with a category, location and follow-up.|Crea reportes con categoría, ubicación y seguimiento.
+296 Open map|Abrir mapa
+297 Report|Reportar
+298 Contact|Contacto
+299 Name|Nombre
+300 Email|Correo electrónico
+301 Message|Mensaje
+303 Phone|Teléfono
+305 email, phone number or username|correo, teléfono o usuario
+306 Forgot password|Olvidé mi contraseña
+307 Failed to publish comment|Error al publicar comentario
+308 ← Back|← Volver
+309 Friendship confirmed.|Amistad confirmada.
+310 Could not update the request.|No se pudo actualizar la solicitud.
+311 @yourusername|@tuusuario
+312 Displayed as @|Se mostrará como @
+313 Profile preview|Vista previa del perfil
+314 Choose photo|Elegir foto
+315 Select a valid image file.|Selecciona un archivo de imagen válido.
+316 Image must be no larger than 5 MB.|La imagen debe tener un máximo de 5 MB.
+317 Or use an image URL|O usa una URL de imagen
+319 Tell us about yourself...|Cuéntanos sobre ti...
+320 Site theme|Tema del sitio
+321 Customize the appearance of Voz Urbana.|Personaliza la apariencia de Voz Urbana.
+322 Version|Versión
+323 Select a version|Selecciona una versión
+324 Standard Voz Urbana|Voz Urbana Normal
+326 Enable snow and Christmas animations|Activar nieve y animaciones navideñas
+327 Preferences are saved in this browser, even after logging out.|Las preferencias se guardan en este navegador, incluso después de cerrar sesión.
+328 Friend requests|Solicitudes de amistad
+329 No pending requests.|Ninguna solicitud pendiente.
+330 Accept|Aceptar
+331 Decline|Rechazar
+332 To|Para
+333 yourusername|tuusuario
+335 (optional)|(opcional)
+336 State|Estado
+337 Add images|Agregar imágenes
+338 E.g. -15.7942|Ej: -15.7942
+339 E.g. -47.8822|Ej: -47.8822
+340 Password must contain at least 6 characters.|La contraseña debe tener al menos 6 caracteres.
+341 Passwords do not match.|Las contraseñas no coinciden.
+342 Invalid reset link.|Enlace de restablecimiento inválido.
+343 Could not reset your password.|No se pudo restablecer tu contraseña.
+344 Create a new password to regain access to your account.|Crea una contraseña nueva para recuperar el acceso a tu cuenta.
+345 At least 6 characters|Mínimo de 6 caracteres
+346 Confirm new password|Confirma la contraseña nueva
+347 Enter your password again|Escribe tu contraseña de nuevo
+348 Reset password|Restablecer contraseña
+349 Could not load this content.|No se pudo cargar este contenido.
+350 Profile shared.|Perfil compartido.
+351 Profile link copied.|Enlace del perfil copiado.
+352 Could not share the profile.|No se pudo compartir el perfil.
+353 Could not start the conversation.|No se pudo iniciar la conversación.
+354 Add friend|Agregar amistad
+355 Accept request|Aceptar solicitud
+356 following|siguiendo
+357 followers|seguidores
+358 likes|me gusta
+359 Edit profile|Editar perfil
+360 Settings|Configuración
+361 Share|Compartir
+362 Profile content|Contenido del perfil
+363 Loading content…|Cargando contenido…
+364 No publications in this section.|Ninguna publicación en esta sección.
+365 you@email.com|tu@email.com
+366 Registration failed|Error al registrarse
+367 Login failed|Error al iniciar sesión
+387 Could not load cities for this state.|No se pudieron cargar las ciudades de este estado.
+388 Could not look up the postal code.|No se pudo consultar el código postal.
+389 Postal code not found.|Código postal no encontrado.

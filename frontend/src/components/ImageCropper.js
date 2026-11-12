@@ -1,3 +1,4 @@
+import { translate as _tr, useI18n as _useLocale } from '../i18n';
 import React, { useEffect, useMemo, useState } from 'react';
 
 export const IMAGE_ASPECTS = [
@@ -9,6 +10,7 @@ export const IMAGE_ASPECTS = [
 ];
 
 const ImageCropper = ({ file, initialAspect = '1:1', onConfirm, onCancel }) => {
+  _useLocale();
   const [aspect, setAspect] = useState(initialAspect);
   const [zoom, setZoom] = useState(1);
   const [position, setPosition] = useState({ x: 0, y: 0 });
@@ -36,15 +38,15 @@ const ImageCropper = ({ file, initialAspect = '1:1', onConfirm, onCancel }) => {
     image.src = source;
   };
 
-  return <div className="fixed inset-0 z-[1600] grid place-items-center bg-black/80 p-4" role="dialog" aria-modal="true" aria-label="Editar enquadramento da imagem">
+  return <div className="fixed inset-0 z-[1600] grid place-items-center bg-black/80 p-4" role="dialog" aria-modal="true" aria-label={_tr("Editar enquadramento da imagem")}>
     <div className="site-panel w-full max-w-xl rounded-2xl p-5">
-      <div className="mb-4 flex items-center justify-between"><h2 className="text-lg font-bold">Ajustar imagem</h2><button type="button" onClick={onCancel} aria-label="Fechar">×</button></div>
+      <div className="mb-4 flex items-center justify-between"><h2 className="text-lg font-bold">{_tr("Ajustar imagem")}</h2><button type="button" onClick={onCancel} aria-label={_tr("Fechar")}>×</button></div>
       <div className="mx-auto max-h-[55vh] w-full max-w-[420px] overflow-hidden rounded-xl border border-violet-400/40 bg-black" style={{ aspectRatio: selected.ratio }}>
-        <img src={source} alt="Prévia para enquadramento" draggable="false" className="h-full w-full select-none object-contain" onPointerDown={(event) => setDrag({ x: event.clientX, y: event.clientY, position })} onPointerMove={(event) => drag && setPosition({ x: drag.position.x + event.clientX - drag.x, y: drag.position.y + event.clientY - drag.y })} onPointerUp={() => setDrag(null)} onPointerLeave={() => setDrag(null)} style={{ transform: `translate(${position.x}px, ${position.y}px) scale(${zoom})` }} />
+        <img src={source} alt={_tr("Prévia para enquadramento")} draggable="false" className="h-full w-full select-none object-contain" onPointerDown={(event) => setDrag({ x: event.clientX, y: event.clientY, position })} onPointerMove={(event) => drag && setPosition({ x: drag.position.x + event.clientX - drag.x, y: drag.position.y + event.clientY - drag.y })} onPointerUp={() => setDrag(null)} onPointerLeave={() => setDrag(null)} style={{ transform: `translate(${position.x}px, ${position.y}px) scale(${zoom})` }} />
       </div>
       <div className="mt-4 flex flex-wrap gap-2">{IMAGE_ASPECTS.map((item) => <button type="button" key={item.value} onClick={() => setAspect(item.value)} className={`rounded-lg border px-3 py-1 text-xs ${aspect === item.value ? 'border-violet-400 bg-violet-500/25' : 'border-white/15'}`}>{item.label}</button>)}</div>
-      <label className="mt-4 block text-xs text-white/60">Zoom<input type="range" min="1" max="3" step="0.05" value={zoom} onChange={(event) => setZoom(Number(event.target.value))} className="mt-2 w-full" /></label>
-      <div className="mt-5 flex justify-end gap-3"><button type="button" onClick={onCancel}>Cancelar</button><button type="button" onClick={confirm} className="feed-create-submit px-4 py-2">Confirmar</button></div>
+      <label className="mt-4 block text-xs text-white/60">{_tr("Zoom")}<input type="range" min="1" max="3" step="0.05" value={zoom} onChange={(event) => setZoom(Number(event.target.value))} className="mt-2 w-full" /></label>
+      <div className="mt-5 flex justify-end gap-3"><button type="button" onClick={onCancel}>{_tr("Cancelar")}</button><button type="button" onClick={confirm} className="feed-create-submit px-4 py-2">{_tr("Confirmar")}</button></div>
     </div>
   </div>;
 };

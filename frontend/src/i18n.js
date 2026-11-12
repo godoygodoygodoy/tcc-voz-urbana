@@ -1,3 +1,4 @@
+import interfaceMessages from './locales/interface.json';
 import React, { createContext, useContext, useEffect, useMemo, useState } from 'react';
 
 const translations = {
@@ -102,16 +103,34 @@ const translations = {
   },
 };
 
+export const supportedLanguages = ['pt-BR', 'en', 'es'];
+const normalizeLanguage = (value) => supportedLanguages.includes(value) ? value : 'pt-BR';
+const readLanguage = () => { try { return normalizeLanguage(localStorage.getItem('language')); } catch { return 'pt-BR'; } };
+let currentLanguage = readLanguage();
+export const getLanguage = () => currentLanguage;
+export const translate = (key, params = {}, language = currentLanguage) => {
+  const text = translations[language]?.[key] ?? interfaceMessages[language]?.[key] ?? key;
+  return String(text ?? '').replace(/\{(\w+)\}/g, (match, name) => params[name] ?? match);
+};
 const I18nContext = createContext(null);
-
 export const I18nProvider = ({ children }) => {
-  const [language, setLanguage] = useState(() => localStorage.getItem('language') || 'pt-BR');
+  const [language, updateLanguage] = useState(readLanguage);
+  currentLanguage = language;
+  const setLanguage = React.useCallback((value) => {
+    const next = normalizeLanguage(value);
+    currentLanguage = next;
+    try { localStorage.setItem('language', next); } catch { /* Private browsing may disable storage. */ }
+    updateLanguage(next);
+  }, []);
   useEffect(() => {
-    localStorage.setItem('language', language);
     document.documentElement.lang = language;
   }, [language]);
-  const value = useMemo(() => ({ language, setLanguage, t: (key) => translations[language]?.[key] || translations['pt-BR'][key] || key }), [language]);
+  useEffect(() => {
+    const sync = (event) => { if (event.key === 'language') setLanguage(event.newValue); };
+    window.addEventListener('storage', sync);
+    return () => window.removeEventListener('storage', sync);
+  }, [setLanguage]);
+  const value = useMemo(() => ({ language, setLanguage, t: (key, params) => translate(key, params, language) }), [language, setLanguage]);
   return <I18nContext.Provider value={value}>{children}</I18nContext.Provider>;
 };
-
 export const useI18n = () => useContext(I18nContext);

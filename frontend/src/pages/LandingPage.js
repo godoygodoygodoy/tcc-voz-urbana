@@ -1,3 +1,4 @@
+import { translate as _tr, useI18n as _useLocale } from '../i18n';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { toast } from 'react-toastify';
@@ -54,6 +55,7 @@ const stagger = {
 };
 
 export default function LandingPage() {
+  _useLocale();
   const { user } = useAuthStore();
   const { t } = useI18n();
   const [recentProblems, setRecentProblems] = useState([]);
@@ -154,9 +156,9 @@ export default function LandingPage() {
 
     return [
       { label: t('recentIdentifications'), value: recentProblems.length || 0 },
-      { label: 'Abertos', value: openCount },
-      { label: 'Em andamento', value: inProgressCount },
-      { label: 'Resolvidos', value: resolvedCount },
+      { label: _tr("Abertos"), value: openCount },
+      { label: _tr("Em andamento"), value: inProgressCount },
+      { label: _tr("Resolvidos"), value: resolvedCount },
     ];
   }, [recentProblems, t]);
 
@@ -370,28 +372,26 @@ export default function LandingPage() {
       >
         <AmbientContour variant="violet" />
         <div className="mb-10 max-w-2xl">
-          <p className="text-xs font-semibold uppercase tracking-[0.32em] text-white/40">Fluxo</p>
+          <p className="text-xs font-semibold uppercase tracking-[0.32em] text-white/40">{_tr("Fluxo")}</p>
           <h3 className="mt-3 text-4xl font-black text-white sm:text-5xl">{t('howItWorks')}</h3>
-          <p className="mt-4 text-white/65">
-            Uma experiência simples: registrar, localizar e acompanhar a melhoria.
-          </p>
+          <p className="mt-4 text-white/65"> {_tr("Uma experiência simples: registrar, localizar e acompanhar a melhoria.")} </p>
         </div>
 
         <motion.div className="grid gap-6 md:grid-cols-3" variants={stagger}>
           {[
             {
               title: t('takePhoto'),
-              description: 'Registre o problema com contexto visual para acelerar a triagem.',
+              description: _tr("Registre o problema com contexto visual para acelerar a triagem."),
               icon: Camera,
             },
             {
               title: t('locateProblem'),
-              description: 'Marque o ponto exato no mapa para facilitar a mobilização.',
+              description: _tr("Marque o ponto exato no mapa para facilitar a mobilização."),
               icon: MapPin,
             },
             {
               title: t('trackResolution'),
-              description: 'Veja quando o caso mudar de status e avance no acompanhamento.',
+              description: _tr("Veja quando o caso mudar de status e avance no acompanhamento."),
               icon: CheckCircle2,
             },
           ].map(({ title, description, icon: Icon }) => (
@@ -421,9 +421,7 @@ export default function LandingPage() {
             <h3 className="mt-3 text-4xl font-black text-white sm:text-5xl">{t('recentIdentifications')}</h3>
             <p className="mt-4 max-w-2xl text-white/65">{t('feedDescription')}</p>
           </div>
-          <Link to="/map" className="inline-flex items-center gap-2 text-sm font-semibold text-violet-200 transition hover:text-white">
-            Ver tudo no mapa
-            <ArrowRight className="h-4 w-4" />
+          <Link to="/map" className="inline-flex items-center gap-2 text-sm font-semibold text-violet-200 transition hover:text-white"> {_tr("Ver tudo no mapa")} <ArrowRight className="h-4 w-4" />
           </Link>
         </div>
 
@@ -478,9 +476,7 @@ export default function LandingPage() {
               <h3 className="mt-4 max-w-xl text-4xl font-black leading-tight sm:text-5xl">
                 {t('together')}
               </h3>
-              <p className="mt-5 max-w-lg text-white/76 leading-8">
-                A plataforma conecta relato, mapa e acompanhamento em um fluxo direto, sem ruído visual.
-              </p>
+              <p className="mt-5 max-w-lg text-white/76 leading-8"> {_tr("A plataforma conecta relato, mapa e acompanhamento em um fluxo direto, sem ruído visual.")} </p>
             </CardContent>
           </Card>
 
@@ -578,21 +574,19 @@ export default function LandingPage() {
           <Card className="glass-panel rounded-[1.8rem] border-white/10 bg-white/6 text-white">
             <CardContent className="p-7 sm:p-8 space-y-4">
               <h4 className="text-xl font-black">{t('quickAccess')}</h4>
-              <p className="leading-8 text-white/65">
-                Este espaço liga o mapa ao fluxo de denúncia. A pessoa entra, identifica o ponto, envia a ocorrência e acompanha a evolução no painel.
-              </p>
+              <p className="leading-8 text-white/65"> {_tr("Este espaço liga o mapa ao fluxo de denúncia. A pessoa entra, identifica o ponto, envia a ocorrência e acompanha a evolução no painel.")} </p>
               <div className="grid gap-3 text-sm text-white/78">
                 <div className="flex items-start gap-3">
                   <span className="mt-0.5 flex h-6 w-6 items-center justify-center rounded-full bg-white text-[11px] font-black text-zinc-950">1</span>
-                  <p>Abra o mapa ou o formulário.</p>
+                  <p>{_tr("Abra o mapa ou o formulário.")}</p>
                 </div>
                 <div className="flex items-start gap-3">
                   <span className="mt-0.5 flex h-6 w-6 items-center justify-center rounded-full bg-white text-[11px] font-black text-zinc-950">2</span>
-                  <p>Veja os registros existentes e clique neles.</p>
+                  <p>{_tr("Veja os registros existentes e clique neles.")}</p>
                 </div>
                 <div className="flex items-start gap-3">
                   <span className="mt-0.5 flex h-6 w-6 items-center justify-center rounded-full bg-white text-[11px] font-black text-zinc-950">3</span>
-                  <p>Acompanhe respostas, votos e resolução.</p>
+                  <p>{_tr("Acompanhe respostas, votos e resolução.")}</p>
                 </div>
               </div>
             </CardContent>
@@ -611,11 +605,9 @@ export default function LandingPage() {
         <AmbientContour variant="lilac" />
         <div className="grid gap-8 lg:grid-cols-2 lg:items-center">
           <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.32em] text-white/40">Sobre</p>
+            <p className="text-xs font-semibold uppercase tracking-[0.32em] text-white/40">{_tr("Sobre")}</p>
             <h3 className="mt-3 text-4xl font-black text-white sm:text-5xl">{t('whatIs')}</h3>
-            <p className="mt-5 max-w-2xl text-lg leading-8 text-white/65">
-              O Voz Urbana é uma plataforma para facilitar a comunicação entre população e órgãos públicos, permitindo denúncias práticas e acompanhamento do status de cada caso.
-            </p>
+            <p className="mt-5 max-w-2xl text-lg leading-8 text-white/65"> {_tr("O Voz Urbana é uma plataforma para facilitar a comunicação entre população e órgãos públicos, permitindo denúncias práticas e acompanhamento do status de cada caso.")} </p>
           </div>
 
           <Card className="glass-panel rounded-[1.8rem] border-white/10 bg-white/6 text-white">
@@ -623,21 +615,19 @@ export default function LandingPage() {
               <h4 className="text-2xl font-black">{t('platformInUse')}</h4>
               <div className="grid gap-4">
                 <div className="rounded-2xl border border-white/8 bg-black/20 p-4">
-                  <p className="text-xs font-semibold uppercase tracking-[0.24em] text-white/45">Mapa</p>
-                  <p className="mt-2 text-white/72">Marcadores reais com popups, fit bounds e visual escuro.</p>
+                  <p className="text-xs font-semibold uppercase tracking-[0.24em] text-white/45">{_tr("Mapa")}</p>
+                  <p className="mt-2 text-white/72">{_tr("Marcadores reais com popups, fit bounds e visual escuro.")}</p>
                 </div>
                 <div className="rounded-2xl border border-white/8 bg-black/20 p-4">
-                  <p className="text-xs font-semibold uppercase tracking-[0.24em] text-white/45">Relatórios</p>
-                  <p className="mt-2 text-white/72">Criação de ocorrências com categoria, localização e acompanhamento.</p>
+                  <p className="text-xs font-semibold uppercase tracking-[0.24em] text-white/45">{_tr("Relatórios")}</p>
+                  <p className="mt-2 text-white/72">{_tr("Criação de ocorrências com categoria, localização e acompanhamento.")}</p>
                 </div>
                 <div className="flex flex-wrap gap-3 pt-2">
                   <Link to="/map">
-                    <Button className="rounded-full bg-white px-6 py-3 font-black text-zinc-950 hover:bg-violet-50">Abrir mapa</Button>
+                    <Button className="rounded-full bg-white px-6 py-3 font-black text-zinc-950 hover:bg-violet-50">{_tr("Abrir mapa")}</Button>
                   </Link>
                   <Link to="/feed#create">
-                    <Button variant="outline" className="rounded-full border-white/16 bg-white/6 px-6 py-3 font-black text-white hover:bg-white/12">
-                      Reportar
-                    </Button>
+                    <Button variant="outline" className="rounded-full border-white/16 bg-white/6 px-6 py-3 font-black text-white hover:bg-white/12"> {_tr("Reportar")} </Button>
                   </Link>
                 </div>
               </div>
@@ -657,19 +647,17 @@ export default function LandingPage() {
         <AmbientContour variant="contact" />
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="mb-8 max-w-2xl">
-            <p className="text-xs font-semibold uppercase tracking-[0.32em] text-white/40">Contato</p>
+            <p className="text-xs font-semibold uppercase tracking-[0.32em] text-white/40">{_tr("Contato")}</p>
             <h3 className="mt-3 text-4xl font-black text-white sm:text-5xl">{t('contactTitle')}</h3>
           </div>
 
           <div className="grid gap-8 lg:grid-cols-[1.1fr_0.9fr]">
             <Card className="glass-panel rounded-[1.8rem] border-white/10 bg-white/6 text-white">
               <CardContent className="p-7 sm:p-8 space-y-4">
-                <input className="w-full rounded-2xl border border-white/10 bg-black/20 p-3 text-white placeholder:text-white/35 outline-none transition focus:border-violet-300/60" placeholder="Nome" />
-                <input className="w-full rounded-2xl border border-white/10 bg-black/20 p-3 text-white placeholder:text-white/35 outline-none transition focus:border-violet-300/60" placeholder="Email" />
-                <textarea className="h-40 w-full rounded-2xl border border-white/10 bg-black/20 p-3 text-white placeholder:text-white/35 outline-none transition focus:border-violet-300/60" placeholder="Mensagem" />
-                <Button className="w-full rounded-full bg-white px-6 py-4 text-base font-black text-zinc-950 hover:bg-violet-50">
-                  Enviar mensagem
-                </Button>
+                <input className="w-full rounded-2xl border border-white/10 bg-black/20 p-3 text-white placeholder:text-white/35 outline-none transition focus:border-violet-300/60" placeholder={_tr("Nome")} />
+                <input className="w-full rounded-2xl border border-white/10 bg-black/20 p-3 text-white placeholder:text-white/35 outline-none transition focus:border-violet-300/60" placeholder={_tr("Email")} />
+                <textarea className="h-40 w-full rounded-2xl border border-white/10 bg-black/20 p-3 text-white placeholder:text-white/35 outline-none transition focus:border-violet-300/60" placeholder={_tr("Mensagem")} />
+                <Button className="w-full rounded-full bg-white px-6 py-4 text-base font-black text-zinc-950 hover:bg-violet-50"> {_tr("Enviar mensagem")} </Button>
               </CardContent>
             </Card>
 
@@ -686,13 +674,13 @@ export default function LandingPage() {
               <Card className="glass-panel rounded-[1.5rem] border-white/10 bg-white/6 text-white">
                 <CardContent className="flex items-center gap-4 p-6">
                   <Phone className="h-6 w-6 text-violet-300" />
-                  <span className="font-bold">Telefone</span>
+                  <span className="font-bold">{_tr("Telefone")}</span>
                 </CardContent>
               </Card>
               <Card className="glass-panel rounded-[1.5rem] border-white/10 bg-white/6 text-white">
                 <CardContent className="flex items-center gap-4 p-6">
                   <Mail className="h-6 w-6 text-violet-300" />
-                  <span className="font-bold">E-mail</span>
+                  <span className="font-bold">{_tr("E-mail")}</span>
                 </CardContent>
               </Card>
             </div>

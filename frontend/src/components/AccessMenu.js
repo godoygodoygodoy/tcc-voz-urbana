@@ -1,3 +1,4 @@
+import { translate as _tr, useI18n as _useLocale } from '../i18n';
 import React, { useEffect, useRef, useState } from 'react';
 import { ChevronDown, Globe2, LogIn, UserPlus } from 'lucide-react';
 import { Link } from 'react-router-dom';
@@ -5,6 +6,7 @@ import { useI18n } from '../i18n';
 import Avatar from './Avatar';
 
 const AccessMenu = ({ authenticated = false, user, onLogout, onOpenAuth, compact = false }) => {
+  _useLocale();
   const { language, setLanguage, t } = useI18n();
   const [open, setOpen] = useState(false);
   const menuRef = useRef(null);
@@ -36,7 +38,7 @@ const AccessMenu = ({ authenticated = false, user, onLogout, onOpenAuth, compact
     <div ref={menuRef} className={`access-menu relative ${compact ? 'is-compact' : ''}`}>
       <button type="button" onClick={() => setOpen((value) => !value)} aria-expanded={open} className="access-menu-trigger group flex items-center gap-2 rounded-full border border-white/15 bg-white/8 p-1.5 pr-3 text-sm font-black text-white transition hover:bg-white/15">
         {authenticated ? (
-          <Avatar user={user} alt="Perfil" className="h-9 w-9 rounded-full object-cover" />
+          <Avatar user={user} alt={_tr("Perfil")} className="h-9 w-9 rounded-full object-cover" />
         ) : <LogIn className="ml-2 h-5 w-5" />}
         <span className="access-menu-label hidden sm:inline">{authenticated ? (user?.username ? `@${user.username.replace(/^@/, '')}` : t('account')) : t('login')}</span>
         <ChevronDown className={`access-menu-chevron h-4 w-4 transition-transform ${open ? 'rotate-180' : ''}`} />
@@ -55,7 +57,7 @@ const AccessMenu = ({ authenticated = false, user, onLogout, onOpenAuth, compact
         </>}
         <div className="my-2 border-t border-white/10" />
         <div className="px-3 py-2 text-xs font-bold uppercase tracking-[0.18em] text-white/45"><Globe2 className="mr-2 inline h-4 w-4" />{t('language')}</div>
-        {languages.map((item) => <button key={item.code} type="button" onClick={() => changeLanguage(item.code)} className={`flex w-full items-center justify-between rounded-xl px-3 py-2 text-left text-sm hover:bg-white/10 ${language === item.code ? 'bg-violet-500/20 text-violet-100' : 'text-white/75'}`}><span>{item.label}</span>{language === item.code && <span aria-label="Selecionado">✓</span>}</button>)}
+        {languages.map((item) => <button key={item.code} type="button" onClick={() => changeLanguage(item.code)} className={`flex w-full items-center justify-between rounded-xl px-3 py-2 text-left text-sm hover:bg-white/10 ${language === item.code ? 'bg-violet-500/20 text-violet-100' : 'text-white/75'}`}><span>{item.label}</span>{language === item.code && <span aria-label={_tr("Selecionado")}>✓</span>}</button>)}
         <p className="px-3 pb-2 pt-2 text-[11px] text-white/35">{t('language')}: {selectedLanguage.label}</p>
         {authenticated && <button type="button" onClick={onLogout} className="flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left text-sm text-red-200 hover:bg-red-500/15">{t('logout')}</button>}
       </div>}

@@ -1,3 +1,4 @@
+import { translate as _tr, useI18n as _useLocale } from '../i18n';
 import React, { useEffect, useState } from 'react';
 import { Bell, CheckCheck } from 'lucide-react';
 import { notificationsAPI } from '../services/api';
@@ -5,6 +6,7 @@ import { useI18n } from '../i18n';
 import { toast } from 'react-toastify';
 
 const NotificationBell = () => {
+  _useLocale();
   const [items, setItems] = useState([]);
   const [open, setOpen] = useState(false);
   const { t } = useI18n();
@@ -30,7 +32,7 @@ const NotificationBell = () => {
       await notificationsAPI.markAllRead();
       setItems((current) => current.map((item) => ({ ...item, lida: true })));
     } catch (error) {
-      toast.error(error.response?.data?.error || 'Não foi possível marcar as notificações como lidas.');
+      toast.error(error.response?.data?.error || _tr("Não foi possível marcar as notificações como lidas."));
     }
   };
 

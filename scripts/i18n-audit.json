@@ -1,0 +1,2804 @@
+[
+  {
+    "text": "Perfil",
+    "files": [
+      "frontend/src/components/AccessMenu.js"
+    ],
+    "kind": "attr"
+  },
+  {
+    "text": "Selecionado",
+    "files": [
+      "frontend/src/components/AccessMenu.js"
+    ],
+    "kind": "attr"
+  },
+  {
+    "text": "M-120 180 C 80 20, 220 360, 420 180 S 780 40, 980 220 S 1330 360, 1550 120",
+    "files": [
+      "frontend/src/components/AmbientContour.jsx"
+    ],
+    "kind": "literal"
+  },
+  {
+    "text": "M-160 520 C 90 280, 260 690, 520 470 S 900 260, 1120 520 S 1420 720, 1640 430",
+    "files": [
+      "frontend/src/components/AmbientContour.jsx"
+    ],
+    "kind": "literal"
+  },
+  {
+    "text": "M-180 850 C 120 620, 300 980, 560 760 S 930 560, 1180 820 S 1460 1000, 1660 760",
+    "files": [
+      "frontend/src/components/AmbientContour.jsx"
+    ],
+    "kind": "literal"
+  },
+  {
+    "text": "M-100 1080 C 180 820, 380 1180, 620 960 S 980 800, 1210 1020 S 1460 1200, 1720 920",
+    "files": [
+      "frontend/src/components/AmbientContour.jsx"
+    ],
+    "kind": "literal"
+  },
+  {
+    "text": "180px 0px",
+    "files": [
+      "frontend/src/components/AmbientContour.jsx"
+    ],
+    "kind": "literal"
+  },
+  {
+    "text": "Fechar aviso",
+    "files": [
+      "frontend/src/components/AuthErrorBalloon.js"
+    ],
+    "kind": "attr"
+  },
+  {
+    "text": "As senhas não conferem.",
+    "files": [
+      "frontend/src/components/AuthModal.js"
+    ],
+    "kind": "literal"
+  },
+  {
+    "text": "Login realizado.",
+    "files": [
+      "frontend/src/components/AuthModal.js"
+    ],
+    "kind": "literal"
+  },
+  {
+    "text": "Cadastro realizado.",
+    "files": [
+      "frontend/src/components/AuthModal.js"
+    ],
+    "kind": "literal"
+  },
+  {
+    "text": "Não foi possível concluir a autenticação.",
+    "files": [
+      "frontend/src/components/AuthModal.js"
+    ],
+    "kind": "literal"
+  },
+  {
+    "text": "Autenticação",
+    "files": [
+      "frontend/src/components/AuthModal.js"
+    ],
+    "kind": "attr"
+  },
+  {
+    "text": "Fechar",
+    "files": [
+      "frontend/src/components/AuthModal.js",
+      "frontend/src/components/ChristmasUnlockNotice.jsx",
+      "frontend/src/components/ImageCropper.js",
+      "frontend/src/pages/FeedPage.js"
+    ],
+    "kind": "attr"
+  },
+  {
+    "text": "Criar conta",
+    "files": [
+      "frontend/src/components/AuthModal.js",
+      "frontend/src/components/AuthModal.js"
+    ],
+    "kind": "literal"
+  },
+  {
+    "text": "Continue sua participação na cidade.",
+    "files": [
+      "frontend/src/components/AuthModal.js"
+    ],
+    "kind": "literal"
+  },
+  {
+    "text": "Faça parte da comunidade Voz Urbana.",
+    "files": [
+      "frontend/src/components/AuthModal.js"
+    ],
+    "kind": "literal"
+  },
+  {
+    "text": "Nome completo",
+    "files": [
+      "frontend/src/components/AuthModal.js"
+    ],
+    "kind": "attr"
+  },
+  {
+    "text": "E-mail",
+    "files": [
+      "frontend/src/components/AuthModal.js",
+      "frontend/src/pages/LandingPage.js"
+    ],
+    "kind": "attr"
+  },
+  {
+    "text": "@usuário",
+    "files": [
+      "frontend/src/components/AuthModal.js"
+    ],
+    "kind": "attr"
+  },
+  {
+    "text": "Telefone (opcional)",
+    "files": [
+      "frontend/src/components/AuthModal.js"
+    ],
+    "kind": "attr"
+  },
+  {
+    "text": "E-mail ou @usuário",
+    "files": [
+      "frontend/src/components/AuthModal.js"
+    ],
+    "kind": "attr"
+  },
+  {
+    "text": "Senha",
+    "files": [
+      "frontend/src/components/AuthModal.js"
+    ],
+    "kind": "attr"
+  },
+  {
+    "text": "Confirme a senha",
+    "files": [
+      "frontend/src/components/AuthModal.js"
+    ],
+    "kind": "attr"
+  },
+  {
+    "text": "Ainda não tenho conta",
+    "files": [
+      "frontend/src/components/AuthModal.js"
+    ],
+    "kind": "literal"
+  },
+  {
+    "text": "Já tenho uma conta",
+    "files": [
+      "frontend/src/components/AuthModal.js"
+    ],
+    "kind": "literal"
+  },
+  {
+    "text": "Usuário",
+    "files": [
+      "frontend/src/components/Avatar.js",
+      "frontend/src/pages/FeedPage.js",
+      "frontend/src/pages/ProfilePage.js"
+    ],
+    "kind": "literal"
+  },
+  {
+    "text": "section[id], .site-footer, .site-panel, .feed-sidebar",
+    "files": [
+      "frontend/src/components/ChristmasEffects.jsx"
+    ],
+    "kind": "literal"
+  },
+  {
+    "text": "❄ Pausar efeitos",
+    "files": [
+      "frontend/src/components/ChristmasEffects.jsx"
+    ],
+    "kind": "literal"
+  },
+  {
+    "text": "❄ Ativar efeitos",
+    "files": [
+      "frontend/src/components/ChristmasEffects.jsx"
+    ],
+    "kind": "literal"
+  },
+  {
+    "text": "Nascimento de Jesus: Maria e José junto ao menino na manjedoura, sob a estrela de Belém",
+    "files": [
+      "frontend/src/components/ChristmasEffects.jsx"
+    ],
+    "kind": "text"
+  },
+  {
+    "text": "© Voz Urbana 2026 - Sua voz melhora a cidade",
+    "files": [
+      "frontend/src/components/ChristmasEffects.jsx"
+    ],
+    "kind": "text"
+  },
+  {
+    "text": "Celebramos o nascimento de Jesus Cristo",
+    "files": [
+      "frontend/src/components/ChristmasEffects.jsx"
+    ],
+    "kind": "text"
+  },
+  {
+    "text": "Christmas Version desbloqueada!",
+    "files": [
+      "frontend/src/components/ChristmasUnlockNotice.jsx"
+    ],
+    "kind": "text"
+  },
+  {
+    "text": "O pombo trouxe o Natal para a cidade. Escolha seu tema no perfil quando quiser.",
+    "files": [
+      "frontend/src/components/ChristmasUnlockNotice.jsx"
+    ],
+    "kind": "text"
+  },
+  {
+    "text": "Março",
+    "files": [
+      "frontend/src/components/FloatingFields.js"
+    ],
+    "kind": "literal"
+  },
+  {
+    "text": "Selecione uma opção",
+    "files": [
+      "frontend/src/components/FloatingFields.js"
+    ],
+    "kind": "literal"
+  },
+  {
+    "text": " ",
+    "files": [
+      "frontend/src/components/FloatingFields.js",
+      "frontend/src/components/PigeonLogo.js",
+      "frontend/src/components/ProblemCard.js",
+      "frontend/src/pages/LoginPage.js",
+      "frontend/src/pages/RegisterPage.js"
+    ],
+    "kind": "literal"
+  },
+  {
+    "text": "Selecione uma data",
+    "files": [
+      "frontend/src/components/FloatingFields.js"
+    ],
+    "kind": "literal"
+  },
+  {
+    "text": "Selecionar data",
+    "files": [
+      "frontend/src/components/FloatingFields.js"
+    ],
+    "kind": "attr"
+  },
+  {
+    "text": "Mês anterior",
+    "files": [
+      "frontend/src/components/FloatingFields.js"
+    ],
+    "kind": "attr"
+  },
+  {
+    "text": "Próximo mês",
+    "files": [
+      "frontend/src/components/FloatingFields.js"
+    ],
+    "kind": "attr"
+  },
+  {
+    "text": "Selecione uma hora",
+    "files": [
+      "frontend/src/components/FloatingFields.js"
+    ],
+    "kind": "literal"
+  },
+  {
+    "text": "Selecionar hora",
+    "files": [
+      "frontend/src/components/FloatingFields.js"
+    ],
+    "kind": "attr"
+  },
+  {
+    "text": "Hora",
+    "files": [
+      "frontend/src/components/FloatingFields.js",
+      "frontend/src/pages/FeedPage.js",
+      "frontend/src/pages/ReportProblemPage.js"
+    ],
+    "kind": "text"
+  },
+  {
+    "text": "Minuto",
+    "files": [
+      "frontend/src/components/FloatingFields.js"
+    ],
+    "kind": "text"
+  },
+  {
+    "text": "Concluir",
+    "files": [
+      "frontend/src/components/FloatingFields.js"
+    ],
+    "kind": "text"
+  },
+  {
+    "text": "Selecionar arquivos",
+    "files": [
+      "frontend/src/components/FloatingFields.js"
+    ],
+    "kind": "literal"
+  },
+  {
+    "text": ", ",
+    "files": [
+      "frontend/src/components/FloatingFields.js",
+      "frontend/src/pages/FeedPage.js",
+      "frontend/src/pages/ReportProblemPage.js"
+    ],
+    "kind": "literal"
+  },
+  {
+    "text": "Nenhum arquivo selecionado",
+    "files": [
+      "frontend/src/components/FloatingFields.js"
+    ],
+    "kind": "literal"
+  },
+  {
+    "text": " · ",
+    "files": [
+      "frontend/src/components/FloatingFields.js"
+    ],
+    "kind": "literal"
+  },
+  {
+    "text": "Voz Urbana",
+    "files": [
+      "frontend/src/components/Header.js",
+      "frontend/src/components/PigeonLogo.js",
+      "frontend/src/components/SiteMenu.js",
+      "frontend/src/pages/FeedPage.js",
+      "frontend/src/pages/FeedPage.js",
+      "frontend/src/pages/FeedPage.js"
+    ],
+    "kind": "attr"
+  },
+  {
+    "text": "Editar enquadramento da imagem",
+    "files": [
+      "frontend/src/components/ImageCropper.js"
+    ],
+    "kind": "attr"
+  },
+  {
+    "text": "Ajustar imagem",
+    "files": [
+      "frontend/src/components/ImageCropper.js"
+    ],
+    "kind": "text"
+  },
+  {
+    "text": "×",
+    "files": [
+      "frontend/src/components/ImageCropper.js",
+      "frontend/src/pages/FeedPage.js",
+      "frontend/src/pages/FeedPage.js",
+      "frontend/src/pages/FeedPage.js"
+    ],
+    "kind": "text"
+  },
+  {
+    "text": "Prévia para enquadramento",
+    "files": [
+      "frontend/src/components/ImageCropper.js"
+    ],
+    "kind": "attr"
+  },
+  {
+    "text": "Zoom",
+    "files": [
+      "frontend/src/components/ImageCropper.js"
+    ],
+    "kind": "text"
+  },
+  {
+    "text": "Cancelar",
+    "files": [
+      "frontend/src/components/ImageCropper.js",
+      "frontend/src/pages/FeedPage.js",
+      "frontend/src/pages/ProfilePage.js"
+    ],
+    "kind": "text"
+  },
+  {
+    "text": "Confirmar",
+    "files": [
+      "frontend/src/components/ImageCropper.js"
+    ],
+    "kind": "text"
+  },
+  {
+    "text": "PLATAFORMA CÍVICA DIGITAL",
+    "files": [
+      "frontend/src/components/LandingHero.jsx"
+    ],
+    "kind": "text"
+  },
+  {
+    "text": "SISTEMA ONLINE",
+    "files": [
+      "frontend/src/components/LandingHero.jsx"
+    ],
+    "kind": "text"
+  },
+  {
+    "text": "Atalhos da página",
+    "files": [
+      "frontend/src/components/LandingHero.jsx"
+    ],
+    "kind": "attr"
+  },
+  {
+    "text": "DESLIZE PARA EXPLORAR",
+    "files": [
+      "frontend/src/components/LandingHero.jsx"
+    ],
+    "kind": "text"
+  },
+  {
+    "text": "REGISTRE · LOCALIZE · TRANSFORME",
+    "files": [
+      "frontend/src/components/LandingHero.jsx"
+    ],
+    "kind": "text"
+  },
+  {
+    "text": "SCROLL",
+    "files": [
+      "frontend/src/components/LandingHero.jsx"
+    ],
+    "kind": "text"
+  },
+  {
+    "text": "10 10",
+    "files": [
+      "frontend/src/components/Map.js"
+    ],
+    "kind": "literal"
+  },
+  {
+    "text": "© OpenStreetMap contributors",
+    "files": [
+      "frontend/src/components/Map.js"
+    ],
+    "kind": "literal"
+  },
+  {
+    "text": "Status:",
+    "files": [
+      "frontend/src/components/Map.js"
+    ],
+    "kind": "text"
+  },
+  {
+    "text": "Mapa temporariamente indisponível.",
+    "files": [
+      "frontend/src/components/MapGoogle.jsx"
+    ],
+    "kind": "text"
+  },
+  {
+    "text": "Erro ao carregar Google Maps",
+    "files": [
+      "frontend/src/components/MapGoogle.jsx"
+    ],
+    "kind": "text"
+  },
+  {
+    "text": "Carregando mapa...",
+    "files": [
+      "frontend/src/components/MapGoogle.jsx"
+    ],
+    "kind": "text"
+  },
+  {
+    "text": "6px 0 0 0",
+    "files": [
+      "frontend/src/components/MapGoogle.jsx",
+      "frontend/src/components/MapGoogle.jsx",
+      "frontend/src/components/MapGoogle.jsx"
+    ],
+    "kind": "literal"
+  },
+  {
+    "text": "Causa:",
+    "files": [
+      "frontend/src/components/MapGoogle.jsx"
+    ],
+    "kind": "text"
+  },
+  {
+    "text": "Não informada",
+    "files": [
+      "frontend/src/components/MapGoogle.jsx"
+    ],
+    "kind": "literal"
+  },
+  {
+    "text": "Endereço:",
+    "files": [
+      "frontend/src/components/MapGoogle.jsx"
+    ],
+    "kind": "text"
+  },
+  {
+    "text": "Não informado",
+    "files": [
+      "frontend/src/components/MapGoogle.jsx"
+    ],
+    "kind": "literal"
+  },
+  {
+    "text": "Não foi possível marcar as notificações como lidas.",
+    "files": [
+      "frontend/src/components/NotificationBell.js"
+    ],
+    "kind": "literal"
+  },
+  {
+    "text": "Ocultar senha",
+    "files": [
+      "frontend/src/components/PasswordField.js"
+    ],
+    "kind": "literal"
+  },
+  {
+    "text": "Mostrar senha",
+    "files": [
+      "frontend/src/components/PasswordField.js"
+    ],
+    "kind": "literal"
+  },
+  {
+    "text": "Interagir com o pombo",
+    "files": [
+      "frontend/src/components/PigeonLogo.js"
+    ],
+    "kind": "attr"
+  },
+  {
+    "text": "(prefers-reduced-motion: reduce)",
+    "files": [
+      "frontend/src/components/ReactiveAtmosphere.jsx",
+      "frontend/src/components/SiteMenu.js",
+      "frontend/src/components/SiteMenu.js",
+      "frontend/src/pages/LandingPage.js"
+    ],
+    "kind": "literal"
+  },
+  {
+    "text": "Fechar menu",
+    "files": [
+      "frontend/src/components/SiteMenu.js",
+      "frontend/src/components/SiteMenu.js"
+    ],
+    "kind": "literal"
+  },
+  {
+    "text": "Abrir menu",
+    "files": [
+      "frontend/src/components/SiteMenu.js"
+    ],
+    "kind": "literal"
+  },
+  {
+    "text": "NAVEGAÇÃO URBANA / 01",
+    "files": [
+      "frontend/src/components/SiteMenu.js"
+    ],
+    "kind": "text"
+  },
+  {
+    "text": "AO VIVO",
+    "files": [
+      "frontend/src/components/SiteMenu.js"
+    ],
+    "kind": "text"
+  },
+  {
+    "text": "Menu principal",
+    "files": [
+      "frontend/src/components/SiteMenu.js"
+    ],
+    "kind": "attr"
+  },
+  {
+    "text": "ROXO É A NOSSA FREQUÊNCIA",
+    "files": [
+      "frontend/src/components/SiteMenu.js"
+    ],
+    "kind": "text"
+  },
+  {
+    "text": "SCROLL / EXPLORE",
+    "files": [
+      "frontend/src/components/SiteMenu.js"
+    ],
+    "kind": "text"
+  },
+  {
+    "text": "24 horas",
+    "files": [
+      "frontend/src/pages/AdminDashboard.js"
+    ],
+    "kind": "literal"
+  },
+  {
+    "text": "7 dias",
+    "files": [
+      "frontend/src/pages/AdminDashboard.js"
+    ],
+    "kind": "literal"
+  },
+  {
+    "text": "30 dias",
+    "files": [
+      "frontend/src/pages/AdminDashboard.js"
+    ],
+    "kind": "literal"
+  },
+  {
+    "text": "90 dias",
+    "files": [
+      "frontend/src/pages/AdminDashboard.js"
+    ],
+    "kind": "literal"
+  },
+  {
+    "text": "Todo o período",
+    "files": [
+      "frontend/src/pages/AdminDashboard.js"
+    ],
+    "kind": "literal"
+  },
+  {
+    "text": "Sem dados no período selecionado.",
+    "files": [
+      "frontend/src/pages/AdminDashboard.js"
+    ],
+    "kind": "text"
+  },
+  {
+    "text": "Visão geral",
+    "files": [
+      "frontend/src/pages/AdminDashboard.js"
+    ],
+    "kind": "literal"
+  },
+  {
+    "text": "Usuários",
+    "files": [
+      "frontend/src/pages/AdminDashboard.js"
+    ],
+    "kind": "literal"
+  },
+  {
+    "text": "Publicações",
+    "files": [
+      "frontend/src/pages/AdminDashboard.js",
+      "frontend/src/pages/UserProfilePage.js"
+    ],
+    "kind": "literal"
+  },
+  {
+    "text": "Problemas urbanos",
+    "files": [
+      "frontend/src/pages/AdminDashboard.js"
+    ],
+    "kind": "literal"
+  },
+  {
+    "text": "Estatísticas",
+    "files": [
+      "frontend/src/pages/AdminDashboard.js"
+    ],
+    "kind": "literal"
+  },
+  {
+    "text": "Em andamento",
+    "files": [
+      "frontend/src/pages/AdminDashboard.js",
+      "frontend/src/pages/LandingPage.js"
+    ],
+    "kind": "literal"
+  },
+  {
+    "text": "CONTROLE DA PLATAFORMA",
+    "files": [
+      "frontend/src/pages/AdminDashboard.js"
+    ],
+    "kind": "text"
+  },
+  {
+    "text": "Painel Administrativo",
+    "files": [
+      "frontend/src/pages/AdminDashboard.js"
+    ],
+    "kind": "text"
+  },
+  {
+    "text": "Dados reais da plataforma, monitorados com acesso restrito a administradores.",
+    "files": [
+      "frontend/src/pages/AdminDashboard.js"
+    ],
+    "kind": "text"
+  },
+  {
+    "text": "Período dos indicadores",
+    "files": [
+      "frontend/src/pages/AdminDashboard.js"
+    ],
+    "kind": "text"
+  },
+  {
+    "text": "Carregando dados administrativos...",
+    "files": [
+      "frontend/src/pages/AdminDashboard.js"
+    ],
+    "kind": "text"
+  },
+  {
+    "text": "Usuários cadastrados",
+    "files": [
+      "frontend/src/pages/AdminDashboard.js"
+    ],
+    "kind": "attr"
+  },
+  {
+    "text": "Visitas registradas",
+    "files": [
+      "frontend/src/pages/AdminDashboard.js"
+    ],
+    "kind": "attr"
+  },
+  {
+    "text": "Problemas no mapa",
+    "files": [
+      "frontend/src/pages/AdminDashboard.js"
+    ],
+    "kind": "attr"
+  },
+  {
+    "text": "Publicações resolvidas",
+    "files": [
+      "frontend/src/pages/AdminDashboard.js"
+    ],
+    "kind": "attr"
+  },
+  {
+    "text": "Comentários",
+    "files": [
+      "frontend/src/pages/AdminDashboard.js"
+    ],
+    "kind": "attr"
+  },
+  {
+    "text": "Interações",
+    "files": [
+      "frontend/src/pages/AdminDashboard.js"
+    ],
+    "kind": "attr"
+  },
+  {
+    "text": "Publicações salvas",
+    "files": [
+      "frontend/src/pages/AdminDashboard.js",
+      "frontend/src/pages/FeedPage.js",
+      "frontend/src/pages/FeedPage.js"
+    ],
+    "kind": "attr"
+  },
+  {
+    "text": "Visitas hoje",
+    "files": [
+      "frontend/src/pages/AdminDashboard.js"
+    ],
+    "kind": "attr"
+  },
+  {
+    "text": "Crescimento de usuários",
+    "files": [
+      "frontend/src/pages/AdminDashboard.js"
+    ],
+    "kind": "text"
+  },
+  {
+    "text": "Visitas por dia",
+    "files": [
+      "frontend/src/pages/AdminDashboard.js"
+    ],
+    "kind": "text"
+  },
+  {
+    "text": "Publicações por categoria",
+    "files": [
+      "frontend/src/pages/AdminDashboard.js"
+    ],
+    "kind": "text"
+  },
+  {
+    "text": "Páginas mais acessadas",
+    "files": [
+      "frontend/src/pages/AdminDashboard.js"
+    ],
+    "kind": "text"
+  },
+  {
+    "text": "Registros de problemas por período",
+    "files": [
+      "frontend/src/pages/AdminDashboard.js"
+    ],
+    "kind": "text"
+  },
+  {
+    "text": "Mapa administrativo",
+    "files": [
+      "frontend/src/pages/AdminDashboard.js"
+    ],
+    "kind": "text"
+  },
+  {
+    "text": "Pesquisar por nome, usuário ou e-mail",
+    "files": [
+      "frontend/src/pages/AdminDashboard.js"
+    ],
+    "kind": "literal"
+  },
+  {
+    "text": "Pesquisar por título, cidade ou usuário",
+    "files": [
+      "frontend/src/pages/AdminDashboard.js"
+    ],
+    "kind": "literal"
+  },
+  {
+    "text": "Pesquisar",
+    "files": [
+      "frontend/src/pages/AdminDashboard.js"
+    ],
+    "kind": "text"
+  },
+  {
+    "text": "publicação(ões)",
+    "files": [
+      "frontend/src/pages/AdminDashboard.js"
+    ],
+    "kind": "text"
+  },
+  {
+    "text": "Local não informado",
+    "files": [
+      "frontend/src/pages/AdminDashboard.js"
+    ],
+    "kind": "literal"
+  },
+  {
+    "text": "Sem coordenadas",
+    "files": [
+      "frontend/src/pages/AdminDashboard.js"
+    ],
+    "kind": "literal"
+  },
+  {
+    "text": "Excluir publicação",
+    "files": [
+      "frontend/src/pages/AdminDashboard.js"
+    ],
+    "kind": "attr"
+  },
+  {
+    "text": "Nenhum registro encontrado.",
+    "files": [
+      "frontend/src/pages/AdminDashboard.js"
+    ],
+    "kind": "text"
+  },
+  {
+    "text": "Histórico administrativo",
+    "files": [
+      "frontend/src/pages/AdminDashboard.js"
+    ],
+    "kind": "text"
+  },
+  {
+    "text": "Nenhuma ação administrativa registrada.",
+    "files": [
+      "frontend/src/pages/AdminDashboard.js"
+    ],
+    "kind": "text"
+  },
+  {
+    "text": "Banco de dados",
+    "files": [
+      "frontend/src/pages/AdminDashboard.js"
+    ],
+    "kind": "text"
+  },
+  {
+    "text": "Métrica indisponível",
+    "files": [
+      "frontend/src/pages/AdminDashboard.js"
+    ],
+    "kind": "literal"
+  },
+  {
+    "text": "Backend",
+    "files": [
+      "frontend/src/pages/AdminDashboard.js"
+    ],
+    "kind": "text"
+  },
+  {
+    "text": "Erros",
+    "files": [
+      "frontend/src/pages/AdminDashboard.js"
+    ],
+    "kind": "text"
+  },
+  {
+    "text": "Não disponível sem coletor de erros.",
+    "files": [
+      "frontend/src/pages/AdminDashboard.js"
+    ],
+    "kind": "literal"
+  },
+  {
+    "text": "Publicação compartilhada.",
+    "files": [
+      "frontend/src/pages/FeedPage.js"
+    ],
+    "kind": "literal"
+  },
+  {
+    "text": "Link da publicação copiado.",
+    "files": [
+      "frontend/src/pages/FeedPage.js",
+      "frontend/src/pages/FeedPage.js"
+    ],
+    "kind": "literal"
+  },
+  {
+    "text": "Não foi possível compartilhar a publicação.",
+    "files": [
+      "frontend/src/pages/FeedPage.js"
+    ],
+    "kind": "literal"
+  },
+  {
+    "text": "Não foi possível carregar as categorias.",
+    "files": [
+      "frontend/src/pages/FeedPage.js"
+    ],
+    "kind": "literal"
+  },
+  {
+    "text": "Não foi possível carregar as publicações salvas.",
+    "files": [
+      "frontend/src/pages/FeedPage.js"
+    ],
+    "kind": "literal"
+  },
+  {
+    "text": "Não foi possível carregar as conversas.",
+    "files": [
+      "frontend/src/pages/FeedPage.js"
+    ],
+    "kind": "literal"
+  },
+  {
+    "text": "Use JPG, PNG, WEBP ou GIF com até 5 MB por imagem.",
+    "files": [
+      "frontend/src/pages/FeedPage.js"
+    ],
+    "kind": "literal"
+  },
+  {
+    "text": "Publicação atualizada.",
+    "files": [
+      "frontend/src/pages/FeedPage.js"
+    ],
+    "kind": "literal"
+  },
+  {
+    "text": "Não foi possível editar a publicação.",
+    "files": [
+      "frontend/src/pages/FeedPage.js"
+    ],
+    "kind": "literal"
+  },
+  {
+    "text": "Link da ocorrência copiado",
+    "files": [
+      "frontend/src/pages/FeedPage.js"
+    ],
+    "kind": "literal"
+  },
+  {
+    "text": "Ocorrência marcada para compartilhar",
+    "files": [
+      "frontend/src/pages/FeedPage.js"
+    ],
+    "kind": "literal"
+  },
+  {
+    "text": "Entre na sua conta para salvar publicações.",
+    "files": [
+      "frontend/src/pages/FeedPage.js"
+    ],
+    "kind": "literal"
+  },
+  {
+    "text": "Publicação removida dos salvos.",
+    "files": [
+      "frontend/src/pages/FeedPage.js"
+    ],
+    "kind": "literal"
+  },
+  {
+    "text": "Publicação salva.",
+    "files": [
+      "frontend/src/pages/FeedPage.js"
+    ],
+    "kind": "literal"
+  },
+  {
+    "text": "Não foi possível atualizar os salvos.",
+    "files": [
+      "frontend/src/pages/FeedPage.js"
+    ],
+    "kind": "literal"
+  },
+  {
+    "text": "Preencha título, descrição, categoria e data/hora da ocorrência.",
+    "files": [
+      "frontend/src/pages/FeedPage.js"
+    ],
+    "kind": "literal"
+  },
+  {
+    "text": "Postagem criada com sucesso!",
+    "files": [
+      "frontend/src/pages/FeedPage.js"
+    ],
+    "kind": "literal"
+  },
+  {
+    "text": "A amizade precisa estar confirmada para conversar.",
+    "files": [
+      "frontend/src/pages/FeedPage.js"
+    ],
+    "kind": "literal"
+  },
+  {
+    "text": "Não foi possível enviar a mensagem.",
+    "files": [
+      "frontend/src/pages/FeedPage.js"
+    ],
+    "kind": "literal"
+  },
+  {
+    "text": "Não foi possível consultar a amizade.",
+    "files": [
+      "frontend/src/pages/FeedPage.js"
+    ],
+    "kind": "literal"
+  },
+  {
+    "text": "Entre na sua conta para adicionar pessoas.",
+    "files": [
+      "frontend/src/pages/FeedPage.js"
+    ],
+    "kind": "literal"
+  },
+  {
+    "text": "Não foi possível atualizar a amizade.",
+    "files": [
+      "frontend/src/pages/FeedPage.js",
+      "frontend/src/pages/UserProfilePage.js"
+    ],
+    "kind": "literal"
+  },
+  {
+    "text": "perfil sem @",
+    "files": [
+      "frontend/src/pages/FeedPage.js"
+    ],
+    "kind": "literal"
+  },
+  {
+    "text": "Mais opções",
+    "files": [
+      "frontend/src/pages/FeedPage.js"
+    ],
+    "kind": "attr"
+  },
+  {
+    "text": "Editar publicação",
+    "files": [
+      "frontend/src/pages/FeedPage.js",
+      "frontend/src/pages/FeedPage.js"
+    ],
+    "kind": "text"
+  },
+  {
+    "text": "Apagar publicação",
+    "files": [
+      "frontend/src/pages/FeedPage.js"
+    ],
+    "kind": "text"
+  },
+  {
+    "text": "Remover dos salvos",
+    "files": [
+      "frontend/src/pages/FeedPage.js"
+    ],
+    "kind": "literal"
+  },
+  {
+    "text": "Salvar publicação",
+    "files": [
+      "frontend/src/pages/FeedPage.js"
+    ],
+    "kind": "literal"
+  },
+  {
+    "text": "Copiar link",
+    "files": [
+      "frontend/src/pages/FeedPage.js"
+    ],
+    "kind": "text"
+  },
+  {
+    "text": "Compartilhar publicação",
+    "files": [
+      "frontend/src/pages/FeedPage.js"
+    ],
+    "kind": "text"
+  },
+  {
+    "text": "Ver detalhes",
+    "files": [
+      "frontend/src/pages/FeedPage.js"
+    ],
+    "kind": "text"
+  },
+  {
+    "text": "Obrigado. A denúncia será analisada.",
+    "files": [
+      "frontend/src/pages/FeedPage.js"
+    ],
+    "kind": "literal"
+  },
+  {
+    "text": "Denunciar",
+    "files": [
+      "frontend/src/pages/FeedPage.js"
+    ],
+    "kind": "text"
+  },
+  {
+    "text": "(editado)",
+    "files": [
+      "frontend/src/pages/FeedPage.js"
+    ],
+    "kind": "text"
+  },
+  {
+    "text": "16 / 9",
+    "files": [
+      "frontend/src/pages/FeedPage.js",
+      "frontend/src/pages/FeedPage.js"
+    ],
+    "kind": "literal"
+  },
+  {
+    "text": "9 / 16",
+    "files": [
+      "frontend/src/pages/FeedPage.js",
+      "frontend/src/pages/FeedPage.js"
+    ],
+    "kind": "literal"
+  },
+  {
+    "text": "4 / 5",
+    "files": [
+      "frontend/src/pages/FeedPage.js",
+      "frontend/src/pages/FeedPage.js"
+    ],
+    "kind": "literal"
+  },
+  {
+    "text": "5 / 4",
+    "files": [
+      "frontend/src/pages/FeedPage.js",
+      "frontend/src/pages/FeedPage.js"
+    ],
+    "kind": "literal"
+  },
+  {
+    "text": "1 / 1",
+    "files": [
+      "frontend/src/pages/FeedPage.js",
+      "frontend/src/pages/FeedPage.js"
+    ],
+    "kind": "literal"
+  },
+  {
+    "text": "1.85 / 1",
+    "files": [
+      "frontend/src/pages/FeedPage.js"
+    ],
+    "kind": "literal"
+  },
+  {
+    "text": "Imagem anterior",
+    "files": [
+      "frontend/src/pages/FeedPage.js"
+    ],
+    "kind": "attr"
+  },
+  {
+    "text": "Próxima imagem",
+    "files": [
+      "frontend/src/pages/FeedPage.js"
+    ],
+    "kind": "attr"
+  },
+  {
+    "text": "Curtir ocorrência",
+    "files": [
+      "frontend/src/pages/FeedPage.js"
+    ],
+    "kind": "attr"
+  },
+  {
+    "text": "Comentar ocorrência",
+    "files": [
+      "frontend/src/pages/FeedPage.js"
+    ],
+    "kind": "attr"
+  },
+  {
+    "text": "Republicar ocorrência",
+    "files": [
+      "frontend/src/pages/FeedPage.js"
+    ],
+    "kind": "attr"
+  },
+  {
+    "text": "Enviar mensagem",
+    "files": [
+      "frontend/src/pages/FeedPage.js",
+      "frontend/src/pages/FeedPage.js",
+      "frontend/src/pages/LandingPage.js"
+    ],
+    "kind": "attr"
+  },
+  {
+    "text": "Abrir ocorrência",
+    "files": [
+      "frontend/src/pages/FeedPage.js"
+    ],
+    "kind": "attr"
+  },
+  {
+    "text": "Relatos urbanos, apoio comunitário e acompanhamento real.",
+    "files": [
+      "frontend/src/pages/FeedPage.js"
+    ],
+    "kind": "literal"
+  },
+  {
+    "text": "Buscar no feed...",
+    "files": [
+      "frontend/src/pages/FeedPage.js"
+    ],
+    "kind": "attr"
+  },
+  {
+    "text": "Todos os status",
+    "files": [
+      "frontend/src/pages/FeedPage.js"
+    ],
+    "kind": "literal"
+  },
+  {
+    "text": "Categorias indisponíveis",
+    "files": [
+      "frontend/src/pages/FeedPage.js",
+      "frontend/src/pages/FeedPage.js"
+    ],
+    "kind": "literal"
+  },
+  {
+    "text": "Todas as categorias",
+    "files": [
+      "frontend/src/pages/FeedPage.js"
+    ],
+    "kind": "literal"
+  },
+  {
+    "text": "Ocorrências recentes",
+    "files": [
+      "frontend/src/pages/FeedPage.js"
+    ],
+    "kind": "literal"
+  },
+  {
+    "text": "Mais apoiadas",
+    "files": [
+      "frontend/src/pages/FeedPage.js"
+    ],
+    "kind": "literal"
+  },
+  {
+    "text": "Não foi possível consultar as publicações. Isso não significa que foram apagadas.",
+    "files": [
+      "frontend/src/pages/FeedPage.js"
+    ],
+    "kind": "text"
+  },
+  {
+    "text": "Tentar novamente",
+    "files": [
+      "frontend/src/pages/FeedPage.js"
+    ],
+    "kind": "text"
+  },
+  {
+    "text": "publicações",
+    "files": [
+      "frontend/src/pages/FeedPage.js",
+      "frontend/src/pages/UserProfilePage.js"
+    ],
+    "kind": "text"
+  },
+  {
+    "text": "Troque mensagens com pessoas que também cuidam da cidade.",
+    "files": [
+      "frontend/src/pages/FeedPage.js"
+    ],
+    "kind": "literal"
+  },
+  {
+    "text": "Mensagens",
+    "files": [
+      "frontend/src/pages/FeedPage.js"
+    ],
+    "kind": "text"
+  },
+  {
+    "text": "Nova conversa",
+    "files": [
+      "frontend/src/pages/FeedPage.js"
+    ],
+    "kind": "attr"
+  },
+  {
+    "text": "Adicione e confirme uma amizade para iniciar conversas.",
+    "files": [
+      "frontend/src/pages/FeedPage.js"
+    ],
+    "kind": "text"
+  },
+  {
+    "text": "Nenhuma mensagem ainda",
+    "files": [
+      "frontend/src/pages/FeedPage.js"
+    ],
+    "kind": "literal"
+  },
+  {
+    "text": "Nenhuma conversa selecionada",
+    "files": [
+      "frontend/src/pages/FeedPage.js"
+    ],
+    "kind": "literal"
+  },
+  {
+    "text": "Amizade confirmada",
+    "files": [
+      "frontend/src/pages/FeedPage.js"
+    ],
+    "kind": "literal"
+  },
+  {
+    "text": "Confirme uma amizade para conversar.",
+    "files": [
+      "frontend/src/pages/FeedPage.js"
+    ],
+    "kind": "literal"
+  },
+  {
+    "text": "Nenhuma mensagem.",
+    "files": [
+      "frontend/src/pages/FeedPage.js"
+    ],
+    "kind": "text"
+  },
+  {
+    "text": "Escreva uma mensagem...",
+    "files": [
+      "frontend/src/pages/FeedPage.js"
+    ],
+    "kind": "literal"
+  },
+  {
+    "text": "Mensagens disponíveis para amigos confirmados.",
+    "files": [
+      "frontend/src/pages/FeedPage.js"
+    ],
+    "kind": "literal"
+  },
+  {
+    "text": "Encontre locais, pessoas, ambientes e problemas publicados na cidade.",
+    "files": [
+      "frontend/src/pages/FeedPage.js"
+    ],
+    "kind": "literal"
+  },
+  {
+    "text": "Busque por rua, usuário, categoria ou problema...",
+    "files": [
+      "frontend/src/pages/FeedPage.js"
+    ],
+    "kind": "attr"
+  },
+  {
+    "text": "Pessoas",
+    "files": [
+      "frontend/src/pages/FeedPage.js"
+    ],
+    "kind": "text"
+  },
+  {
+    "text": "Digite pelo menos 2 caracteres para buscar pessoas.",
+    "files": [
+      "frontend/src/pages/FeedPage.js"
+    ],
+    "kind": "text"
+  },
+  {
+    "text": "Não foi possível consultar as pessoas. Verifique sua conexão e tente novamente.",
+    "files": [
+      "frontend/src/pages/FeedPage.js"
+    ],
+    "kind": "text"
+  },
+  {
+    "text": "Buscando pessoas...",
+    "files": [
+      "frontend/src/pages/FeedPage.js"
+    ],
+    "kind": "text"
+  },
+  {
+    "text": "Nenhuma pessoa encontrada.",
+    "files": [
+      "frontend/src/pages/FeedPage.js"
+    ],
+    "kind": "text"
+  },
+  {
+    "text": "Solicitação enviada",
+    "files": [
+      "frontend/src/pages/FeedPage.js",
+      "frontend/src/pages/UserProfilePage.js"
+    ],
+    "kind": "literal"
+  },
+  {
+    "text": "Páginas de pessoas",
+    "files": [
+      "frontend/src/pages/FeedPage.js"
+    ],
+    "kind": "attr"
+  },
+  {
+    "text": "Anterior",
+    "files": [
+      "frontend/src/pages/FeedPage.js"
+    ],
+    "kind": "text"
+  },
+  {
+    "text": "Página",
+    "files": [
+      "frontend/src/pages/FeedPage.js"
+    ],
+    "kind": "text"
+  },
+  {
+    "text": "de",
+    "files": [
+      "frontend/src/pages/FeedPage.js"
+    ],
+    "kind": "text"
+  },
+  {
+    "text": "Próxima",
+    "files": [
+      "frontend/src/pages/FeedPage.js"
+    ],
+    "kind": "text"
+  },
+  {
+    "text": "Ocorrências e locais",
+    "files": [
+      "frontend/src/pages/FeedPage.js"
+    ],
+    "kind": "text"
+  },
+  {
+    "text": "Nenhum resultado encontrado.",
+    "files": [
+      "frontend/src/pages/FeedPage.js"
+    ],
+    "kind": "text"
+  },
+  {
+    "text": "Acompanhe respostas, apoios e novidades sobre os seus relatos.",
+    "files": [
+      "frontend/src/pages/FeedPage.js"
+    ],
+    "kind": "literal"
+  },
+  {
+    "text": "Marcar tudo como lido",
+    "files": [
+      "frontend/src/pages/FeedPage.js"
+    ],
+    "kind": "text"
+  },
+  {
+    "text": "Sua atividade",
+    "files": [
+      "frontend/src/pages/FeedPage.js"
+    ],
+    "kind": "text"
+  },
+  {
+    "text": "novas",
+    "files": [
+      "frontend/src/pages/FeedPage.js"
+    ],
+    "kind": "text"
+  },
+  {
+    "text": "Carregando notificações...",
+    "files": [
+      "frontend/src/pages/FeedPage.js"
+    ],
+    "kind": "text"
+  },
+  {
+    "text": "Nenhuma notificação por enquanto",
+    "files": [
+      "frontend/src/pages/FeedPage.js"
+    ],
+    "kind": "text"
+  },
+  {
+    "text": "Quando a comunidade interagir com seus relatos, elas aparecerão aqui.",
+    "files": [
+      "frontend/src/pages/FeedPage.js"
+    ],
+    "kind": "text"
+  },
+  {
+    "text": "Acesse rapidamente os relatos que você escolheu acompanhar.",
+    "files": [
+      "frontend/src/pages/FeedPage.js"
+    ],
+    "kind": "literal"
+  },
+  {
+    "text": "Nenhuma publicação salva.",
+    "files": [
+      "frontend/src/pages/FeedPage.js"
+    ],
+    "kind": "text"
+  },
+  {
+    "text": "Registre um problema urbano e coloque a sua comunidade em movimento.",
+    "files": [
+      "frontend/src/pages/FeedPage.js"
+    ],
+    "kind": "literal"
+  },
+  {
+    "text": "Nova identificação urbana",
+    "files": [
+      "frontend/src/pages/FeedPage.js"
+    ],
+    "kind": "text"
+  },
+  {
+    "text": "Compartilhe o que precisa mudar perto de você.",
+    "files": [
+      "frontend/src/pages/FeedPage.js"
+    ],
+    "kind": "text"
+  },
+  {
+    "text": "Categoria",
+    "files": [
+      "frontend/src/pages/FeedPage.js"
+    ],
+    "kind": "text"
+  },
+  {
+    "text": "Selecione uma categoria",
+    "files": [
+      "frontend/src/pages/FeedPage.js"
+    ],
+    "kind": "literal"
+  },
+  {
+    "text": "Título",
+    "files": [
+      "frontend/src/pages/FeedPage.js"
+    ],
+    "kind": "text"
+  },
+  {
+    "text": "Ex: Buraco na rua principal",
+    "files": [
+      "frontend/src/pages/FeedPage.js"
+    ],
+    "kind": "attr"
+  },
+  {
+    "text": "Descrição",
+    "files": [
+      "frontend/src/pages/FeedPage.js"
+    ],
+    "kind": "text"
+  },
+  {
+    "text": "Descreva o que está acontecendo...",
+    "files": [
+      "frontend/src/pages/FeedPage.js"
+    ],
+    "kind": "attr"
+  },
+  {
+    "text": "Endereço",
+    "files": [
+      "frontend/src/pages/FeedPage.js"
+    ],
+    "kind": "text"
+  },
+  {
+    "text": "Rua",
+    "files": [
+      "frontend/src/pages/FeedPage.js",
+      "frontend/src/pages/ReportProblemPage.js"
+    ],
+    "kind": "text"
+  },
+  {
+    "text": "Nome da rua",
+    "files": [
+      "frontend/src/pages/FeedPage.js",
+      "frontend/src/pages/ReportProblemPage.js"
+    ],
+    "kind": "attr"
+  },
+  {
+    "text": "Número",
+    "files": [
+      "frontend/src/pages/FeedPage.js",
+      "frontend/src/pages/FeedPage.js",
+      "frontend/src/pages/ReportProblemPage.js"
+    ],
+    "kind": "text"
+  },
+  {
+    "text": "Nº",
+    "files": [
+      "frontend/src/pages/FeedPage.js",
+      "frontend/src/pages/ReportProblemPage.js"
+    ],
+    "kind": "attr"
+  },
+  {
+    "text": "Bairro",
+    "files": [
+      "frontend/src/pages/FeedPage.js",
+      "frontend/src/pages/FeedPage.js",
+      "frontend/src/pages/FeedPage.js",
+      "frontend/src/pages/ReportProblemPage.js",
+      "frontend/src/pages/ReportProblemPage.js"
+    ],
+    "kind": "text"
+  },
+  {
+    "text": "Complemento",
+    "files": [
+      "frontend/src/pages/FeedPage.js",
+      "frontend/src/pages/FeedPage.js"
+    ],
+    "kind": "text"
+  },
+  {
+    "text": "Apto, referência...",
+    "files": [
+      "frontend/src/pages/FeedPage.js"
+    ],
+    "kind": "attr"
+  },
+  {
+    "text": "CEP",
+    "files": [
+      "frontend/src/pages/FeedPage.js",
+      "frontend/src/pages/FeedPage.js"
+    ],
+    "kind": "text"
+  },
+  {
+    "text": "00000-000",
+    "files": [
+      "frontend/src/pages/FeedPage.js"
+    ],
+    "kind": "attr"
+  },
+  {
+    "text": "Cidade",
+    "files": [
+      "frontend/src/pages/FeedPage.js",
+      "frontend/src/pages/FeedPage.js",
+      "frontend/src/pages/ReportProblemPage.js",
+      "frontend/src/pages/ReportProblemPage.js"
+    ],
+    "kind": "text"
+  },
+  {
+    "text": "Estado",
+    "files": [
+      "frontend/src/pages/FeedPage.js",
+      "frontend/src/pages/FeedPage.js",
+      "frontend/src/pages/ReportProblemPage.js"
+    ],
+    "kind": "text"
+  },
+  {
+    "text": "Quando aconteceu?",
+    "files": [
+      "frontend/src/pages/FeedPage.js",
+      "frontend/src/pages/ReportProblemPage.js"
+    ],
+    "kind": "text"
+  },
+  {
+    "text": "Data",
+    "files": [
+      "frontend/src/pages/FeedPage.js",
+      "frontend/src/pages/ReportProblemPage.js"
+    ],
+    "kind": "text"
+  },
+  {
+    "text": "Adicionar fotos",
+    "files": [
+      "frontend/src/pages/FeedPage.js",
+      "frontend/src/pages/FeedPage.js"
+    ],
+    "kind": "attr"
+  },
+  {
+    "text": "Publicar identificação",
+    "files": [
+      "frontend/src/pages/FeedPage.js"
+    ],
+    "kind": "literal"
+  },
+  {
+    "text": "VU",
+    "files": [
+      "frontend/src/pages/FeedPage.js"
+    ],
+    "kind": "text"
+  },
+  {
+    "text": "Voz",
+    "files": [
+      "frontend/src/pages/FeedPage.js"
+    ],
+    "kind": "text"
+  },
+  {
+    "text": "URBANA",
+    "files": [
+      "frontend/src/pages/FeedPage.js",
+      "frontend/src/pages/LoginPage.js",
+      "frontend/src/pages/RegisterPage.js"
+    ],
+    "kind": "text"
+  },
+  {
+    "text": "Navegação do feed",
+    "files": [
+      "frontend/src/pages/FeedPage.js"
+    ],
+    "kind": "attr"
+  },
+  {
+    "text": "Para seguir",
+    "files": [
+      "frontend/src/pages/FeedPage.js"
+    ],
+    "kind": "text"
+  },
+  {
+    "text": "Pesquise pessoas para encontrar conexões reais.",
+    "files": [
+      "frontend/src/pages/FeedPage.js"
+    ],
+    "kind": "text"
+  },
+  {
+    "text": "Sobre · Ajuda · Imprensa · API · Carreiras",
+    "files": [
+      "frontend/src/pages/FeedPage.js"
+    ],
+    "kind": "text"
+  },
+  {
+    "text": "Termos · Localizações · Idioma",
+    "files": [
+      "frontend/src/pages/FeedPage.js"
+    ],
+    "kind": "text"
+  },
+  {
+    "text": "Comunidade conectada",
+    "files": [
+      "frontend/src/pages/FeedPage.js"
+    ],
+    "kind": "text"
+  },
+  {
+    "text": "Rua ou logradouro",
+    "files": [
+      "frontend/src/pages/FeedPage.js"
+    ],
+    "kind": "attr"
+  },
+  {
+    "text": "Endereço completo (opcional)",
+    "files": [
+      "frontend/src/pages/FeedPage.js"
+    ],
+    "kind": "attr"
+  },
+  {
+    "text": "Salvar alterações",
+    "files": [
+      "frontend/src/pages/FeedPage.js"
+    ],
+    "kind": "literal"
+  },
+  {
+    "text": "Fechar imagem",
+    "files": [
+      "frontend/src/pages/FeedPage.js"
+    ],
+    "kind": "attr"
+  },
+  {
+    "text": "Não foi possível solicitar a redefinição.",
+    "files": [
+      "frontend/src/pages/ForgotPasswordPage.js"
+    ],
+    "kind": "literal"
+  },
+  {
+    "text": "Voltar para o login",
+    "files": [
+      "frontend/src/pages/ForgotPasswordPage.js",
+      "frontend/src/pages/ResetPasswordPage.js"
+    ],
+    "kind": "text"
+  },
+  {
+    "text": "Informe seu e-mail e enviaremos um link seguro para criar uma nova senha.",
+    "files": [
+      "frontend/src/pages/ForgotPasswordPage.js"
+    ],
+    "kind": "text"
+  },
+  {
+    "text": "Confira sua caixa de entrada",
+    "files": [
+      "frontend/src/pages/ForgotPasswordPage.js"
+    ],
+    "kind": "text"
+  },
+  {
+    "text": "Se existir uma conta com esse e-mail, o link de redefinição já foi enviado. Ele expira em 1 hora.",
+    "files": [
+      "frontend/src/pages/ForgotPasswordPage.js"
+    ],
+    "kind": "text"
+  },
+  {
+    "text": "Enviar link de redefinição",
+    "files": [
+      "frontend/src/pages/ForgotPasswordPage.js"
+    ],
+    "kind": "literal"
+  },
+  {
+    "text": "Lembrou da senha?",
+    "files": [
+      "frontend/src/pages/ForgotPasswordPage.js"
+    ],
+    "kind": "text"
+  },
+  {
+    "text": "Entrar",
+    "files": [
+      "frontend/src/pages/ForgotPasswordPage.js"
+    ],
+    "kind": "text"
+  },
+  {
+    "text": "VOZ URBANA",
+    "files": [
+      "frontend/src/pages/HomePage.js"
+    ],
+    "kind": "text"
+  },
+  {
+    "text": "1 km",
+    "files": [
+      "frontend/src/pages/HomePage.js"
+    ],
+    "kind": "literal"
+  },
+  {
+    "text": "5 km",
+    "files": [
+      "frontend/src/pages/HomePage.js"
+    ],
+    "kind": "literal"
+  },
+  {
+    "text": "10 km",
+    "files": [
+      "frontend/src/pages/HomePage.js"
+    ],
+    "kind": "literal"
+  },
+  {
+    "text": "25 km",
+    "files": [
+      "frontend/src/pages/HomePage.js"
+    ],
+    "kind": "literal"
+  },
+  {
+    "text": "72px 72px",
+    "files": [
+      "frontend/src/pages/LandingPage.js"
+    ],
+    "kind": "literal"
+  },
+  {
+    "text": "Fluxo",
+    "files": [
+      "frontend/src/pages/LandingPage.js"
+    ],
+    "kind": "text"
+  },
+  {
+    "text": "Uma experiência simples: registrar, localizar e acompanhar a melhoria.",
+    "files": [
+      "frontend/src/pages/LandingPage.js"
+    ],
+    "kind": "text"
+  },
+  {
+    "text": "Registre o problema com contexto visual para acelerar a triagem.",
+    "files": [
+      "frontend/src/pages/LandingPage.js"
+    ],
+    "kind": "literal"
+  },
+  {
+    "text": "Marque o ponto exato no mapa para facilitar a mobilização.",
+    "files": [
+      "frontend/src/pages/LandingPage.js"
+    ],
+    "kind": "literal"
+  },
+  {
+    "text": "Veja quando o caso mudar de status e avance no acompanhamento.",
+    "files": [
+      "frontend/src/pages/LandingPage.js"
+    ],
+    "kind": "literal"
+  },
+  {
+    "text": "Feed",
+    "files": [
+      "frontend/src/pages/LandingPage.js"
+    ],
+    "kind": "text"
+  },
+  {
+    "text": "Ver tudo no mapa",
+    "files": [
+      "frontend/src/pages/LandingPage.js"
+    ],
+    "kind": "text"
+  },
+  {
+    "text": "A plataforma conecta relato, mapa e acompanhamento em um fluxo direto, sem ruído visual.",
+    "files": [
+      "frontend/src/pages/LandingPage.js"
+    ],
+    "kind": "text"
+  },
+  {
+    "text": "Este espaço liga o mapa ao fluxo de denúncia. A pessoa entra, identifica o ponto, envia a ocorrência e acompanha a evolução no painel.",
+    "files": [
+      "frontend/src/pages/LandingPage.js"
+    ],
+    "kind": "text"
+  },
+  {
+    "text": "Abra o mapa ou o formulário.",
+    "files": [
+      "frontend/src/pages/LandingPage.js"
+    ],
+    "kind": "text"
+  },
+  {
+    "text": "Veja os registros existentes e clique neles.",
+    "files": [
+      "frontend/src/pages/LandingPage.js"
+    ],
+    "kind": "text"
+  },
+  {
+    "text": "Acompanhe respostas, votos e resolução.",
+    "files": [
+      "frontend/src/pages/LandingPage.js"
+    ],
+    "kind": "text"
+  },
+  {
+    "text": "Sobre",
+    "files": [
+      "frontend/src/pages/LandingPage.js"
+    ],
+    "kind": "text"
+  },
+  {
+    "text": "O Voz Urbana é uma plataforma para facilitar a comunicação entre população e órgãos públicos, permitindo denúncias práticas e acompanhamento do status de cada caso.",
+    "files": [
+      "frontend/src/pages/LandingPage.js"
+    ],
+    "kind": "text"
+  },
+  {
+    "text": "Mapa",
+    "files": [
+      "frontend/src/pages/LandingPage.js"
+    ],
+    "kind": "text"
+  },
+  {
+    "text": "Marcadores reais com popups, fit bounds e visual escuro.",
+    "files": [
+      "frontend/src/pages/LandingPage.js"
+    ],
+    "kind": "text"
+  },
+  {
+    "text": "Relatórios",
+    "files": [
+      "frontend/src/pages/LandingPage.js"
+    ],
+    "kind": "text"
+  },
+  {
+    "text": "Criação de ocorrências com categoria, localização e acompanhamento.",
+    "files": [
+      "frontend/src/pages/LandingPage.js"
+    ],
+    "kind": "text"
+  },
+  {
+    "text": "Abrir mapa",
+    "files": [
+      "frontend/src/pages/LandingPage.js"
+    ],
+    "kind": "text"
+  },
+  {
+    "text": "Reportar",
+    "files": [
+      "frontend/src/pages/LandingPage.js"
+    ],
+    "kind": "text"
+  },
+  {
+    "text": "Contato",
+    "files": [
+      "frontend/src/pages/LandingPage.js"
+    ],
+    "kind": "text"
+  },
+  {
+    "text": "Nome",
+    "files": [
+      "frontend/src/pages/LandingPage.js"
+    ],
+    "kind": "attr"
+  },
+  {
+    "text": "Email",
+    "files": [
+      "frontend/src/pages/LandingPage.js"
+    ],
+    "kind": "attr"
+  },
+  {
+    "text": "Mensagem",
+    "files": [
+      "frontend/src/pages/LandingPage.js",
+      "frontend/src/pages/UserProfilePage.js"
+    ],
+    "kind": "attr"
+  },
+  {
+    "text": "WhatsApp",
+    "files": [
+      "frontend/src/pages/LandingPage.js"
+    ],
+    "kind": "text"
+  },
+  {
+    "text": "Telefone",
+    "files": [
+      "frontend/src/pages/LandingPage.js"
+    ],
+    "kind": "text"
+  },
+  {
+    "text": "VOZ",
+    "files": [
+      "frontend/src/pages/LoginPage.js",
+      "frontend/src/pages/RegisterPage.js"
+    ],
+    "kind": "text"
+  },
+  {
+    "text": "e-mail, número ou usuário",
+    "files": [
+      "frontend/src/pages/LoginPage.js"
+    ],
+    "kind": "attr"
+  },
+  {
+    "text": "Esqueci minha senha",
+    "files": [
+      "frontend/src/pages/LoginPage.js"
+    ],
+    "kind": "text"
+  },
+  {
+    "text": "Erro ao publicar comentário",
+    "files": [
+      "frontend/src/pages/ProblemDetailPage.js"
+    ],
+    "kind": "literal"
+  },
+  {
+    "text": "← Voltar",
+    "files": [
+      "frontend/src/pages/ProblemDetailPage.js"
+    ],
+    "kind": "text"
+  },
+  {
+    "text": "Amizade confirmada.",
+    "files": [
+      "frontend/src/pages/ProfilePage.js"
+    ],
+    "kind": "literal"
+  },
+  {
+    "text": "Não foi possível atualizar a solicitação.",
+    "files": [
+      "frontend/src/pages/ProfilePage.js"
+    ],
+    "kind": "literal"
+  },
+  {
+    "text": "@seuusuario",
+    "files": [
+      "frontend/src/pages/ProfilePage.js"
+    ],
+    "kind": "attr"
+  },
+  {
+    "text": "Será exibido como @",
+    "files": [
+      "frontend/src/pages/ProfilePage.js"
+    ],
+    "kind": "text"
+  },
+  {
+    "text": "Prévia do perfil",
+    "files": [
+      "frontend/src/pages/ProfilePage.js"
+    ],
+    "kind": "attr"
+  },
+  {
+    "text": "Escolher foto",
+    "files": [
+      "frontend/src/pages/ProfilePage.js"
+    ],
+    "kind": "attr"
+  },
+  {
+    "text": "Selecione um arquivo de imagem válido.",
+    "files": [
+      "frontend/src/pages/ProfilePage.js"
+    ],
+    "kind": "literal"
+  },
+  {
+    "text": "A imagem deve ter no máximo 5 MB.",
+    "files": [
+      "frontend/src/pages/ProfilePage.js"
+    ],
+    "kind": "literal"
+  },
+  {
+    "text": "Ou use uma URL de imagem",
+    "files": [
+      "frontend/src/pages/ProfilePage.js"
+    ],
+    "kind": "attr"
+  },
+  {
+    "text": "(11) 99999-9999",
+    "files": [
+      "frontend/src/pages/ProfilePage.js"
+    ],
+    "kind": "attr"
+  },
+  {
+    "text": "Fale um pouco sobre você...",
+    "files": [
+      "frontend/src/pages/ProfilePage.js"
+    ],
+    "kind": "attr"
+  },
+  {
+    "text": "Tema do site",
+    "files": [
+      "frontend/src/pages/ProfilePage.js"
+    ],
+    "kind": "text"
+  },
+  {
+    "text": "Personalize a aparência do Voz Urbana.",
+    "files": [
+      "frontend/src/pages/ProfilePage.js"
+    ],
+    "kind": "text"
+  },
+  {
+    "text": "Versão",
+    "files": [
+      "frontend/src/pages/ProfilePage.js"
+    ],
+    "kind": "text"
+  },
+  {
+    "text": "Selecione uma versão",
+    "files": [
+      "frontend/src/pages/ProfilePage.js"
+    ],
+    "kind": "attr"
+  },
+  {
+    "text": "Voz Urbana Normal",
+    "files": [
+      "frontend/src/pages/ProfilePage.js"
+    ],
+    "kind": "literal"
+  },
+  {
+    "text": "Christmas Version",
+    "files": [
+      "frontend/src/pages/ProfilePage.js"
+    ],
+    "kind": "literal"
+  },
+  {
+    "text": "Ativar neve e animações natalinas",
+    "files": [
+      "frontend/src/pages/ProfilePage.js"
+    ],
+    "kind": "text"
+  },
+  {
+    "text": "Preferências salvas neste navegador, mesmo após sair da conta.",
+    "files": [
+      "frontend/src/pages/ProfilePage.js"
+    ],
+    "kind": "text"
+  },
+  {
+    "text": "Solicitações de amizade",
+    "files": [
+      "frontend/src/pages/ProfilePage.js"
+    ],
+    "kind": "text"
+  },
+  {
+    "text": "Nenhuma solicitação pendente.",
+    "files": [
+      "frontend/src/pages/ProfilePage.js"
+    ],
+    "kind": "text"
+  },
+  {
+    "text": "Aceitar",
+    "files": [
+      "frontend/src/pages/ProfilePage.js"
+    ],
+    "kind": "text"
+  },
+  {
+    "text": "Recusar",
+    "files": [
+      "frontend/src/pages/ProfilePage.js"
+    ],
+    "kind": "text"
+  },
+  {
+    "text": "Para",
+    "files": [
+      "frontend/src/pages/ProfilePage.js"
+    ],
+    "kind": "text"
+  },
+  {
+    "text": "seuusuario",
+    "files": [
+      "frontend/src/pages/RegisterPage.js"
+    ],
+    "kind": "attr"
+  },
+  {
+    "text": "+55 (11) 99999-9999",
+    "files": [
+      "frontend/src/pages/RegisterPage.js"
+    ],
+    "kind": "attr"
+  },
+  {
+    "text": "(opcional)",
+    "files": [
+      "frontend/src/pages/ReportProblemPage.js"
+    ],
+    "kind": "text"
+  },
+  {
+    "text": "UF",
+    "files": [
+      "frontend/src/pages/ReportProblemPage.js"
+    ],
+    "kind": "attr"
+  },
+  {
+    "text": "Adicionar imagens",
+    "files": [
+      "frontend/src/pages/ReportProblemPage.js"
+    ],
+    "kind": "attr"
+  },
+  {
+    "text": "Ex: -15.7942",
+    "files": [
+      "frontend/src/pages/ReportProblemPage.js"
+    ],
+    "kind": "attr"
+  },
+  {
+    "text": "Ex: -47.8822",
+    "files": [
+      "frontend/src/pages/ReportProblemPage.js"
+    ],
+    "kind": "attr"
+  },
+  {
+    "text": "A senha deve ter pelo menos 6 caracteres.",
+    "files": [
+      "frontend/src/pages/ResetPasswordPage.js"
+    ],
+    "kind": "literal"
+  },
+  {
+    "text": "As senhas não coincidem.",
+    "files": [
+      "frontend/src/pages/ResetPasswordPage.js"
+    ],
+    "kind": "literal"
+  },
+  {
+    "text": "Link de redefinição inválido.",
+    "files": [
+      "frontend/src/pages/ResetPasswordPage.js"
+    ],
+    "kind": "literal"
+  },
+  {
+    "text": "Não foi possível redefinir sua senha.",
+    "files": [
+      "frontend/src/pages/ResetPasswordPage.js"
+    ],
+    "kind": "literal"
+  },
+  {
+    "text": "Crie uma senha nova para recuperar o acesso à sua conta.",
+    "files": [
+      "frontend/src/pages/ResetPasswordPage.js"
+    ],
+    "kind": "text"
+  },
+  {
+    "text": "Mínimo de 6 caracteres",
+    "files": [
+      "frontend/src/pages/ResetPasswordPage.js"
+    ],
+    "kind": "attr"
+  },
+  {
+    "text": "Confirme a nova senha",
+    "files": [
+      "frontend/src/pages/ResetPasswordPage.js"
+    ],
+    "kind": "text"
+  },
+  {
+    "text": "Digite novamente sua senha",
+    "files": [
+      "frontend/src/pages/ResetPasswordPage.js"
+    ],
+    "kind": "attr"
+  },
+  {
+    "text": "Redefinir senha",
+    "files": [
+      "frontend/src/pages/ResetPasswordPage.js"
+    ],
+    "kind": "literal"
+  },
+  {
+    "text": "Não foi possível carregar este conteúdo.",
+    "files": [
+      "frontend/src/pages/UserProfilePage.js"
+    ],
+    "kind": "literal"
+  },
+  {
+    "text": "Perfil compartilhado.",
+    "files": [
+      "frontend/src/pages/UserProfilePage.js"
+    ],
+    "kind": "literal"
+  },
+  {
+    "text": "Link do perfil copiado.",
+    "files": [
+      "frontend/src/pages/UserProfilePage.js"
+    ],
+    "kind": "literal"
+  },
+  {
+    "text": "Não foi possível compartilhar o perfil.",
+    "files": [
+      "frontend/src/pages/UserProfilePage.js"
+    ],
+    "kind": "literal"
+  },
+  {
+    "text": "Não foi possível iniciar a conversa.",
+    "files": [
+      "frontend/src/pages/UserProfilePage.js"
+    ],
+    "kind": "literal"
+  },
+  {
+    "text": "Adicionar amizade",
+    "files": [
+      "frontend/src/pages/UserProfilePage.js"
+    ],
+    "kind": "literal"
+  },
+  {
+    "text": "Aceitar solicitação",
+    "files": [
+      "frontend/src/pages/UserProfilePage.js"
+    ],
+    "kind": "literal"
+  },
+  {
+    "text": "seguindo",
+    "files": [
+      "frontend/src/pages/UserProfilePage.js"
+    ],
+    "kind": "text"
+  },
+  {
+    "text": "seguidores",
+    "files": [
+      "frontend/src/pages/UserProfilePage.js"
+    ],
+    "kind": "text"
+  },
+  {
+    "text": "curtidas",
+    "files": [
+      "frontend/src/pages/UserProfilePage.js"
+    ],
+    "kind": "text"
+  },
+  {
+    "text": "Editar perfil",
+    "files": [
+      "frontend/src/pages/UserProfilePage.js"
+    ],
+    "kind": "text"
+  },
+  {
+    "text": "Configurações",
+    "files": [
+      "frontend/src/pages/UserProfilePage.js"
+    ],
+    "kind": "attr"
+  },
+  {
+    "text": "Compartilhar",
+    "files": [
+      "frontend/src/pages/UserProfilePage.js"
+    ],
+    "kind": "text"
+  },
+  {
+    "text": "Conteúdo do perfil",
+    "files": [
+      "frontend/src/pages/UserProfilePage.js"
+    ],
+    "kind": "attr"
+  },
+  {
+    "text": "Carregando conteúdo…",
+    "files": [
+      "frontend/src/pages/UserProfilePage.js"
+    ],
+    "kind": "text"
+  },
+  {
+    "text": "Nenhuma publicação nesta seção.",
+    "files": [
+      "frontend/src/pages/UserProfilePage.js"
+    ],
+    "kind": "literal"
+  },
+  {
+    "text": "seu@email.com",
+    "files": [
+      "frontend/src/pages/VerifyEmailPage.js"
+    ],
+    "kind": "attr"
+  },
+  {
+    "text": "Erro ao registrar",
+    "files": [
+      "frontend/src/store/index.js"
+    ],
+    "kind": "literal"
+  },
+  {
+    "text": "Erro ao fazer login",
+    "files": [
+      "frontend/src/store/index.js"
+    ],
+    "kind": "literal"
+  },
+  {
+    "text": "Amapá",
+    "files": [
+      "frontend/src/utils/brazil.js"
+    ],
+    "kind": "literal"
+  },
+  {
+    "text": "Ceará",
+    "files": [
+      "frontend/src/utils/brazil.js"
+    ],
+    "kind": "literal"
+  },
+  {
+    "text": "Distrito Federal",
+    "files": [
+      "frontend/src/utils/brazil.js"
+    ],
+    "kind": "literal"
+  },
+  {
+    "text": "Espírito Santo",
+    "files": [
+      "frontend/src/utils/brazil.js"
+    ],
+    "kind": "literal"
+  },
+  {
+    "text": "Goiás",
+    "files": [
+      "frontend/src/utils/brazil.js"
+    ],
+    "kind": "literal"
+  },
+  {
+    "text": "Maranhão",
+    "files": [
+      "frontend/src/utils/brazil.js"
+    ],
+    "kind": "literal"
+  },
+  {
+    "text": "Mato Grosso",
+    "files": [
+      "frontend/src/utils/brazil.js"
+    ],
+    "kind": "literal"
+  },
+  {
+    "text": "Mato Grosso do Sul",
+    "files": [
+      "frontend/src/utils/brazil.js"
+    ],
+    "kind": "literal"
+  },
+  {
+    "text": "Minas Gerais",
+    "files": [
+      "frontend/src/utils/brazil.js"
+    ],
+    "kind": "literal"
+  },
+  {
+    "text": "Pará",
+    "files": [
+      "frontend/src/utils/brazil.js"
+    ],
+    "kind": "literal"
+  },
+  {
+    "text": "Paraíba",
+    "files": [
+      "frontend/src/utils/brazil.js"
+    ],
+    "kind": "literal"
+  },
+  {
+    "text": "Paraná",
+    "files": [
+      "frontend/src/utils/brazil.js"
+    ],
+    "kind": "literal"
+  },
+  {
+    "text": "Piauí",
+    "files": [
+      "frontend/src/utils/brazil.js"
+    ],
+    "kind": "literal"
+  },
+  {
+    "text": "Rio de Janeiro",
+    "files": [
+      "frontend/src/utils/brazil.js"
+    ],
+    "kind": "literal"
+  },
+  {
+    "text": "Rio Grande do Norte",
+    "files": [
+      "frontend/src/utils/brazil.js"
+    ],
+    "kind": "literal"
+  },
+  {
+    "text": "Rio Grande do Sul",
+    "files": [
+      "frontend/src/utils/brazil.js"
+    ],
+    "kind": "literal"
+  },
+  {
+    "text": "Rondônia",
+    "files": [
+      "frontend/src/utils/brazil.js"
+    ],
+    "kind": "literal"
+  },
+  {
+    "text": "Santa Catarina",
+    "files": [
+      "frontend/src/utils/brazil.js"
+    ],
+    "kind": "literal"
+  },
+  {
+    "text": "São Paulo",
+    "files": [
+      "frontend/src/utils/brazil.js"
+    ],
+    "kind": "literal"
+  },
+  {
+    "text": "Não foi possível carregar as cidades deste estado.",
+    "files": [
+      "frontend/src/utils/brazil.js"
+    ],
+    "kind": "literal"
+  },
+  {
+    "text": "Não foi possível consultar o CEP.",
+    "files": [
+      "frontend/src/utils/brazil.js"
+    ],
+    "kind": "literal"
+  },
+  {
+    "text": "CEP não encontrado.",
+    "files": [
+      "frontend/src/utils/brazil.js"
+    ],
+    "kind": "literal"
+  }
+]

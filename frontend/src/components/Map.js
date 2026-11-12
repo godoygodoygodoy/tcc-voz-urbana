@@ -1,3 +1,4 @@
+import { translate as _tr, useI18n as _useLocale } from '../i18n';
 import React, { useEffect, useRef, useState } from 'react';
 import { CircleMarker, MapContainer, Marker, Popup, Polygon, Polyline, TileLayer, useMap, useMapEvents } from 'react-leaflet';
 import L from 'leaflet';
@@ -53,6 +54,7 @@ const toPoint = (problem) => {
 };
 
 const FitBounds = ({ problems }) => {
+  _useLocale();
   const map = useMap();
 
   useEffect(() => {
@@ -84,6 +86,7 @@ const FitBounds = ({ problems }) => {
 };
 
 const AreaDrawingLayer = ({ active, selectedArea, onAreaComplete, onAreaDrawingToggle }) => {
+  _useLocale();
   const map = useMap();
   const controlsRef = useRef(null);
   const { t } = useI18n();
@@ -210,6 +213,7 @@ const AreaDrawingLayer = ({ active, selectedArea, onAreaComplete, onAreaDrawingT
 };
 
 const LocationPicker = ({ position, onChange, active }) => {
+  _useLocale();
   const [markerPosition, setMarkerPosition] = useState(position);
 
   useEffect(() => {
@@ -254,6 +258,7 @@ const Map = ({
   location,
   onLocationChange,
 }) => {
+  _useLocale();
   const { t } = useI18n();
   const validProblems = problems.filter((problem) => toPoint(problem));
 
@@ -308,7 +313,7 @@ const Map = ({
                     </span>
                   </p>
                   <p className="urban-map-popup__status">
-                    <strong>Status:</strong> {problem.status || 'ABERTO'}
+                    <strong>{_tr("Status:")}</strong> {problem.status || 'ABERTO'}
                   </p>
                 </div>
               </Popup>

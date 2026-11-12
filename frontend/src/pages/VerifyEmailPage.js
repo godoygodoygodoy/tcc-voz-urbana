@@ -1,9 +1,11 @@
+import { translate as _tr, useI18n as _useLocale } from '../i18n';
 import React, { useEffect, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { authAPI } from '../services/api';
 import { useI18n } from '../i18n';
 
 const VerifyEmailPage = () => {
+  _useLocale();
   const [searchParams] = useSearchParams();
   const [state, setState] = useState({ loading: true, message: '' });
   const [email, setEmail] = useState(searchParams.get('email') || '');
@@ -51,7 +53,7 @@ const VerifyEmailPage = () => {
               onChange={(event) => setEmail(event.target.value)}
               required
               className="w-full rounded-xl border border-white/15 bg-[#17171b] p-3 text-white outline-none focus:border-violet-600"
-              placeholder="seu@email.com"
+              placeholder={_tr("seu@email.com")}
             />
             <button type="submit" disabled={resending} className="w-full rounded-xl bg-violet-600 p-3 font-semibold text-white disabled:bg-zinc-400">
               {resending ? t('resending') : t('resend')}

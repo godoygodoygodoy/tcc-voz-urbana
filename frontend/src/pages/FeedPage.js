@@ -1,3 +1,4 @@
+import { translate as _tr, useI18n as _useLocale } from '../i18n';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   Bell,
@@ -65,9 +66,9 @@ const sharePost = async (post) => {
   try {
     if (navigator.share) await navigator.share({ title: post.title, text: post.description, url });
     else await navigator.clipboard?.writeText(url);
-    toast.success(navigator.share ? 'Publicação compartilhada.' : 'Link da publicação copiado.');
+    toast.success(navigator.share ? _tr("Publicação compartilhada.") : _tr("Link da publicação copiado."));
   } catch (error) {
-    if (error.name !== 'AbortError') toast.error('Não foi possível compartilhar a publicação.');
+    if (error.name !== 'AbortError') toast.error(_tr("Não foi possível compartilhar a publicação."));
   } finally {
     setOpenMenu(null);
   }
@@ -77,7 +78,7 @@ const MAX_IMAGE_SIZE = 5 * 1024 * 1024;
 const IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
 
 const FeedAction = ({ active, asset, label, count, onClick, disabled }) => (
-  <button
+  { _useLocale(); return (<button
     type="button"
     onClick={onClick}
     disabled={disabled}
@@ -86,21 +87,22 @@ const FeedAction = ({ active, asset, label, count, onClick, disabled }) => (
   >
     <img src={actionAsset(active ? (asset === 'curtir' ? 'curtido' : 'republicado') : asset)} alt="" className="h-8 w-8 object-contain transition group-hover/action:scale-110" />
     <span>{count ?? label}</span>
-  </button>
+  </button>); }
 );
 
 const FeedHeader = ({ title, description, children }) => (
-  <div className="feed-view-head">
+  { _useLocale(); return (<div className="feed-view-head">
     <div>
       <p className="feed-kicker">Voz Urbana</p>
       <h1 className="feed-title">{title}</h1>
       <p className="feed-subtitle">{description}</p>
     </div>
     <div className="feed-view-actions">{children}</div>
-  </div>
+  </div>); }
 );
 
 const FeedPage = () => {
+  _useLocale();
   const { t, language } = useI18n();
   const { user, openAuthModal } = useAuthStore();
   const location = useLocation();
@@ -184,7 +186,7 @@ const FeedPage = () => {
         || categoriesResult.value.data.length === 0) {
         setCategories([]);
         setCategoryError(true);
-        toast.error('Não foi possível carregar as categorias.');
+        toast.error(_tr("Não foi possível carregar as categorias."));
       } else {
         setCategories(categoriesResult.value.data);
         setCategoryError(false);
@@ -206,7 +208,7 @@ const FeedPage = () => {
       return undefined;
     }
     savedAPI.list().then((response) => setSavedPosts(response.data || []))
-      .catch((error) => toast.error(error.response?.data?.error || 'Não foi possível carregar as publicações salvas.'));
+      .catch((error) => toast.error(error.response?.data?.error || _tr("Não foi possível carregar as publicações salvas.")));
     return undefined;
   }, [activeTab, user]);
 
@@ -214,7 +216,7 @@ const FeedPage = () => {
     if (!user || activeTab !== 'conversations') return undefined;
     conversationsAPI.list()
       .then((response) => setConversations(response.data || []))
-      .catch((error) => toast.error(error.response?.data?.error || 'Não foi possível carregar as conversas.'));
+      .catch((error) => toast.error(error.response?.data?.error || _tr("Não foi possível carregar as conversas.")));
     return undefined;
   }, [activeTab, user]);
 
@@ -292,7 +294,7 @@ const FeedPage = () => {
     const selected = Array.from(files || []);
     if (existingCount + selected.length > MAX_IMAGE_COUNT) throw new Error(`Você pode enviar no máximo ${MAX_IMAGE_COUNT} imagens.`);
     const invalid = selected.find((file) => !IMAGE_TYPES.includes(file.type) || file.size > MAX_IMAGE_SIZE);
-    if (invalid) throw new Error('Use JPG, PNG, WEBP ou GIF com até 5 MB por imagem.');
+    if (invalid) throw new Error(_tr("Use JPG, PNG, WEBP ou GIF com até 5 MB por imagem."));
     return selected;
   };
 
@@ -352,9 +354,9 @@ const FeedPage = () => {
       const response = await problemsAPI.update(editingPost.id, payload);
       setPosts((current) => current.map((post) => post.id === editingPost.id ? response.data : post));
       setEditingPost(null);
-      toast.success('Publicação atualizada.');
+      toast.success(_tr("Publicação atualizada."));
     } catch (error) {
-      toast.error(error.response?.data?.error || error.message || 'Não foi possível editar a publicação.');
+      toast.error(error.response?.data?.error || error.message || _tr("Não foi possível editar a publicação."));
     } finally {
       setSavingEdit(false);
     }
@@ -410,7 +412,7 @@ const FeedPage = () => {
       .some((value) => String(value || '').toLowerCase().includes(query)));
   }, [posts, search]);
 
-  const displayName = user?.username ? `@${user.username.replace(/^@/, '')}` : user?.name || user?.nome || 'Perfil';
+  const displayName = user?.username ? `@${user.username.replace(/^@/, '')}` : user?.name || user?.nome || _tr("Perfil");
 
   const selectTab = (key) => {
     navigate(`/feed#${key}`);
@@ -450,15 +452,15 @@ const FeedPage = () => {
     });
     try {
       await navigator.clipboard?.writeText(`${window.location.origin}${import.meta.env.BASE_URL}problem/${post.id}`);
-      toast.success('Link da ocorrência copiado');
+      toast.success(_tr("Link da ocorrência copiado"));
     } catch (error) {
-      toast.info('Ocorrência marcada para compartilhar');
+      toast.info(_tr("Ocorrência marcada para compartilhar"));
     }
   };
 
   const toggleSaved = async (post) => {
     if (!user) {
-      toast.info('Entre na sua conta para salvar publicações.');
+      toast.info(_tr("Entre na sua conta para salvar publicações."));
       return;
     }
     try {
@@ -471,16 +473,16 @@ const FeedPage = () => {
         setSavedPosts((current) => [{ ...post, savedByMe: true }, ...current]);
       }
       setOpenMenu(null);
-      toast.success(saved ? 'Publicação removida dos salvos.' : 'Publicação salva.');
+      toast.success(saved ? _tr("Publicação removida dos salvos.") : _tr("Publicação salva."));
     } catch (error) {
-      toast.error(error.response?.data?.error || 'Não foi possível atualizar os salvos.');
+      toast.error(error.response?.data?.error || _tr("Não foi possível atualizar os salvos."));
     }
   };
 
   const copyPostLink = async (post) => {
     await navigator.clipboard?.writeText(`${window.location.origin}${import.meta.env.BASE_URL}problem/${post.id}`);
     setOpenMenu(null);
-    toast.success('Link da publicação copiado.');
+    toast.success(_tr("Link da publicação copiado."));
   };
 
   const updateCreateForm = (event) => setCreateForm((current) => ({ ...current, [event.target.name]: event.target.value }));
@@ -493,7 +495,7 @@ const FeedPage = () => {
     }
     if (!createForm.title || !createForm.description || !createForm.categoryId
       || !createForm.occurrenceDate || !createForm.occurrenceTime) {
-      toast.error('Preencha título, descrição, categoria e data/hora da ocorrência.');
+      toast.error(_tr("Preencha título, descrição, categoria e data/hora da ocorrência."));
       return;
     }
     try {
@@ -518,7 +520,7 @@ const FeedPage = () => {
       payload.append('state', createForm.state);
       createImages.forEach((file) => payload.append('images', file));
       await problemsAPI.create(payload);
-      toast.success('Postagem criada com sucesso!');
+      toast.success(_tr("Postagem criada com sucesso!"));
       setCreateForm(emptyCreateForm);
       setCreateImages([]);
       selectTab('home');
@@ -553,7 +555,7 @@ const FeedPage = () => {
       setMessages(messagesResponse.data || []);
       setConversations((current) => current.some((item) => item.id === response.data.id) ? current : [response.data, ...current]);
     } catch (error) {
-      toast.error(error.response?.data?.error || 'A amizade precisa estar confirmada para conversar.');
+      toast.error(error.response?.data?.error || _tr("A amizade precisa estar confirmada para conversar."));
     }
   };
 
@@ -565,7 +567,7 @@ const FeedPage = () => {
       setMessages((current) => [...current, response.data]);
       setMessageText('');
     } catch (error) {
-      toast.error(error.response?.data?.error || 'Não foi possível enviar a mensagem.');
+      toast.error(error.response?.data?.error || _tr("Não foi possível enviar a mensagem."));
     }
   };
 
@@ -580,13 +582,13 @@ const FeedPage = () => {
       const response = await socialAPI.friendship(userId);
       setFriendships((current) => ({ ...current, [userId]: response.data }));
     } catch (error) {
-      toast.error('Não foi possível consultar a amizade.');
+      toast.error(_tr("Não foi possível consultar a amizade."));
     }
   };
 
   const changeFriendship = async (person) => {
     if (!user) {
-      toast.info('Entre na sua conta para adicionar pessoas.');
+      toast.info(_tr("Entre na sua conta para adicionar pessoas."));
       return;
     }
     const relation = friendships[person.id];
@@ -601,7 +603,7 @@ const FeedPage = () => {
         setFriendships((current) => ({ ...current, [person.id]: response.data }));
       }
     } catch (error) {
-      toast.error(error.response?.data?.error || 'Não foi possível atualizar a amizade.');
+      toast.error(error.response?.data?.error || _tr("Não foi possível atualizar a amizade."));
     }
   };
 
@@ -610,38 +612,38 @@ const FeedPage = () => {
     const slide = slideByPost[post.id] || 0;
     const liked = likedPosts.has(post.id);
     const shared = sharedPosts.has(post.id);
-    const authorName = post.author?.name || 'Usuário';
-    const authorHandle = post.author?.username ? `@${post.author.username.replace(/^@/, '')}` : 'perfil sem @';
+    const authorName = post.author?.name || _tr("Usuário");
+    const authorHandle = post.author?.username ? `@${post.author.username.replace(/^@/, '')}` : _tr("perfil sem @");
     return <article key={post.id} className="feed-post">
       <div className="feed-post-head">
         <Link to={profilePath(post.author)} className="feed-post-author"><Avatar user={post.author} className="feed-avatar" /></Link>
         <Link to={profilePath(post.author)} className="min-w-0 feed-post-author-copy"><strong>{authorHandle}</strong><span>{authorName} · {post.createdAt ? formatDistanceToNow(new Date(post.createdAt), { locale: language === 'pt-BR' ? ptBR : undefined, addSuffix: true }) : t('now')}</span></Link>
         <div className="relative flex items-center gap-1">
-          <button type="button" className="feed-more" aria-label="Mais opções" onClick={() => setOpenMenu((current) => current === post.id ? null : post.id)}><Ellipsis size={18} /></button>
+          <button type="button" className="feed-more" aria-label={_tr("Mais opções")} onClick={() => setOpenMenu((current) => current === post.id ? null : post.id)}><Ellipsis size={18} /></button>
               {openMenu === post.id && <div className="feed-post-menu" role="menu">
-            {(post.author?.id === user?.id || user?.role === 'admin') && <button type="button" onClick={() => { startEditing(post); setOpenMenu(null); }}><Ellipsis size={14} /> Editar publicação</button>}
-            {(post.author?.id === user?.id || user?.role === 'admin') && <button type="button" onClick={() => { setOpenMenu(null); deletePost(post); }}><Trash2 size={14} /> Apagar publicação</button>}
-            <button type="button" onClick={() => toggleSaved(post)}><Bookmark size={14} /> {savedPosts.some((item) => item.id === post.id) ? 'Remover dos salvos' : 'Salvar publicação'}</button>
-            <button type="button" onClick={() => copyPostLink(post)}><Copy size={14} /> Copiar link</button>
-            <button type="button" onClick={() => sharePost(post)}><Share2 size={14} /> Compartilhar publicação</button>
-            <button type="button" onClick={() => { setOpenMenu(null); navigate(`/problem/${post.id}`); }}><Check size={14} /> Ver detalhes</button>
-            <button type="button" onClick={() => { setOpenMenu(null); toast.info('Obrigado. A denúncia será analisada.'); }}><Flag size={14} /> Denunciar</button>
+            {(post.author?.id === user?.id || user?.role === 'admin') && <button type="button" onClick={() => { startEditing(post); setOpenMenu(null); }}><Ellipsis size={14} /> {_tr("Editar publicação")}</button>}
+            {(post.author?.id === user?.id || user?.role === 'admin') && <button type="button" onClick={() => { setOpenMenu(null); deletePost(post); }}><Trash2 size={14} /> {_tr("Apagar publicação")}</button>}
+            <button type="button" onClick={() => toggleSaved(post)}><Bookmark size={14} /> {savedPosts.some((item) => item.id === post.id) ? _tr("Remover dos salvos") : _tr("Salvar publicação")}</button>
+            <button type="button" onClick={() => copyPostLink(post)}><Copy size={14} /> {_tr("Copiar link")}</button>
+            <button type="button" onClick={() => sharePost(post)}><Share2 size={14} /> {_tr("Compartilhar publicação")}</button>
+            <button type="button" onClick={() => { setOpenMenu(null); navigate(`/problem/${post.id}`); }}><Check size={14} /> {_tr("Ver detalhes")}</button>
+            <button type="button" onClick={() => { setOpenMenu(null); toast.info(_tr("Obrigado. A denúncia será analisada.")); }}><Flag size={14} /> {_tr("Denunciar")}</button>
           </div>}
         </div>
       </div>
       <Link to={`/problem/${post.id}`} className="block">
-        <div className="feed-post-copy"><span className="feed-category">{post.category?.name || t('noCategory')}</span><h2>{post.title}{post.isEdited && <small className="ml-2 text-xs text-white/45">(editado)</small>}</h2><p>{post.description}</p><span className="feed-location"><MapPin size={13} />{post.address || t('locationOnMap')}</span></div>
+        <div className="feed-post-copy"><span className="feed-category">{post.category?.name || t('noCategory')}</span><h2>{post.title}{post.isEdited && <small className="ml-2 text-xs text-white/45">{_tr("(editado)")}</small>}</h2><p>{post.description}</p><span className="feed-location"><MapPin size={13} />{post.address || t('locationOnMap')}</span></div>
         <div className="feed-media" style={{ aspectRatio: images.length ? (images[slide].proporcao === '16:9' ? '16 / 9' : images[slide].proporcao === '9:16' ? '9 / 16' : images[slide].proporcao === '4:5' ? '4 / 5' : images[slide].proporcao === '5:4' ? '5 / 4' : '1 / 1') : '1.85 / 1' }}>
           {images.length > 0 ? <button type="button" className="block h-full w-full" style={{ aspectRatio: images[slide].proporcao === '16:9' ? '16 / 9' : images[slide].proporcao === '9:16' ? '9 / 16' : images[slide].proporcao === '4:5' ? '4 / 5' : images[slide].proporcao === '5:4' ? '5 / 4' : '1 / 1' }} onClick={(event) => { event.preventDefault(); setLightboxImage(mediaUrl(images[slide].url)); }}><img src={mediaUrl(images[slide].url)} alt={post.title} /></button> : <div className="feed-media-placeholder"><span>Voz Urbana</span><strong>{post.title}</strong><small>{statusLabels[post.status] || post.status}</small></div>}
-          {images.length > 1 && <><button type="button" onClick={(event) => { event.preventDefault(); changeSlide(post.id, -1, images.length); }} className="feed-slide feed-slide-left" aria-label="Imagem anterior"><ChevronLeft size={20} /></button><button type="button" onClick={(event) => { event.preventDefault(); changeSlide(post.id, 1, images.length); }} className="feed-slide feed-slide-right" aria-label="Próxima imagem"><ChevronRight size={20} /></button><div className="feed-dots">{images.map((image, index) => <span key={image.id || index} className={index === slide ? 'is-current' : ''} />)}</div></>}
+          {images.length > 1 && <><button type="button" onClick={(event) => { event.preventDefault(); changeSlide(post.id, -1, images.length); }} className="feed-slide feed-slide-left" aria-label={_tr("Imagem anterior")}><ChevronLeft size={20} /></button><button type="button" onClick={(event) => { event.preventDefault(); changeSlide(post.id, 1, images.length); }} className="feed-slide feed-slide-right" aria-label={_tr("Próxima imagem")}><ChevronRight size={20} /></button><div className="feed-dots">{images.map((image, index) => <span key={image.id || index} className={index === slide ? 'is-current' : ''} />)}</div></>}
         </div>
       </Link>
       <div className="feed-post-actions">
-        <FeedAction active={liked} asset="curtir" label="Curtir ocorrência" count={`${post.votes || 0} apoios`} onClick={() => handleVote(post)} disabled={votingPost === post.id} />
-        <FeedAction asset="comentar" label="Comentar ocorrência" count="Comentar" onClick={() => navigate(`/problem/${post.id}#comments`)} />
-        <FeedAction active={shared} asset="republicar" label="Republicar ocorrência" count="Republicar" onClick={() => toggleShare(post)} />
-        <button type="button" className="feed-action-icon" aria-label="Enviar mensagem"><img src={actionAsset('mensagem')} alt="" /></button>
-        <Link to={`/problem/${post.id}`} className="ml-auto feed-bookmark" aria-label="Abrir ocorrência"><MessageCircle size={17} /></Link>
+        <FeedAction active={liked} asset="curtir" label={_tr("Curtir ocorrência")} count={`${post.votes || 0} apoios`} onClick={() => handleVote(post)} disabled={votingPost === post.id} />
+        <FeedAction asset="comentar" label={_tr("Comentar ocorrência")} count={_tr("Comentar")} onClick={() => navigate(`/problem/${post.id}#comments`)} />
+        <FeedAction active={shared} asset="republicar" label={_tr("Republicar ocorrência")} count="Republicar" onClick={() => toggleShare(post)} />
+        <button type="button" className="feed-action-icon" aria-label={_tr("Enviar mensagem")}><img src={actionAsset('mensagem')} alt="" /></button>
+        <Link to={`/problem/${post.id}`} className="ml-auto feed-bookmark" aria-label={_tr("Abrir ocorrência")}><MessageCircle size={17} /></Link>
       </div>
     </article>;
   };
@@ -651,35 +653,35 @@ const FeedPage = () => {
       <button type="button" onClick={() => selectTab('create')} className="feed-report-button"><Plus size={15} /> <span>{t('reportProblem')}</span></button>
     </FeedHeader>
     <section id="search" className="feed-filters">
-      <label className="feed-search"><Search size={16} /><input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Buscar no feed..." /></label>
-      <FloatingSelect value={status} onChange={(value) => { setStatus(value); setPage(1); }} options={[{ value: '', label: 'Todos os status' }, { value: 'ABERTO', label: t('openStatus') }, { value: 'EM_ANDAMENTO', label: t('progressStatus') }, { value: 'RESOLVIDO', label: t('resolvedStatus') }]} />
-      <FloatingSelect value={category} onChange={(value) => { setCategory(value); setPage(1); }} options={[{ value: '', label: categoryError ? 'Categorias indisponíveis' : 'Todas as categorias' }, ...categories.map((item) => ({ value: item.id, label: item.name }))]} />
-      <FloatingSelect value={sort} onChange={(value) => { setSort(value); setPage(1); }} options={[{ value: 'recent', label: 'Ocorrências recentes' }, { value: 'votes', label: 'Mais apoiadas' }]} />
+      <label className="feed-search"><Search size={16} /><input value={search} onChange={(event) => setSearch(event.target.value)} placeholder={_tr("Buscar no feed...")} /></label>
+      <FloatingSelect value={status} onChange={(value) => { setStatus(value); setPage(1); }} options={[{ value: '', label: _tr("Todos os status") }, { value: 'ABERTO', label: t('openStatus') }, { value: 'EM_ANDAMENTO', label: t('progressStatus') }, { value: 'RESOLVIDO', label: t('resolvedStatus') }]} />
+      <FloatingSelect value={category} onChange={(value) => { setCategory(value); setPage(1); }} options={[{ value: '', label: categoryError ? _tr("Categorias indisponíveis") : _tr("Todas as categorias") }, ...categories.map((item) => ({ value: item.id, label: item.name }))]} />
+      <FloatingSelect value={sort} onChange={(value) => { setSort(value); setPage(1); }} options={[{ value: 'recent', label: _tr("Ocorrências recentes") }, { value: 'votes', label: _tr("Mais apoiadas") }]} />
     </section>
-    {feedError && <div className="feed-empty" role="alert">Não foi possível consultar as publicações. Isso não significa que foram apagadas.<button type="button" onClick={loadFeed}>Tentar novamente</button></div>}
+    {feedError && <div className="feed-empty" role="alert">{_tr("Não foi possível consultar as publicações. Isso não significa que foram apagadas.")}<button type="button" onClick={loadFeed}>{_tr("Tentar novamente")}</button></div>}
     {loading ? <div className="feed-empty">{t('loadingPosts')}</div> : feedError && filteredPosts.length === 0 ? null : filteredPosts.length === 0 ? <div className="feed-empty"><ImageIcon size={30} />{t('noPosts')}</div> : <div className="space-y-5">{filteredPosts.map(renderPost)}</div>}
-    <footer className="feed-pagination"><span>{total} publicações</span><div><button type="button" disabled={page <= 1} onClick={() => setPage((value) => value - 1)}><ChevronLeft size={16} /></button><span>{page}</span><button type="button" disabled={page * 9 >= total} onClick={() => setPage((value) => value + 1)}><ChevronRight size={16} /></button></div></footer>
+    <footer className="feed-pagination"><span>{total} {_tr("publicações")}</span><div><button type="button" disabled={page <= 1} onClick={() => setPage((value) => value - 1)}><ChevronLeft size={16} /></button><span>{page}</span><button type="button" disabled={page * 9 >= total} onClick={() => setPage((value) => value + 1)}><ChevronRight size={16} /></button></div></footer>
   </>;
 
   const renderConversations = () => <>
     <FeedHeader title={t('conversationsTitle')} description="Troque mensagens com pessoas que também cuidam da cidade." />
     <div className="feed-dm-shell">
       <div className="feed-dm-list">
-        <div className="feed-dm-list-head"><strong>Mensagens</strong><button type="button" aria-label="Nova conversa"><Plus size={17} /></button></div>
-        {conversations.length === 0 ? <div className="feed-empty">Adicione e confirme uma amizade para iniciar conversas.</div> : conversations.map((conversation) => <button key={conversation.id} type="button" className={`feed-dm-contact ${selectedConversation?.id === conversation.id ? 'is-selected' : ''}`} onClick={async () => { setSelectedConversation(conversation); const response = await conversationsAPI.messages(conversation.id); setMessages(response.data || []); }}><Avatar user={conversation.amigo} /><span><strong>{conversation.amigo?.nome}</strong><small>{conversation.ultimaMensagem?.texto || 'Nenhuma mensagem ainda'}</small></span></button>)}
+        <div className="feed-dm-list-head"><strong>{_tr("Mensagens")}</strong><button type="button" aria-label={_tr("Nova conversa")}><Plus size={17} /></button></div>
+        {conversations.length === 0 ? <div className="feed-empty">{_tr("Adicione e confirme uma amizade para iniciar conversas.")}</div> : conversations.map((conversation) => <button key={conversation.id} type="button" className={`feed-dm-contact ${selectedConversation?.id === conversation.id ? 'is-selected' : ''}`} onClick={async () => { setSelectedConversation(conversation); const response = await conversationsAPI.messages(conversation.id); setMessages(response.data || []); }}><Avatar user={conversation.amigo} /><span><strong>{conversation.amigo?.nome}</strong><small>{conversation.ultimaMensagem?.texto || _tr("Nenhuma mensagem ainda")}</small></span></button>)}
       </div>
-      <div className="feed-dm-thread"><div className="feed-dm-thread-head"><Avatar user={selectedConversation?.amigo} /><div><strong>{selectedConversation?.amigo?.nome || 'Nenhuma conversa selecionada'}</strong><small>{selectedConversation ? 'Amizade confirmada' : 'Confirme uma amizade para conversar.'}</small></div></div><div className="feed-dm-messages">{messages.length ? messages.map((message) => <div key={message.id} className={`feed-message ${message.remetenteId === user?.id ? 'is-own' : ''}`}><span>{message.texto}</span><small>{new Date(message.criadaEm).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</small></div>) : <div className="feed-empty">Nenhuma mensagem.</div>}</div><form onSubmit={sendMessage} className="feed-dm-compose"><input value={messageText} onChange={(event) => setMessageText(event.target.value)} placeholder={selectedConversation ? 'Escreva uma mensagem...' : 'Mensagens disponíveis para amigos confirmados.'} disabled={!selectedConversation} /><button type="submit" aria-label="Enviar mensagem" disabled={!selectedConversation}><Send size={17} /></button></form></div>
+      <div className="feed-dm-thread"><div className="feed-dm-thread-head"><Avatar user={selectedConversation?.amigo} /><div><strong>{selectedConversation?.amigo?.nome || _tr("Nenhuma conversa selecionada")}</strong><small>{selectedConversation ? _tr("Amizade confirmada") : _tr("Confirme uma amizade para conversar.")}</small></div></div><div className="feed-dm-messages">{messages.length ? messages.map((message) => <div key={message.id} className={`feed-message ${message.remetenteId === user?.id ? 'is-own' : ''}`}><span>{message.texto}</span><small>{new Date(message.criadaEm).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</small></div>) : <div className="feed-empty">{_tr("Nenhuma mensagem.")}</div>}</div><form onSubmit={sendMessage} className="feed-dm-compose"><input value={messageText} onChange={(event) => setMessageText(event.target.value)} placeholder={selectedConversation ? _tr("Escreva uma mensagem...") : _tr("Mensagens disponíveis para amigos confirmados.")} disabled={!selectedConversation} /><button type="submit" aria-label={_tr("Enviar mensagem")} disabled={!selectedConversation}><Send size={17} /></button></form></div>
     </div>
   </>;
 
   const renderSearch = () => <>
     <FeedHeader title={t('searchTitle')} description="Encontre locais, pessoas, ambientes e problemas publicados na cidade." />
-    <div className="feed-discovery-search"><Search size={20} /><input autoFocus value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Busque por rua, usuário, categoria ou problema..." /></div>
+    <div className="feed-discovery-search"><Search size={20} /><input autoFocus value={search} onChange={(event) => setSearch(event.target.value)} placeholder={_tr("Busque por rua, usuário, categoria ou problema...")} /></div>
     <div className="feed-search-section">
-      <div className="feed-section-label"><Users size={15} /> Pessoas</div>
-      {search.trim().replace(/^@+/, '').length < 2 ? <p className="feed-search-empty">Digite pelo menos 2 caracteres para buscar pessoas.</p> : peopleSearchError ? <p className="feed-search-empty" role="alert">Não foi possível consultar as pessoas. Verifique sua conexão e tente novamente.</p> : loadingUsers ? <p className="feed-search-empty">Buscando pessoas...</p> : userResults.length === 0 ? <p className="feed-search-empty">Nenhuma pessoa encontrada.</p> : userResults.map((person) => {
+      <div className="feed-section-label"><Users size={15} /> {_tr("Pessoas")}</div>
+      {search.trim().replace(/^@+/, '').length < 2 ? <p className="feed-search-empty">{_tr("Digite pelo menos 2 caracteres para buscar pessoas.")}</p> : peopleSearchError ? <p className="feed-search-empty" role="alert">{_tr("Não foi possível consultar as pessoas. Verifique sua conexão e tente novamente.")}</p> : loadingUsers ? <p className="feed-search-empty">{_tr("Buscando pessoas...")}</p> : userResults.length === 0 ? <p className="feed-search-empty">{_tr("Nenhuma pessoa encontrada.")}</p> : userResults.map((person) => {
         const relation = friendships[person.id];
-        const relationLabel = relation?.status === 'ACEITA' ? 'Amigos' : relation?.status === 'PENDENTE' && relation.destinatarioId === user?.id ? 'Aceitar' : relation?.status === 'PENDENTE' ? 'Solicitação enviada' : 'Adicionar';
+        const relationLabel = relation?.status === 'ACEITA' ? _tr("Amigos") : relation?.status === 'PENDENTE' && relation.destinatarioId === user?.id ? _tr("Aceitar") : relation?.status === 'PENDENTE' ? _tr("Solicitação enviada") : _tr("Adicionar");
         return <div key={person.id} className="feed-search-person">
           <div className="feed-search-person-main">
             <Link to={profilePath(person)} className="feed-search-person-main">
@@ -690,53 +692,53 @@ const FeedPage = () => {
           {user && person.id !== user.id && <button type="button" onClick={() => changeFriendship(person)} onMouseEnter={() => loadFriendship(person.id)}>{relationLabel}</button>}
         </div>;
       })}
-      {peopleTotal > 12 && <nav className="flex items-center justify-between gap-3" aria-label="Páginas de pessoas"><button type="button" disabled={loadingUsers || peoplePage === 1} onClick={() => setPeoplePage(current => current - 1)}>Anterior</button><span>Página {peoplePage} de {Math.ceil(peopleTotal / 12)}</span><button type="button" disabled={loadingUsers || peoplePage * 12 >= peopleTotal} onClick={() => setPeoplePage(current => current + 1)}>Próxima</button></nav>}
-      <div className="feed-section-label"><MapPin size={15} /> Ocorrências e locais</div>{filteredPosts.length === 0 ? <p className="feed-search-empty">Nenhum resultado encontrado.</p> : filteredPosts.map(renderPost)}
+      {peopleTotal > 12 && <nav className="flex items-center justify-between gap-3" aria-label={_tr("Páginas de pessoas")}><button type="button" disabled={loadingUsers || peoplePage === 1} onClick={() => setPeoplePage(current => current - 1)}>{_tr("Anterior")}</button><span>{_tr("Página")} {peoplePage} {_tr("de")} {Math.ceil(peopleTotal / 12)}</span><button type="button" disabled={loadingUsers || peoplePage * 12 >= peopleTotal} onClick={() => setPeoplePage(current => current + 1)}>{_tr("Próxima")}</button></nav>}
+      <div className="feed-section-label"><MapPin size={15} /> {_tr("Ocorrências e locais")}</div>{filteredPosts.length === 0 ? <p className="feed-search-empty">{_tr("Nenhum resultado encontrado.")}</p> : filteredPosts.map(renderPost)}
     </div>
   </>;
 
   const renderNotifications = () => <>
-    <FeedHeader title={t('notifications')} description="Acompanhe respostas, apoios e novidades sobre os seus relatos."><button type="button" onClick={markNotificationsRead} className="feed-secondary-button">Marcar tudo como lido</button></FeedHeader>
+    <FeedHeader title={t('notifications')} description="Acompanhe respostas, apoios e novidades sobre os seus relatos."><button type="button" onClick={markNotificationsRead} className="feed-secondary-button">{_tr("Marcar tudo como lido")}</button></FeedHeader>
     <div className="feed-notification-balloon">
-      <div className="feed-notification-head"><span><Bell size={17} /> Sua atividade</span><strong>{notifications.filter((item) => !item.lida).length} novas</strong></div>
-      {loadingNotifications ? <div className="feed-empty">Carregando notificações...</div> : notifications.length === 0 ? <div className="feed-notification-empty"><Bell size={30} /><strong>Nenhuma notificação por enquanto</strong><span>Quando a comunidade interagir com seus relatos, elas aparecerão aqui.</span></div> : notifications.map((item) => <div key={item.id} className={`feed-notification ${item.lida ? '' : 'is-unread'}`}><span className="feed-notification-icon"><Bell size={15} /></span><div><strong>{item.titulo}</strong><p>{item.mensagem}</p><small>{item.dataCriacao ? formatDistanceToNow(new Date(item.dataCriacao), { locale: ptBR, addSuffix: true }) : 'agora'}</small></div></div>)}
+      <div className="feed-notification-head"><span><Bell size={17} /> {_tr("Sua atividade")}</span><strong>{notifications.filter((item) => !item.lida).length} {_tr("novas")}</strong></div>
+      {loadingNotifications ? <div className="feed-empty">{_tr("Carregando notificações...")}</div> : notifications.length === 0 ? <div className="feed-notification-empty"><Bell size={30} /><strong>{_tr("Nenhuma notificação por enquanto")}</strong><span>{_tr("Quando a comunidade interagir com seus relatos, elas aparecerão aqui.")}</span></div> : notifications.map((item) => <div key={item.id} className={`feed-notification ${item.lida ? '' : 'is-unread'}`}><span className="feed-notification-icon"><Bell size={15} /></span><div><strong>{item.titulo}</strong><p>{item.mensagem}</p><small>{item.dataCriacao ? formatDistanceToNow(new Date(item.dataCriacao), { locale: ptBR, addSuffix: true }) : _tr("agora")}</small></div></div>)}
     </div>
   </>;
 
   const renderSaved = () => <>
-    <FeedHeader title="Publicações salvas" description="Acesse rapidamente os relatos que você escolheu acompanhar." />
-    {savedPosts.length ? <div className="space-y-5">{savedPosts.map(renderPost)}</div> : <div className="feed-empty"><Bookmark size={30} />Nenhuma publicação salva.</div>}
+    <FeedHeader title={_tr("Publicações salvas")} description="Acesse rapidamente os relatos que você escolheu acompanhar." />
+    {savedPosts.length ? <div className="space-y-5">{savedPosts.map(renderPost)}</div> : <div className="feed-empty"><Bookmark size={30} />{_tr("Nenhuma publicação salva.")}</div>}
   </>;
 
   const renderCreate = () => <>
     <FeedHeader title={t('createPostTitle')} description="Registre um problema urbano e coloque a sua comunidade em movimento." />
     <form onSubmit={handleCreate} className="feed-create-form">
-      <div className="feed-create-intro"><span className="feed-avatar"><Plus size={18} /></span><div><strong>Nova identificação urbana</strong><small>Compartilhe o que precisa mudar perto de você.</small></div></div>
-      <label>Categoria<FloatingSelect value={createForm.categoryId} onChange={(value) => setCreateForm((current) => ({ ...current, categoryId: value }))} options={[{ value: '', label: categoryError ? 'Categorias indisponíveis' : 'Selecione uma categoria' }, ...categories.map((item) => ({ value: item.id, label: item.name }))]} /></label>
-      <label>Título<input name="title" value={createForm.title} onChange={updateCreateForm} placeholder="Ex: Buraco na rua principal" required /></label>
-      <label>Descrição<textarea name="description" value={createForm.description} onChange={updateCreateForm} placeholder="Descreva o que está acontecendo..." rows="5" required /></label>
+      <div className="feed-create-intro"><span className="feed-avatar"><Plus size={18} /></span><div><strong>{_tr("Nova identificação urbana")}</strong><small>{_tr("Compartilhe o que precisa mudar perto de você.")}</small></div></div>
+      <label>{_tr("Categoria")}<FloatingSelect value={createForm.categoryId} onChange={(value) => setCreateForm((current) => ({ ...current, categoryId: value }))} options={[{ value: '', label: categoryError ? _tr("Categorias indisponíveis") : _tr("Selecione uma categoria") }, ...categories.map((item) => ({ value: item.id, label: item.name }))]} /></label>
+      <label>{_tr("Título")}<input name="title" value={createForm.title} onChange={updateCreateForm} placeholder={_tr("Ex: Buraco na rua principal")} required /></label>
+      <label>{_tr("Descrição")}<textarea name="description" value={createForm.description} onChange={updateCreateForm} placeholder={_tr("Descreva o que está acontecendo...")} rows="5" required /></label>
       <fieldset className="feed-fieldset">
-        <legend>Endereço</legend>
+        <legend>{_tr("Endereço")}</legend>
         <div className="feed-address-grid">
-          <label className="feed-address-street">Rua<input name="street" value={createForm.street} onChange={updateCreateForm} placeholder="Nome da rua" /></label>
-          <label>Número<input name="number" value={createForm.number} onChange={updateCreateForm} placeholder="Nº" /></label>
-          <label>Bairro<input name="neighborhood" value={createForm.neighborhood} onChange={updateCreateForm} placeholder="Bairro" /></label>
-          <label>Complemento<input name="complemento" value={createForm.complemento} onChange={updateCreateForm} placeholder="Apto, referência..." /></label>
-              <label>CEP<div className="relative"><input name="cep" value={createForm.cep} onChange={(event) => setCreateForm((current) => ({ ...current, cep: formatCep(event.target.value) }))} placeholder="00000-000" inputMode="numeric" />{loadingCep && <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-violet-200">...</span>}</div></label>
-              <label>Cidade<FloatingSelect value={createForm.city} onChange={(value) => setCreateForm((current) => ({ ...current, city: value }))} options={[{ value: '', label: loadingCities ? t('loadingCities') : t('selectCity') }, ...cities]} /></label>
-              <label>Estado<FloatingSelect value={createForm.state} onChange={(value) => setCreateForm((current) => ({ ...current, state: value, city: '' }))} options={[{ value: '', label: t('selectState') }, ...brazilStates]} /></label>
+          <label className="feed-address-street">{_tr("Rua")}<input name="street" value={createForm.street} onChange={updateCreateForm} placeholder={_tr("Nome da rua")} /></label>
+          <label>{_tr("Número")}<input name="number" value={createForm.number} onChange={updateCreateForm} placeholder={_tr("Nº")} /></label>
+          <label>{_tr("Bairro")}<input name="neighborhood" value={createForm.neighborhood} onChange={updateCreateForm} placeholder={_tr("Bairro")} /></label>
+          <label>{_tr("Complemento")}<input name="complemento" value={createForm.complemento} onChange={updateCreateForm} placeholder={_tr("Apto, referência...")} /></label>
+              <label>{_tr("CEP")}<div className="relative"><input name="cep" value={createForm.cep} onChange={(event) => setCreateForm((current) => ({ ...current, cep: formatCep(event.target.value) }))} placeholder="00000-000" inputMode="numeric" />{loadingCep && <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-violet-200">...</span>}</div></label>
+              <label>{_tr("Cidade")}<FloatingSelect value={createForm.city} onChange={(value) => setCreateForm((current) => ({ ...current, city: value }))} options={[{ value: '', label: loadingCities ? t('loadingCities') : t('selectCity') }, ...cities]} /></label>
+              <label>{_tr("Estado")}<FloatingSelect value={createForm.state} onChange={(value) => setCreateForm((current) => ({ ...current, state: value, city: '' }))} options={[{ value: '', label: t('selectState') }, ...brazilStates]} /></label>
         </div>
       </fieldset>
       <fieldset className="feed-fieldset">
-        <legend>Quando aconteceu?</legend>
+        <legend>{_tr("Quando aconteceu?")}</legend>
         <div className="feed-datetime-grid">
-          <label>Data<FloatingDatePicker value={createForm.occurrenceDate} onChange={(value) => setCreateForm((current) => ({ ...current, occurrenceDate: value }))} /></label>
-          <label>Hora<FloatingTimePicker value={createForm.occurrenceTime} onChange={(value) => setCreateForm((current) => ({ ...current, occurrenceTime: value }))} /></label>
+          <label>{_tr("Data")}<FloatingDatePicker value={createForm.occurrenceDate} onChange={(value) => setCreateForm((current) => ({ ...current, occurrenceDate: value }))} /></label>
+          <label>{_tr("Hora")}<FloatingTimePicker value={createForm.occurrenceTime} onChange={(value) => setCreateForm((current) => ({ ...current, occurrenceTime: value }))} /></label>
         </div>
       </fieldset>
-      <UploadField accept={IMAGE_TYPES.join(',')} multiple files={createImages} maxFiles={MAX_IMAGE_COUNT} maxSizeMb={5} label="Adicionar fotos" onChange={handleCreateImages} />
+      <UploadField accept={IMAGE_TYPES.join(',')} multiple files={createImages} maxFiles={MAX_IMAGE_COUNT} maxSizeMb={5} label={_tr("Adicionar fotos")} onChange={handleCreateImages} />
       {createImages.length > 0 && <div className="grid grid-cols-4 gap-2">{createImages.map((file, index) => <div key={`${file.name}-${index}`} className="relative"><img src={URL.createObjectURL(file)} alt="" className="h-20 w-full rounded object-cover" /><button type="button" onClick={() => setCreateImages((current) => current.filter((_, imageIndex) => imageIndex !== index))} className="absolute right-1 top-1">×</button></div>)}</div>}
-      <button type="submit" disabled={creating} className="feed-create-submit"><Send size={16} /> {creating ? 'Publicando...' : 'Publicar identificação'}</button>
+      <button type="submit" disabled={creating} className="feed-create-submit"><Send size={16} /> {creating ? 'Publicando...' : _tr("Publicar identificação")}</button>
     </form>
   </>;
 
@@ -751,32 +753,32 @@ const FeedPage = () => {
           <nav className="mt-14 space-y-2">{navItems.map((item) => { const Icon = item.icon; return <button type="button" key={item.key} onClick={() => selectTab(item.key)} className={`feed-nav-item ${activeTab === item.key ? 'is-active' : ''}`}><Icon className="feed-nav-icon" size={29} strokeWidth={1.8} /><span>{t(item.label)}</span></button>; })}</nav>
           <Link to={profilePath(user)} className="feed-profile mt-auto"><Avatar user={user} /><small>{displayName}</small><span className="feed-profile-edit">&#9998;</span></Link>
         </aside>
-        <nav className="feed-mobile-nav lg:hidden" aria-label="Navegação do feed">{navItems.map((item) => { const Icon = item.icon; return <button type="button" key={item.key} onClick={() => selectTab(item.key)} className={activeTab === item.key ? 'is-active' : ''}><Icon size={18} /><span>{t(item.label)}</span></button>; })}</nav>
+        <nav className="feed-mobile-nav lg:hidden" aria-label={_tr("Navegação do feed")}>{navItems.map((item) => { const Icon = item.icon; return <button type="button" key={item.key} onClick={() => selectTab(item.key)} className={activeTab === item.key ? 'is-active' : ''}><Icon size={18} /><span>{t(item.label)}</span></button>; })}</nav>
         <section className="feed-main">{renderTab()}</section>
-        <aside className="feed-aside hidden xl:block"><div className="feed-aside-head"><span>Para seguir</span><Users size={17} /></div><div className="feed-empty">Pesquise pessoas para encontrar conexões reais.</div><div className="feed-aside-links">Sobre · Ajuda · Imprensa · API · Carreiras<br />Termos · Localizações · Idioma</div><div className="feed-aside-note"><Bell size={15} /> Comunidade conectada</div></aside>
+        <aside className="feed-aside hidden xl:block"><div className="feed-aside-head"><span>{_tr("Para seguir")}</span><Users size={17} /></div><div className="feed-empty">{_tr("Pesquise pessoas para encontrar conexões reais.")}</div><div className="feed-aside-links">{_tr("Sobre · Ajuda · Imprensa · API · Carreiras")}<br />{_tr("Termos · Localizações · Idioma")}</div><div className="feed-aside-note"><Bell size={15} /> {_tr("Comunidade conectada")}</div></aside>
       </div>
-      {editingPost && <div className="context-modal fixed inset-0 z-[1400] grid place-items-center bg-black/70 p-4" role="dialog" aria-modal="true" aria-label="Editar publicação">
+      {editingPost && <div className="context-modal fixed inset-0 z-[1400] grid place-items-center bg-black/70 p-4" role="dialog" aria-modal="true" aria-label={_tr("Editar publicação")}>
         <form onSubmit={saveEdit} className="context-scroll site-panel max-h-[90vh] w-full max-w-2xl space-y-4 overflow-auto rounded-2xl p-6">
-          <div className="flex items-center justify-between"><h2 className="text-xl font-bold">{t('editPostTitle')}</h2><button type="button" onClick={() => setEditingPost(null)} aria-label="Fechar">×</button></div>
+          <div className="flex items-center justify-between"><h2 className="text-xl font-bold">{t('editPostTitle')}</h2><button type="button" onClick={() => setEditingPost(null)} aria-label={_tr("Fechar")}>×</button></div>
           <input value={editingPost.title} onChange={(event) => setEditingPost((current) => ({ ...current, title: event.target.value }))} required className="site-form-input w-full rounded p-3" />
           <textarea value={editingPost.description} onChange={(event) => setEditingPost((current) => ({ ...current, description: event.target.value }))} required rows="5" className="site-form-input w-full rounded p-3" />
           <div className="grid gap-3 sm:grid-cols-2">
-            <input value={editingPost.street || ''} onChange={(event) => setEditingPost((current) => ({ ...current, street: event.target.value }))} className="site-form-input w-full rounded p-3" placeholder="Rua ou logradouro" />
-            <input value={editingPost.number || ''} onChange={(event) => setEditingPost((current) => ({ ...current, number: event.target.value }))} className="site-form-input w-full rounded p-3" placeholder="Número" />
-            <input value={editingPost.neighborhood || ''} onChange={(event) => setEditingPost((current) => ({ ...current, neighborhood: event.target.value }))} className="site-form-input w-full rounded p-3" placeholder="Bairro" />
-            <input value={editingPost.complemento || ''} onChange={(event) => setEditingPost((current) => ({ ...current, complemento: event.target.value }))} className="site-form-input w-full rounded p-3" placeholder="Complemento" />
-            <input value={editingPost.cep || ''} onChange={(event) => setEditingPost((current) => ({ ...current, cep: event.target.value }))} className="site-form-input w-full rounded p-3" placeholder="CEP" />
-            <input value={editingPost.city || ''} onChange={(event) => setEditingPost((current) => ({ ...current, city: event.target.value }))} className="site-form-input w-full rounded p-3" placeholder="Cidade" />
-            <input value={editingPost.state || ''} onChange={(event) => setEditingPost((current) => ({ ...current, state: event.target.value }))} className="site-form-input w-full rounded p-3" placeholder="Estado" />
+            <input value={editingPost.street || ''} onChange={(event) => setEditingPost((current) => ({ ...current, street: event.target.value }))} className="site-form-input w-full rounded p-3" placeholder={_tr("Rua ou logradouro")} />
+            <input value={editingPost.number || ''} onChange={(event) => setEditingPost((current) => ({ ...current, number: event.target.value }))} className="site-form-input w-full rounded p-3" placeholder={_tr("Número")} />
+            <input value={editingPost.neighborhood || ''} onChange={(event) => setEditingPost((current) => ({ ...current, neighborhood: event.target.value }))} className="site-form-input w-full rounded p-3" placeholder={_tr("Bairro")} />
+            <input value={editingPost.complemento || ''} onChange={(event) => setEditingPost((current) => ({ ...current, complemento: event.target.value }))} className="site-form-input w-full rounded p-3" placeholder={_tr("Complemento")} />
+            <input value={editingPost.cep || ''} onChange={(event) => setEditingPost((current) => ({ ...current, cep: event.target.value }))} className="site-form-input w-full rounded p-3" placeholder={_tr("CEP")} />
+            <input value={editingPost.city || ''} onChange={(event) => setEditingPost((current) => ({ ...current, city: event.target.value }))} className="site-form-input w-full rounded p-3" placeholder={_tr("Cidade")} />
+            <input value={editingPost.state || ''} onChange={(event) => setEditingPost((current) => ({ ...current, state: event.target.value }))} className="site-form-input w-full rounded p-3" placeholder={_tr("Estado")} />
           </div>
-          <input value={editingPost.address || ''} onChange={(event) => setEditingPost((current) => ({ ...current, address: event.target.value }))} className="site-form-input w-full rounded p-3" placeholder="Endereço completo (opcional)" />
+          <input value={editingPost.address || ''} onChange={(event) => setEditingPost((current) => ({ ...current, address: event.target.value }))} className="site-form-input w-full rounded p-3" placeholder={_tr("Endereço completo (opcional)")} />
           <FloatingSelect value={editingPost.categoryId} onChange={(value) => setEditingPost((current) => ({ ...current, categoryId: value }))} options={categories.map((item) => ({ value: item.id, label: item.name }))} />
           <div className="grid grid-cols-4 gap-2">{(editingPost.images || []).filter((image) => !removedEditImages.includes(image.id)).map((image) => <div key={image.id} className="relative"><img src={mediaUrl(image.url)} alt="" className="h-20 w-full rounded object-cover" /><button type="button" onClick={() => setRemovedEditImages((current) => [...current, image.id])} className="absolute right-1 top-1">×</button></div>)}</div>
-          <UploadField accept={IMAGE_TYPES.join(',')} multiple files={editImages} maxFiles={MAX_IMAGE_COUNT} maxSizeMb={5} label="Adicionar fotos" onChange={(event) => { try { const selected = validateImages(event.target.files, (editingPost.images || []).length - removedEditImages.length + editImages.length); if (selected.length) { setCropTarget('edit'); setCropFile(selected[0]); setCropQueue(selected.slice(1)); } } catch (error) { toast.error(error.message); } }} />
-          <div className="flex justify-end gap-3"><button type="button" onClick={() => setEditingPost(null)}>Cancelar</button><button type="submit" disabled={savingEdit} className="feed-create-submit">{savingEdit ? 'Salvando...' : 'Salvar alterações'}</button></div>
+          <UploadField accept={IMAGE_TYPES.join(',')} multiple files={editImages} maxFiles={MAX_IMAGE_COUNT} maxSizeMb={5} label={_tr("Adicionar fotos")} onChange={(event) => { try { const selected = validateImages(event.target.files, (editingPost.images || []).length - removedEditImages.length + editImages.length); if (selected.length) { setCropTarget('edit'); setCropFile(selected[0]); setCropQueue(selected.slice(1)); } } catch (error) { toast.error(error.message); } }} />
+          <div className="flex justify-end gap-3"><button type="button" onClick={() => setEditingPost(null)}>{_tr("Cancelar")}</button><button type="submit" disabled={savingEdit} className="feed-create-submit">{savingEdit ? _tr("Salvando...") : _tr("Salvar alterações")}</button></div>
         </form>
       </div>}
-      {lightboxImage && <button type="button" className="context-modal fixed inset-0 z-[1500] grid place-items-center bg-black/90 p-6" onClick={() => setLightboxImage(null)} aria-label="Fechar imagem"><img src={lightboxImage} alt="" className="max-h-full max-w-full object-contain" /></button>}
+      {lightboxImage && <button type="button" className="context-modal fixed inset-0 z-[1500] grid place-items-center bg-black/90 p-6" onClick={() => setLightboxImage(null)} aria-label={_tr("Fechar imagem")}><img src={lightboxImage} alt="" className="max-h-full max-w-full object-contain" /></button>}
       {cropFile && <ImageCropper file={cropFile} onCancel={() => { setCropFile(null); setCropQueue([]); }} onConfirm={handleCroppedImage} />}
     </main>
   );

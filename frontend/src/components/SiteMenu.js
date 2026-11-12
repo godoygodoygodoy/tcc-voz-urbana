@@ -1,3 +1,4 @@
+import { translate as _tr, useI18n as _useLocale } from '../i18n';
 import React, { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { FiCompass, FiFileText, FiHome, FiInfo, FiMail, FiMenu, FiMap, FiShield, FiX } from 'react-icons/fi';
@@ -6,6 +7,7 @@ import { useI18n } from '../i18n';
 import { useAuthStore } from '../store';
 
 const SiteMenu = () => {
+  _useLocale();
   const { t } = useI18n();
   const location = useLocation();
   const navigate = useNavigate();
@@ -30,8 +32,8 @@ const SiteMenu = () => {
     { label: t('navFeed'), href: '/feed', icon: FiFileText },
     { label: t('navAbout'), href: '/#sobre', icon: FiInfo },
     { label: t('navContact'), href: '/#contato', icon: FiMail },
-    ...(user ? [{ label: t('reportProblem'), href: '/report', icon: FiFileText }] : []),
-    ...(user?.role?.toLowerCase() === 'admin' ? [{ label: t('adminNav'), href: '/admin', icon: FiShield }] : []),
+    { label: t('reportProblem'), href: '/feed#create', icon: FiFileText, variant: 'create' },
+    ...(user?.role?.toLowerCase() === 'admin' ? [{ label: t('adminNav'), href: '/admin', icon: FiShield, variant: 'admin' }] : []),
   ];
 
   const currentIndex = items.findIndex(({ href }) => {
@@ -39,7 +41,7 @@ const SiteMenu = () => {
     if (location.pathname !== path) return false;
     return hash ? location.hash === `#${hash}` : !location.hash;
   });
-  const routeIndex = location.pathname === '/report' ? items.length : currentIndex;
+  const routeIndex = location.pathname === '/report' ? 6 : currentIndex;
   const selectedIndex = clickedIndex ?? (routeIndex >= 0 ? routeIndex : null);
   const indicatorIndex = pointerInside ? null : selectedIndex;
 
@@ -111,7 +113,7 @@ const SiteMenu = () => {
     physicsRef.current.targetY = initial.y;
     if (indicatorRef.current) indicatorRef.current.style.transform = `translate3d(${initial.x}px, ${initial.y}px, 0) translateY(-50%)`;
     return undefined;
-  }, [open, selectedIndex]);
+  }, [open, selectedIndex, t]);
 
   useEffect(() => {
     if (!open) return undefined;
@@ -150,7 +152,7 @@ const SiteMenu = () => {
       window.removeEventListener('resize', update);
       document.fonts?.removeEventListener?.('loadingdone', update);
     };
-  }, [open, pointerInside, pointerIndex, selectedIndex, items.length]);
+  }, [open, pointerInside, pointerIndex, selectedIndex, items.length, t]);
 
   const handleNavPointerMove = (event) => {
     const nav = navRef.current;
@@ -282,7 +284,7 @@ const SiteMenu = () => {
 
   return createPortal(
     <div className={`site-menu ${open ? 'is-open' : ''}`}>
-      <button type="button" className="site-menu-trigger" aria-label={open ? 'Fechar menu' : 'Abrir menu'} aria-expanded={open} onClick={() => {
+      <button type="button" className="site-menu-trigger" aria-label={open ? _tr("Fechar menu") : _tr("Abrir menu")} aria-expanded={open} onClick={() => {
         if (navigationRef.current) {
           navigationRef.current.cancelled = true;
           navigationRef.current.timers.forEach((timer) => window.clearTimeout(timer));
@@ -294,19 +296,19 @@ const SiteMenu = () => {
         <FiMenu className="site-menu-open-icon" />
         <FiX className="site-menu-close-icon" />
       </button>
-      {open && <button type="button" className="site-menu-backdrop" aria-label="Fechar menu" onClick={() => setOpen(false)} />}
+      {open && <button type="button" className="site-menu-backdrop" aria-label={_tr("Fechar menu")} onClick={() => setOpen(false)} />}
       <div className="site-menu-panel" aria-hidden={!open}>
         <div className="site-menu-panel-contours" aria-hidden="true" />
         <div className="site-menu-panel-head">
           <div>
-            <span className="site-menu-panel-kicker">NAVEGAÇÃO URBANA / 01</span>
+            <span className="site-menu-panel-kicker">{_tr("NAVEGAÇÃO URBANA / 01")}</span>
             <div className="site-menu-panel-title">Voz Urbana</div>
           </div>
-          <span className="site-menu-panel-live"><i /> AO VIVO</span>
+          <span className="site-menu-panel-live"><i /> {_tr("AO VIVO")}</span>
         </div>
         <nav
           ref={navRef}
-          aria-label="Menu principal"
+          aria-label={_tr("Menu principal")}
           className="site-menu-links"
           onMouseMove={handleNavPointerMove}
           onMouseLeave={() => {
@@ -329,7 +331,7 @@ const SiteMenu = () => {
               </svg>
             </span>
           ) : null}
-          {items.map(({ label, href, icon: Icon }, index) => (
+          {items.map(({ label, href, icon: Icon, variant }, index) => (
             <Link
               key={label}
               to={href}
@@ -341,7 +343,7 @@ const SiteMenu = () => {
                 setIndicatorTarget(targetForIndex(index));
               }}
               ref={(element) => { linkRefs.current[index] = element; }}
-              className={`site-menu-link ${selectedIndex === index ? 'is-current' : ''} ${pointerIndex === index ? 'is-pointer-active' : ''} ${clickedIndex === index ? 'is-clicked' : ''}`}
+              className={`site-menu-link ${variant ? `site-menu-${variant}` : ''} ${selectedIndex === index ? 'is-current' : ''} ${pointerIndex === index ? 'is-pointer-active' : ''} ${clickedIndex === index ? 'is-clicked' : ''}`}
               style={{ '--menu-index': index }}
             >
               <span className="site-menu-link-index">0{index + 1}</span>
@@ -380,8 +382,8 @@ const SiteMenu = () => {
           </Link>
         </nav>
         <div className="site-menu-panel-foot">
-          <span>ROXO É A NOSSA FREQUÊNCIA</span>
-          <span>SCROLL / EXPLORE</span>
+          <span>{_tr("ROXO É A NOSSA FREQUÊNCIA")}</span>
+          <span>{_tr("SCROLL / EXPLORE")}</span>
         </div>
       </div>
     </div>,

@@ -1,3 +1,4 @@
+import { translate as _tr, useI18n as _useLocale } from '../i18n';
 import { create } from 'zustand';
 import { authAPI } from '../services/api';
 
@@ -24,7 +25,7 @@ export const useAuthStore = create((set, get) => ({
       set({ user: response.data.user, token: response.data.token });
       return response.data;
     } catch (error) {
-      set({ error: error.response?.data?.error || 'Erro ao registrar' });
+      set({ error: error.response?.data?.error || _tr("Erro ao registrar") });
       throw error;
     } finally {
       set({ loading: false });
@@ -40,7 +41,7 @@ export const useAuthStore = create((set, get) => ({
       set({ user: response.data.user, token: response.data.token });
       return response.data;
     } catch (error) {
-      set({ error: error.response?.data?.error || 'Erro ao fazer login' });
+      set({ error: error.response?.data?.error || _tr("Erro ao fazer login") });
       throw error;
     } finally {
       set({ loading: false });

@@ -1,3 +1,4 @@
+import { translate as _tr, useI18n as _useLocale } from '../i18n';
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { problemsAPI, votesAPI, commentsAPI, mediaUrl } from '../services/api';
@@ -11,6 +12,7 @@ import { useI18n } from '../i18n';
 import { profilePath } from '../utils/profileLinks';
 
 const ProblemDetailPage = () => {
+  _useLocale();
   const { id } = useParams();
   const [problem, setProblem] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -72,7 +74,7 @@ const ProblemDetailPage = () => {
       setCommentText('');
       toast.success(t('commentPublished'));
     } catch (error) {
-      toast.error(error.response?.data?.error || 'Erro ao publicar comentário');
+      toast.error(error.response?.data?.error || _tr("Erro ao publicar comentário"));
     } finally {
       setCommentLoading(false);
     }
@@ -107,7 +109,7 @@ const ProblemDetailPage = () => {
   return (
     <div className="site-page min-h-screen py-8 text-white">
       <div className="container mx-auto px-4">
-        <button type="button" onClick={() => navigate(-1)} className="mb-4 inline-flex items-center gap-2 rounded-xl border border-white/10 px-4 py-2 text-sm font-bold hover:bg-white/10">← Voltar</button>
+        <button type="button" onClick={() => navigate(-1)} className="mb-4 inline-flex items-center gap-2 rounded-xl border border-white/10 px-4 py-2 text-sm font-bold hover:bg-white/10">{_tr("← Voltar")}</button>
         <div className="site-detail overflow-hidden rounded-3xl shadow-md">
           {/* Imagens */}
           {problem.images?.length > 0 && (
