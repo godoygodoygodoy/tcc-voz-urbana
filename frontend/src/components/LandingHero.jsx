@@ -1,4 +1,4 @@
-import { translate as _tr, useI18n as _useLocale } from '../i18n';
+
 import React from 'react';
 import { ArrowDownRight, ArrowUpRight, MapPinned, Megaphone, Radio, ShieldCheck } from 'lucide-react';
 import { Link } from 'react-router-dom';
@@ -14,7 +14,7 @@ const LandingHero = ({
   stats,
   recentProblems,
 }) => {
-  _useLocale();
+
   const marqueeText = `${t('citySpeaks')} ${t('speaks')} / VOZ URBANA / `;
 
   return (
@@ -23,14 +23,14 @@ const LandingHero = ({
       <div className="urban-hero__grid" aria-hidden="true" />
 
       <div className="urban-hero__topline">
-        <span>{_tr("PLATAFORMA CÍVICA DIGITAL")}</span>
-        <span className="urban-hero__topline-status"><i /> {_tr("SISTEMA ONLINE")}</span>
+        <span>{t("PLATAFORMA CÍVICA DIGITAL")}</span>
+        <span className="urban-hero__topline-status"><i /> {t("SISTEMA ONLINE")}</span>
       </div>
 
       <div className="urban-hero__layout">
-        <aside className="urban-hero__rail" aria-label={_tr("Atalhos da página")}>
+        <aside className="urban-hero__rail" aria-label={t("Atalhos da página")}>
           <span className="urban-hero__rail-line" />
-          <span className="urban-hero__rail-label">{_tr("DESLIZE PARA EXPLORAR")}</span>
+          <span className="urban-hero__rail-label">{t("DESLIZE PARA EXPLORAR")}</span>
           <ArrowDownRight size={18} />
         </aside>
 
@@ -133,8 +133,8 @@ const LandingHero = ({
       </div>
 
       <div className="urban-hero__bottomline">
-        <span>{_tr("REGISTRE · LOCALIZE · TRANSFORME")}</span>
-        <span>{_tr("SCROLL")} <ArrowDownRight size={15} /></span>
+        <span>{t("REGISTRE · LOCALIZE · TRANSFORME")}</span>
+        <span>{t("SCROLL")} <ArrowDownRight size={15} /></span>
       </div>
     </section>
   );

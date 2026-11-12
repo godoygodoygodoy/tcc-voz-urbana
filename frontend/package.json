@@ -31,7 +31,9 @@
     "start": "vite",
     "build": "vite build",
     "preview": "vite preview",
-    "test:christmas": "node --test tests/christmas.test.cjs"
+    "test:christmas": "node --test tests/christmas.test.cjs",
+    "test:i18n": "node tests/i18n-audit.cjs && node --test tests/i18n-engine.cjs",
+    "test:i18n:browser": "node tests/i18n-system.cjs"
   },
   "browserslist": {
     "production": [

@@ -1,10 +1,10 @@
-import { translate as _tr, useI18n as _useLocale } from '../i18n';
+import { translateStatus, translateCategory, useI18n } from '../i18n';
 import React, { useEffect, useRef, useState } from 'react';
-import { CircleMarker, MapContainer, Marker, Popup, Polygon, Polyline, TileLayer, useMap, useMapEvents } from 'react-leaflet';
+import { CircleMarker, MapContainer, Marker, Popup, Polygon, Polyline, TileLayer, ZoomControl, useMap, useMapEvents } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { getPurpleTone } from '../utils/theme';
-import { useI18n } from '../i18n';
+
 
 // Corrigir ícone do Leaflet
 delete L.Icon.Default.prototype._getIconUrl;
@@ -54,7 +54,7 @@ const toPoint = (problem) => {
 };
 
 const FitBounds = ({ problems }) => {
-  _useLocale();
+  const { t } = useI18n();
   const map = useMap();
 
   useEffect(() => {
@@ -86,7 +86,7 @@ const FitBounds = ({ problems }) => {
 };
 
 const AreaDrawingLayer = ({ active, selectedArea, onAreaComplete, onAreaDrawingToggle }) => {
-  _useLocale();
+
   const map = useMap();
   const controlsRef = useRef(null);
   const { t } = useI18n();
@@ -213,7 +213,7 @@ const AreaDrawingLayer = ({ active, selectedArea, onAreaComplete, onAreaDrawingT
 };
 
 const LocationPicker = ({ position, onChange, active }) => {
-  _useLocale();
+  const { t } = useI18n();
   const [markerPosition, setMarkerPosition] = useState(position);
 
   useEffect(() => {
@@ -246,6 +246,12 @@ const LocationPicker = ({ position, onChange, active }) => {
   );
 };
 
+const PopupClose = () => {
+  const { t } = useI18n();
+  const map = useMap();
+  return <button type="button" className="leaflet-popup-close-button" aria-label={t('Fechar')} onClick={() => map.closePopup()}>×</button>;
+};
+
 const Map = ({
   problems = [],
   onMarkerClick,
@@ -258,8 +264,8 @@ const Map = ({
   location,
   onLocationChange,
 }) => {
-  _useLocale();
-  const { t } = useI18n();
+
+  const { t, language } = useI18n();
   const validProblems = problems.filter((problem) => toPoint(problem));
 
   return (
@@ -267,9 +273,11 @@ const Map = ({
       <MapContainer
         center={[-15.8267, -47.8822]}
         zoom={12}
+        zoomControl={false}
         className="urban-map"
         style={{ height, width: '100%' }}
       >
+        <ZoomControl key={language} zoomInTitle={t("zoomIn")} zoomOutTitle={t("zoomOut")} />
         <TileLayer
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
           attribution='&copy; OpenStreetMap contributors'
@@ -297,7 +305,7 @@ const Map = ({
                 click: () => onMarkerClick?.(problem),
               }}
             >
-              <Popup>
+              <Popup closeButton={false}><PopupClose />
                 <div className="urban-map-popup">
                   <h3>{problem.title}</h3>
                   <p className="urban-map-popup__description">{problem.description}</p>
@@ -309,11 +317,11 @@ const Map = ({
                       className="urban-map-popup__badge"
                       style={{ backgroundColor: markerColor }}
                     >
-                      {t('category')}: {problem.category?.name || t('noCategory')}
+                      {t('category')}: {translateCategory(problem.category?.name) || t('noCategory')}
                     </span>
                   </p>
                   <p className="urban-map-popup__status">
-                    <strong>{_tr("Status:")}</strong> {problem.status || 'ABERTO'}
+                    <strong>{t("Status:")}</strong> {translateStatus(problem.status || 'ABERTO')}
                   </p>
                 </div>
               </Popup>

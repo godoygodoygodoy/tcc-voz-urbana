@@ -1,11 +1,11 @@
-import { translate as _tr, useI18n as _useLocale } from '../i18n';
+import { useI18n } from '../i18n';
 ﻿import React from 'react';
 import { useChristmasTheme, setChristmasEffects } from '../utils/christmasTheme';
 import { createPortal } from 'react-dom';
 import { useLocation } from 'react-router-dom';
 
 const ChristmasGarlands = () => {
-  _useLocale();
+  const { t } = useI18n();
   const { pathname } = useLocation();
   const [targets, setTargets] = React.useState([]);
   React.useEffect(() => {
@@ -29,7 +29,7 @@ const ChristmasGarlands = () => {
     </div>, target, `garland-${index}`));
 };
 export const ChristmasEffects = () => {
-  _useLocale();
+  const { t } = useI18n();
   const { theme, effects } = useChristmasTheme();
   if (theme !== 'christmas') return null;
   return <>
@@ -38,12 +38,12 @@ export const ChristmasEffects = () => {
       {effects && <div className="christmas-snow">{Array.from({ length: 80 }, (_, index) => <span key={index} style={{ '--snow-left': `${(index * 37.7) % 100}%`, '--snow-delay': `${index * -0.73}s`, '--snow-duration': `${10 + index % 11}s`, '--snow-size': `${2 + index % 5}px` }} />)}</div>}
     </div>
     <ChristmasGarlands />
-    <button className="christmas-effects-toggle" type="button" aria-pressed={effects} onClick={() => setChristmasEffects(!effects)}>{effects ? _tr("❄ Pausar efeitos") : _tr("❄ Ativar efeitos")}</button>
+    <button className="christmas-effects-toggle" type="button" aria-pressed={effects} onClick={() => setChristmasEffects(!effects)}>{effects ? t("❄ Pausar efeitos") : t("❄ Ativar efeitos")}</button>
   </>;
 };
-export const NativityFooter = () => { _useLocale(); return (<footer className="site-footer">
+export const NativityFooter = () => { const { t } = useI18n(); return (<footer className="site-footer">
   <svg className="nativity" viewBox="0 0 260 150" role="img" aria-labelledby="nativity-title">
-    <title id="nativity-title">{_tr("Nascimento de Jesus: Maria e José junto ao menino na manjedoura, sob a estrela de Belém")}</title>
+    <title id="nativity-title">{t("Nascimento de Jesus: Maria e José junto ao menino na manjedoura, sob a estrela de Belém")}</title>
     <defs><radialGradient id="nativity-light"><stop stopColor="#f5cf75" stopOpacity=".28"/><stop offset="1" stopColor="#f5cf75" stopOpacity="0"/></radialGradient></defs>
     <ellipse cx="130" cy="100" rx="105" ry="49" fill="url(#nativity-light)"/>
     <g fill="none" stroke="#b58a51" strokeWidth="5" strokeLinecap="round" strokeLinejoin="round"><path d="M34 70 130 30 226 70M50 65v71m160-71v71M40 138h180"/><path d="M58 65 130 35 202 65" strokeWidth="1"/></g>
@@ -56,6 +56,6 @@ export const NativityFooter = () => { _useLocale(); return (<footer className="s
     <path d="m106 118 10 12h28l10-12Zm8 23 29-17m-26 0 29 17" fill="none" stroke="#d2a05a" strokeWidth="3" strokeLinecap="round"/>
     <path d="m27 113 2 3m203-18 3 2M62 39l2 2m132-6 2 2" stroke="#f5cf75" strokeWidth="2"/>
   </svg>
-  <p>{_tr("© Voz Urbana 2026 - Sua voz melhora a cidade")}</p>
-  <small>{_tr("Celebramos o nascimento de Jesus Cristo")}</small>
+  <p>{t("© Voz Urbana 2026 - Sua voz melhora a cidade")}</p>
+  <small>{t("Celebramos o nascimento de Jesus Cristo")}</small>
 </footer>); };

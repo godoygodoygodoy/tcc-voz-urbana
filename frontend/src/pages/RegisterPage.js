@@ -1,17 +1,17 @@
-import { translate as _tr, useI18n as _useLocale } from '../i18n';
+import { useI18n } from '../i18n';
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuthStore } from '../store';
-import { toast } from 'react-toastify';
+import { toast } from '../components/LocalizedToast';
 import { Card, CardContent } from '../components/ui/card';
 import { Button } from '../components/ui/button';
-import { useI18n } from '../i18n';
+
 import PasswordField from '../components/PasswordField';
 import AuthErrorBalloon from '../components/AuthErrorBalloon';
 import { formatBrazilianPhone, normalizeDigits } from '../utils/formatters';
 
 const RegisterPage = () => {
-  _useLocale();
+
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -111,7 +111,7 @@ const RegisterPage = () => {
                   name="username"
                   value={formData.username}
                   onChange={handleChange}
-                  placeholder={_tr("seuusuario")}
+                  placeholder={t("seuusuario")}
                   required
                   minLength="3"
                   maxLength="30"

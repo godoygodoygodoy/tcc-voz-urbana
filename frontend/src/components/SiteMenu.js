@@ -1,13 +1,13 @@
-import { translate as _tr, useI18n as _useLocale } from '../i18n';
+import { useI18n } from '../i18n';
 import React, { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { FiCompass, FiFileText, FiHome, FiInfo, FiMail, FiMenu, FiMap, FiShield, FiX } from 'react-icons/fi';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { useI18n } from '../i18n';
+
 import { useAuthStore } from '../store';
 
 const SiteMenu = () => {
-  _useLocale();
+
   const { t } = useI18n();
   const location = useLocation();
   const navigate = useNavigate();
@@ -284,7 +284,7 @@ const SiteMenu = () => {
 
   return createPortal(
     <div className={`site-menu ${open ? 'is-open' : ''}`}>
-      <button type="button" className="site-menu-trigger" aria-label={open ? _tr("Fechar menu") : _tr("Abrir menu")} aria-expanded={open} onClick={() => {
+      <button type="button" className="site-menu-trigger" aria-label={open ? t("Fechar menu") : t("Abrir menu")} aria-expanded={open} onClick={() => {
         if (navigationRef.current) {
           navigationRef.current.cancelled = true;
           navigationRef.current.timers.forEach((timer) => window.clearTimeout(timer));
@@ -296,19 +296,19 @@ const SiteMenu = () => {
         <FiMenu className="site-menu-open-icon" />
         <FiX className="site-menu-close-icon" />
       </button>
-      {open && <button type="button" className="site-menu-backdrop" aria-label={_tr("Fechar menu")} onClick={() => setOpen(false)} />}
+      {open && <button type="button" className="site-menu-backdrop" aria-label={t("Fechar menu")} onClick={() => setOpen(false)} />}
       <div className="site-menu-panel" aria-hidden={!open}>
         <div className="site-menu-panel-contours" aria-hidden="true" />
         <div className="site-menu-panel-head">
           <div>
-            <span className="site-menu-panel-kicker">{_tr("NAVEGAÇÃO URBANA / 01")}</span>
+            <span className="site-menu-panel-kicker">{t("NAVEGAÇÃO URBANA / 01")}</span>
             <div className="site-menu-panel-title">Voz Urbana</div>
           </div>
-          <span className="site-menu-panel-live"><i /> {_tr("AO VIVO")}</span>
+          <span className="site-menu-panel-live"><i /> {t("AO VIVO")}</span>
         </div>
         <nav
           ref={navRef}
-          aria-label={_tr("Menu principal")}
+          aria-label={t("Menu principal")}
           className="site-menu-links"
           onMouseMove={handleNavPointerMove}
           onMouseLeave={() => {
@@ -357,33 +357,10 @@ const SiteMenu = () => {
               <span className="site-menu-link-arrow" aria-hidden="true" />
             </Link>
           ))}
-          <Link
-            to="/feed#create"
-            onClick={(event) => handleLinkClick(event, items.length, '/feed#create')}
-            onFocus={() => {
-              setPointerInside(true);
-              pointerIndexRef.current = items.length;
-              setPointerIndex(items.length);
-              setIndicatorTarget(targetForIndex(items.length));
-            }}
-            ref={(element) => { linkRefs.current[items.length] = element; }}
-            className={`site-menu-link site-menu-create ${selectedIndex === items.length ? 'is-current' : ''} ${pointerIndex === items.length ? 'is-pointer-active' : ''} ${clickedIndex === items.length ? 'is-clicked' : ''}`}
-            style={{ '--menu-index': items.length }}
-          >
-            <span className="site-menu-link-index">07</span>
-            <FiFileText />
-            <span
-              ref={(element) => { labelRefs.current[items.length] = element; }}
-              className="site-menu-link-label"
-            >
-              {t('reportProblem')}
-            </span>
-            <span className="site-menu-link-arrow" aria-hidden="true" />
-          </Link>
         </nav>
         <div className="site-menu-panel-foot">
-          <span>{_tr("ROXO É A NOSSA FREQUÊNCIA")}</span>
-          <span>{_tr("SCROLL / EXPLORE")}</span>
+          <span>{t("ROXO É A NOSSA FREQUÊNCIA")}</span>
+          <span>{t("SCROLL / EXPLORE")}</span>
         </div>
       </div>
     </div>,

@@ -1,10 +1,10 @@
-import { translate as _tr, useI18n as _useLocale } from '../i18n';
+import { useI18n } from '../i18n';
 import React from 'react';
 import { mediaUrl } from '../services/api';
 
 const Avatar = ({ user, className = '', alt = '', ...props }) => {
-  _useLocale();
-  const name = user?.name || user?.nome || user?.username || _tr("Usuário");
+  const { t } = useI18n();
+  const name = user?.name || user?.nome || user?.username || t("Usuário");
   const image = mediaUrl(user?.avatar || user?.fotoPerfil);
   const initial = name.trim().charAt(0).toUpperCase() || 'U';
   return image

@@ -1,11 +1,11 @@
-import { translate as _tr, useI18n as _useLocale } from '../i18n';
+import { translateSystemText, useI18n } from '../i18n';
 import React, { useEffect, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { authAPI } from '../services/api';
-import { useI18n } from '../i18n';
+
 
 const VerifyEmailPage = () => {
-  _useLocale();
+
   const [searchParams] = useSearchParams();
   const [state, setState] = useState({ loading: true, message: '' });
   const [email, setEmail] = useState(searchParams.get('email') || '');
@@ -42,7 +42,7 @@ const VerifyEmailPage = () => {
     <main className="min-h-screen bg-[#1b1b20] flex items-center justify-center px-4 text-white">
       <section className="glass-panel w-full max-w-md rounded-2xl border border-white/10 bg-[#202026] p-8 text-center shadow-xl">
         <h1 className="text-2xl font-bold text-white">{t('verifyTitle')}</h1>
-        <p className="mt-4 text-white/65">{state.loading ? t('verifyLoading') : state.message}</p>
+        <p className="mt-4 text-white/65">{state.loading ? t('verifyLoading') : translateSystemText(state.message)}</p>
         {!state.loading && !searchParams.get('token') && (
           <form onSubmit={resendVerification} className="mt-6 space-y-3 text-left">
             <label className="block text-sm font-semibold text-white/80" htmlFor="verification-email">{t('registeredEmail')}</label>
@@ -53,7 +53,7 @@ const VerifyEmailPage = () => {
               onChange={(event) => setEmail(event.target.value)}
               required
               className="w-full rounded-xl border border-white/15 bg-[#17171b] p-3 text-white outline-none focus:border-violet-600"
-              placeholder={_tr("seu@email.com")}
+              placeholder={t("seu@email.com")}
             />
             <button type="submit" disabled={resending} className="w-full rounded-xl bg-violet-600 p-3 font-semibold text-white disabled:bg-zinc-400">
               {resending ? t('resending') : t('resend')}

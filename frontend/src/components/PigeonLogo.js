@@ -1,4 +1,4 @@
-import { translate as _tr, useI18n as _useLocale } from '../i18n';
+import { useI18n } from '../i18n';
 import React from 'react';
 import { recordPigeonSound } from '../utils/christmasTheme';
 
@@ -9,7 +9,7 @@ let clickCount = 0;
 let resetTimer;
 
 const PigeonLogo = ({ className }) => {
-  _useLocale();
+  const { t } = useI18n();
   const handleClick = (event) => {
     event?.preventDefault();
     event?.stopPropagation();
@@ -28,7 +28,7 @@ const PigeonLogo = ({ className }) => {
     }, SEQUENCE_TIMEOUT);
   };
 
-  return <span className="pigeon-logo"><img src={`${import.meta.env.BASE_URL}branding/mascote-voz-urbana.png`} alt="Voz Urbana" className={className} onClick={handleClick} role="button" tabIndex={0} aria-label={_tr("Interagir com o pombo")} onKeyDown={(event) => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); handleClick(); } }} /><span className="pigeon-santa-hat" aria-hidden="true" /></span>;
+  return <span className="pigeon-logo"><img src={`${import.meta.env.BASE_URL}branding/mascote-voz-urbana.png`} alt="Voz Urbana" className={className} onClick={handleClick} role="button" tabIndex={0} aria-label={t("Interagir com o pombo")} onKeyDown={(event) => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); handleClick(); } }} /><span className="pigeon-santa-hat" aria-hidden="true" /></span>;
 };
 
 export default PigeonLogo;

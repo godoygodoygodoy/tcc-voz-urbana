@@ -1,9 +1,9 @@
-import { translate as _tr, useI18n as _useLocale } from '../i18n';
+import { useI18n } from '../i18n';
 import React, { useState, useEffect } from 'react';
 import { socialAPI, usersAPI, mediaUrl } from '../services/api';
-import { toast } from 'react-toastify';
+import { toast } from '../components/LocalizedToast';
 import { useAuthStore } from '../store';
-import { useI18n } from '../i18n';
+
 import { FloatingSelect, UploadField } from '../components/FloatingFields';
 import { formatBrazilianPhone, normalizeDigits } from '../utils/formatters';
 import ImageCropper from '../components/ImageCropper';
@@ -11,7 +11,7 @@ import Avatar from '../components/Avatar';
 import { applySiteTheme, useChristmasTheme, setChristmasEffects } from '../utils/christmasTheme';
 
 const ProfilePage = () => {
-  _useLocale();
+
   const [profile, setProfile] = useState(null);
   const [formData, setFormData] = useState({
     name: '',
@@ -104,9 +104,9 @@ const ProfilePage = () => {
     try {
       await socialAPI.updateFriendship(request.id, action);
       setFriendRequests((current) => current.filter((item) => item.id !== request.id));
-      if (action === 'accept') toast.success(_tr("Amizade confirmada."));
+      if (action === 'accept') toast.success(t("Amizade confirmada."));
     } catch (error) {
-      toast.error(error.response?.data?.error || _tr("Não foi possível atualizar a solicitação."));
+      toast.error(error.response?.data?.error || t("Não foi possível atualizar a solicitação."));
     }
   };
 
@@ -143,10 +143,10 @@ const ProfilePage = () => {
                 value={formData.username}
                 onChange={handleChange}
                 className="site-form-input w-full border rounded-lg p-3"
-                placeholder={_tr("@seuusuario")}
+                placeholder={t("@seuusuario")}
                 maxLength="30"
               />
-              <p className="site-muted mt-1 text-xs">{_tr("Será exibido como @")}{formData.username.replace(/^@/, '') || 'usuario'}.</p>
+              <p className="site-muted mt-1 text-xs">{t("Será exibido como @")}{formData.username.replace(/^@/, '') || 'usuario'}.</p>
             </div>
 
             <div>
@@ -164,24 +164,24 @@ const ProfilePage = () => {
               <label className="block text-sm font-semibold mb-2">{t('profilePhoto')}</label>
               <div className="flex flex-col gap-4 sm:flex-row">
                 {formData.avatar ? (
-                  <img src={formData.avatar.startsWith('blob:') ? formData.avatar : mediaUrl(formData.avatar)} alt={_tr("Prévia do perfil")} className="h-64 w-64 shrink-0 rounded-full border-2 border-violet-500 object-cover" />
+                  <img src={formData.avatar.startsWith('blob:') ? formData.avatar : mediaUrl(formData.avatar)} alt={t("Prévia do perfil")} className="h-64 w-64 shrink-0 rounded-full border-2 border-violet-500 object-cover" />
                 ) : (
                   <Avatar user={{ name: formData.name }} className="h-64 w-64 shrink-0 text-5xl" />
                 )}
                 <div className="flex-1 space-y-3">
-                  <UploadField accept="image/*" files={formData.avatarFile ? [formData.avatarFile] : []} maxSizeMb={5} label={_tr("Escolher foto")} onChange={(event) => {
+                  <UploadField accept="image/*" files={formData.avatarFile ? [formData.avatarFile] : []} maxSizeMb={5} label={t("Escolher foto")} onChange={(event) => {
                     const file = event.target.files?.[0];
                     if (file && !file.type.startsWith('image/')) {
-                      toast.error(_tr("Selecione um arquivo de imagem válido."));
+                      toast.error(t("Selecione um arquivo de imagem válido."));
                       return;
                     }
                     if (file && file.size > 5 * 1024 * 1024) {
-                      toast.error(_tr("A imagem deve ter no máximo 5 MB."));
+                      toast.error(t("A imagem deve ter no máximo 5 MB."));
                       return;
                     }
                     selectAvatar(file);
                   }} />
-                  <input type="url" name="avatar" value={formData.avatarFile ? '' : formData.avatar} onChange={handleChange} className="site-form-input mt-2 w-full border rounded-lg p-3" placeholder={_tr("Ou use uma URL de imagem")} />
+                  <input type="url" name="avatar" value={formData.avatarFile ? '' : formData.avatar} onChange={handleChange} className="site-form-input mt-2 w-full border rounded-lg p-3" placeholder={t("Ou use uma URL de imagem")} />
                   {formData.avatar && <button type="button" onClick={() => { setCrop({ zoom: 1, x: 0, y: 0 }); setFormData((current) => ({ ...current, avatar: '', avatarFile: null })); }} className="text-sm text-fuchsia-300">{t('removePhoto')}</button>}
                 </div>
               </div>
@@ -208,7 +208,7 @@ const ProfilePage = () => {
                 onChange={handleChange}
                 className="site-form-input w-full border rounded-lg p-3"
                 rows="4"
-                placeholder={_tr("Fale um pouco sobre você...")}
+                placeholder={t("Fale um pouco sobre você...")}
               />
             </div>
 
@@ -216,10 +216,10 @@ const ProfilePage = () => {
               <label className="block text-sm font-semibold mb-2">{t('role')}</label>
               <input
                 type="text"
-                value={profile?.role || ''}
+                value={t(profile?.role || '')}
                 disabled
                 className="site-form-input w-full border rounded-lg p-3 cursor-not-allowed"
-                placeholder={_tr("Usuário")}
+                placeholder={t("Usuário")}
               />
             </div>
 
@@ -232,26 +232,26 @@ const ProfilePage = () => {
             </button>
           </form>
           {christmasUnlocked && <section className="theme-settings mt-8 border-t border-white/10 pt-6">
-            <h2 className="mb-2 text-xl font-bold">{_tr("Tema do site")}</h2>
-            <p className="site-muted mb-4 text-sm">{_tr("Personalize a aparência do Voz Urbana.")}</p>
-            <label className="block text-sm font-semibold mb-2" htmlFor="site-theme">{_tr("Versão")}</label>
+            <h2 className="mb-2 text-xl font-bold">{t("Tema do site")}</h2>
+            <p className="site-muted mb-4 text-sm">{t("Personalize a aparência do Voz Urbana.")}</p>
+            <label className="block text-sm font-semibold mb-2" htmlFor="site-theme">{t("Versão")}</label>
             <FloatingSelect
               value={siteTheme}
               onChange={changeSiteTheme}
-              placeholder={_tr("Selecione uma versão")}
+              placeholder={t("Selecione uma versão")}
               options={[
-                { value: 'normal', label: _tr("Voz Urbana Normal") },
+                { value: 'normal', label: t("Voz Urbana Normal") },
                 { value: 'christmas', label: 'Christmas Version' },
               ]}
             />
-            <label className="mt-4 flex items-center gap-3 text-sm"><input type="checkbox" checked={effects} onChange={(event) => setChristmasEffects(event.target.checked)} />{_tr("Ativar neve e animações natalinas")}</label>
-            <p className="site-muted mt-2 text-xs">{_tr("Preferências salvas neste navegador, mesmo após sair da conta.")}</p>
+            <label className="mt-4 flex items-center gap-3 text-sm"><input type="checkbox" checked={effects} onChange={(event) => setChristmasEffects(event.target.checked)} />{t("Ativar neve e animações natalinas")}</label>
+            <p className="site-muted mt-2 text-xs">{t("Preferências salvas neste navegador, mesmo após sair da conta.")}</p>
           </section>}
           <section className="mt-10 border-t border-white/10 pt-6">
-            <h2 className="mb-4 text-xl font-bold">{_tr("Solicitações de amizade")}</h2>
-            {friendRequests.length === 0 && sentRequests.length === 0 && <p className="text-sm text-white/55">{_tr("Nenhuma solicitação pendente.")}</p>}
-            <div className="space-y-3">{friendRequests.map((request) => <div key={request.id} className="flex items-center justify-between gap-3 rounded-xl bg-white/5 p-3"><span><strong>{request.solicitante.nome}</strong><small className="ml-2 text-white/50">{request.solicitante.username ? `@${request.solicitante.username}` : ''}</small></span><span className="flex gap-2"><button type="button" onClick={() => updateRequest(request, 'accept')} className="rounded-lg bg-violet-600 px-3 py-1 text-xs font-bold">{_tr("Aceitar")}</button><button type="button" onClick={() => updateRequest(request, 'reject')} className="rounded-lg border border-white/10 px-3 py-1 text-xs">{_tr("Recusar")}</button></span></div>)}</div>
-            <div className="mt-3 space-y-3">{sentRequests.map((request) => <div key={request.id} className="flex items-center justify-between rounded-xl bg-white/5 p-3 text-sm"><span>{_tr("Para")} <strong>{request.destinatario.nome}</strong></span><button type="button" onClick={() => updateRequest(request, 'cancel')} className="rounded-lg border border-white/10 px-3 py-1 text-xs">{_tr("Cancelar")}</button></div>)}</div>
+            <h2 className="mb-4 text-xl font-bold">{t("Solicitações de amizade")}</h2>
+            {friendRequests.length === 0 && sentRequests.length === 0 && <p className="text-sm text-white/55">{t("Nenhuma solicitação pendente.")}</p>}
+            <div className="space-y-3">{friendRequests.map((request) => <div key={request.id} className="flex items-center justify-between gap-3 rounded-xl bg-white/5 p-3"><span><strong>{request.solicitante.nome}</strong><small className="ml-2 text-white/50">{request.solicitante.username ? `@${request.solicitante.username}` : ''}</small></span><span className="flex gap-2"><button type="button" onClick={() => updateRequest(request, 'accept')} className="rounded-lg bg-violet-600 px-3 py-1 text-xs font-bold">{t("Aceitar")}</button><button type="button" onClick={() => updateRequest(request, 'reject')} className="rounded-lg border border-white/10 px-3 py-1 text-xs">{t("Recusar")}</button></span></div>)}</div>
+            <div className="mt-3 space-y-3">{sentRequests.map((request) => <div key={request.id} className="flex items-center justify-between rounded-xl bg-white/5 p-3 text-sm"><span>{t("Para")} <strong>{request.destinatario.nome}</strong></span><button type="button" onClick={() => updateRequest(request, 'cancel')} className="rounded-lg border border-white/10 px-3 py-1 text-xs">{t("Cancelar")}</button></div>)}</div>
           </section>
         </div>
       </div>

@@ -1,12 +1,13 @@
+import { translateStatus, translateCategory, getLanguage, useI18n } from '../i18n';
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FiMapPin, FiThumbsUp, FiImage, FiCalendar } from 'react-icons/fi';
 import { formatDistanceToNow } from 'date-fns';
-import { ptBR } from 'date-fns/locale';
+import { ptBR, enUS, es } from 'date-fns/locale';
 import { motion } from 'framer-motion';
 import { getPurpleTone, getStatusTone } from '../utils/theme';
 import { mediaUrl } from '../services/api';
-import { useI18n } from '../i18n';
+
 
 const ProblemCard = ({ problem }) => {
   const navigate = useNavigate();
@@ -53,10 +54,10 @@ const ProblemCard = ({ problem }) => {
             className="inline-flex max-w-[70%] items-center rounded-full px-3 py-1 text-sm font-semibold text-white shadow-sm"
             style={{ backgroundColor: categoryColor }}
           >
-            {problem.category?.name || t('noCategory')}
+            {translateCategory(problem.category?.name) || t('noCategory')}
           </div>
           <span className={`rounded-full px-3 py-1 text-[11px] font-bold uppercase tracking-[0.18em] ${getStatusTone(problem.status)}`}>
-            {problem.status}
+            {translateStatus(problem.status)}
           </span>
         </div>
 
@@ -81,7 +82,7 @@ const ProblemCard = ({ problem }) => {
           </div>
           <span className="flex items-center gap-1 text-xs text-white/45">
             <FiCalendar />
-            {formatDistanceToNow(new Date(problem.createdAt), { locale: ptBR, addSuffix: true })}
+            {formatDistanceToNow(new Date(problem.createdAt), { locale: ({ 'pt-BR': ptBR, en: enUS, es })[getLanguage()], addSuffix: true })}
           </span>
         </div>
       </div>

@@ -1,13 +1,13 @@
-import { translate as _tr, useI18n as _useLocale } from '../i18n';
+import { translateCategory, useI18n } from '../i18n';
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { problemsAPI, categoriesAPI } from '../services/api';
-import { toast } from 'react-toastify';
-import { useI18n } from '../i18n';
+import { toast } from '../components/LocalizedToast';
+
 import { FloatingDatePicker, FloatingSelect, FloatingTimePicker, UploadField } from '../components/FloatingFields';
 
 const ReportProblemPage = () => {
-  _useLocale();
+
   const { t } = useI18n();
   const [formData, setFormData] = useState({
     title: '',
@@ -116,7 +116,7 @@ const ReportProblemPage = () => {
               {loadingCategories ? (
                 <p className="site-muted">{t('loadingCategories')}</p>
               ) : (
-                <FloatingSelect value={formData.categoryId} onChange={(value) => setFormData((current) => ({ ...current, categoryId: value }))} options={[{ value: '', label: t('selectCategory') }, ...categories.map((cat) => ({ value: cat.id, label: cat.name }))]} />
+                <FloatingSelect value={formData.categoryId} onChange={(value) => setFormData((current) => ({ ...current, categoryId: value }))} options={[{ value: '', label: t('selectCategory') }, ...categories.map((cat) => ({ value: cat.id, label: translateCategory(cat.name) }))]} />
               )}
             </div>
 
@@ -148,27 +148,27 @@ const ReportProblemPage = () => {
 
             <div>
               <fieldset className="feed-fieldset">
-                <legend>{t('address')} {_tr("(opcional)")}</legend>
+                <legend>{t('address')} {t("(opcional)")}</legend>
                 <div className="feed-address-grid">
-                  <label className="feed-address-street">{_tr("Rua")}<input type="text" name="street" value={formData.street} onChange={handleChange} placeholder={_tr("Nome da rua")} /></label>
-                  <label>{_tr("Número")}<input type="text" name="number" value={formData.number} onChange={handleChange} placeholder={_tr("Nº")} /></label>
-                  <label>{_tr("Bairro")}<input type="text" name="neighborhood" value={formData.neighborhood} onChange={handleChange} placeholder={_tr("Bairro")} /></label>
-                  <label>{_tr("Cidade")}<input type="text" name="city" value={formData.city} onChange={handleChange} placeholder={_tr("Cidade")} /></label>
-                  <label>{_tr("Estado")}<input type="text" name="state" value={formData.state} onChange={handleChange} placeholder={_tr("UF")} maxLength="2" /></label>
+                  <label className="feed-address-street">{t("Rua")}<input type="text" name="street" value={formData.street} onChange={handleChange} placeholder={t("Nome da rua")} /></label>
+                  <label>{t("Número")}<input type="text" name="number" value={formData.number} onChange={handleChange} placeholder={t("Nº")} /></label>
+                  <label>{t("Bairro")}<input type="text" name="neighborhood" value={formData.neighborhood} onChange={handleChange} placeholder={t("Bairro")} /></label>
+                  <label>{t("Cidade")}<input type="text" name="city" value={formData.city} onChange={handleChange} placeholder={t("Cidade")} /></label>
+                  <label>{t("Estado")}<input type="text" name="state" value={formData.state} onChange={handleChange} placeholder={t("UF")} maxLength="2" /></label>
                 </div>
               </fieldset>
               <fieldset className="feed-fieldset mt-6">
-                <legend>{_tr("Quando aconteceu?")}</legend>
+                <legend>{t("Quando aconteceu?")}</legend>
                 <div className="feed-datetime-grid">
-                  <label>{_tr("Data")}<FloatingDatePicker value={formData.occurrenceDate} onChange={(value) => setFormData((current) => ({ ...current, occurrenceDate: value }))} /></label>
-                  <label>{_tr("Hora")}<FloatingTimePicker value={formData.occurrenceTime} onChange={(value) => setFormData((current) => ({ ...current, occurrenceTime: value }))} /></label>
+                  <label>{t("Data")}<FloatingDatePicker value={formData.occurrenceDate} onChange={(value) => setFormData((current) => ({ ...current, occurrenceDate: value }))} /></label>
+                  <label>{t("Hora")}<FloatingTimePicker value={formData.occurrenceTime} onChange={(value) => setFormData((current) => ({ ...current, occurrenceTime: value }))} /></label>
                 </div>
               </fieldset>
             </div>
 
             <div>
               <label className="block text-sm font-semibold mb-2">{t('imagesOptional')}</label>
-              <UploadField accept="image/*" multiple files={images} maxSizeMb={5} label={_tr("Adicionar imagens")} onChange={handleFilesChange} />
+              <UploadField accept="image/*" multiple files={images} maxSizeMb={5} label={t("Adicionar imagens")} onChange={handleFilesChange} />
 
               {previews.length > 0 && (
                 <div className="mt-3 grid grid-cols-3 gap-2">
@@ -198,7 +198,7 @@ const ReportProblemPage = () => {
                   onChange={handleChange}
                   step="0.000001"
                   className="site-form-input w-full border rounded-lg p-3"
-                  placeholder={_tr("Ex: -15.7942")}
+                  placeholder={t("Ex: -15.7942")}
                 />
               </div>
               <div>
@@ -210,7 +210,7 @@ const ReportProblemPage = () => {
                   onChange={handleChange}
                   step="0.000001"
                   className="site-form-input w-full border rounded-lg p-3"
-                  placeholder={_tr("Ex: -47.8822")}
+                  placeholder={t("Ex: -47.8822")}
                 />
               </div>
             </div>

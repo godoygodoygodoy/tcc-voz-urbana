@@ -1,10 +1,11 @@
+import { translateCategory, useI18n } from '../i18n';
 import React, { useState, useEffect } from 'react';
 import { problemsAPI, categoriesAPI } from '../services/api';
-import { toast } from 'react-toastify';
+import { toast } from '../components/LocalizedToast';
 import Map from '../components/Map';
 import ProblemCard from '../components/ProblemCard';
 import { FiFilter } from 'react-icons/fi';
-import { useI18n } from '../i18n';
+
 import { FloatingDatePicker, FloatingSelect } from '../components/FloatingFields';
 
 const HomePage = () => {
@@ -134,7 +135,7 @@ const HomePage = () => {
 
             <div>
               <label className="mb-2 block text-sm font-semibold text-white/70">{t('category')}</label>
-              <FloatingSelect value={selectedCategory || ''} onChange={(value) => setSelectedCategory(value || null)} options={[{ value: '', label: t('allCategories') }, ...categories.map((cat) => ({ value: cat.id, label: cat.name }))]} />
+              <FloatingSelect value={selectedCategory || ''} onChange={(value) => setSelectedCategory(value || null)} options={[{ value: '', label: t('allCategories') }, ...categories.map((cat) => ({ value: cat.id, label: translateCategory(cat.name) }))]} />
             </div>
             <div>
               <label className="mb-2 block text-sm font-semibold text-white/70">{t('sort')}</label>

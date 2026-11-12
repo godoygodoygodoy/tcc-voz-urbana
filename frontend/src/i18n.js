@@ -78,7 +78,7 @@ const translations = {
     editPostTitle: "Editar publicación",
 
     navHome: 'Inicio', navHow: 'Cómo funciona', navMap: 'Mapa', navFeed: 'Feed', navAbout: 'Sobre nosotros', navContact: 'Contacto',
-    login: 'Entrar', logout: 'Salir', account: 'Mi cuenta', accountSettings: 'Configuración de la cuenta', siteSettings: 'Configuración del sitio', createProfile: 'Crear nuevo perfil', createAccount: 'Crear cuenta',
+    login: 'Iniciar sesión', logout: 'Salir', account: 'Mi cuenta', accountSettings: 'Configuración de la cuenta', siteSettings: 'Configuración del sitio', createProfile: 'Crear nuevo perfil', createAccount: 'Crear cuenta',
     language: 'Idioma', portuguese: 'Português (Brasil)', english: 'English', spanish: 'Español',
     liveMap: 'Mapa vivo de la ciudad', citySpeaks: 'LA CIUDAD', speaks: 'HABLA', amplify: 'Tú amplificas',
     heroCopy: 'Reporta baches, basura, iluminación, árboles y otros problemas urbanos con mapa interactivo, votación comunitaria y seguimiento real.',
@@ -124,6 +124,8 @@ export const I18nProvider = ({ children }) => {
   }, []);
   useEffect(() => {
     document.documentElement.lang = language;
+    document.title = translate('documentTitle', {}, language);
+    document.querySelector('meta[name="description"]')?.setAttribute('content', translate('documentTitle', {}, language));
   }, [language]);
   useEffect(() => {
     const sync = (event) => { if (event.key === 'language') setLanguage(event.newValue); };
@@ -134,3 +136,50 @@ export const I18nProvider = ({ children }) => {
   return <I18nContext.Provider value={value}>{children}</I18nContext.Provider>;
 };
 export const useI18n = () => useContext(I18nContext);
+
+// Only known system-owned category labels are translated. Unknown names remain intact.
+const categoryNames = new Set(['Asfalto', 'Lixo', 'Vegetação', 'Iluminação', 'Sinalização', 'Saneamento', 'Área com grande quantidade de furto', 'Acidentes de carros', 'Outros', 'Limpeza', 'Acessibilidade']);
+export const translateCategory = (name) => categoryNames.has(name) ? translate(name) : name;
+const sourceMessages = new Map();
+for (const catalog of [translations, interfaceMessages]) {
+  for (const messages of Object.values(catalog)) {
+    for (const [key, text] of Object.entries(messages)) sourceMessages.set(text, key);
+  }
+}
+// Resolve stored system templates in any supported language, preserving their data.
+const escapePattern = (text) => [...text].map(char => '.+*?^$()[]{}|'.includes(char) || char.charCodeAt(0) === 92 ? String.fromCharCode(92) + char : char).join('');
+const systemTemplates = Object.values(interfaceMessages).flatMap((messages) =>
+  Object.entries(messages).filter(([, text]) => /\{\w+\}/.test(text)).map(([key, text]) => {
+    const names = [];
+    let cursor = 0;
+    let pattern = '^';
+    for (const match of text.matchAll(/\{(\w+)\}/g)) {
+      pattern += escapePattern(text.slice(cursor, match.index)) + '(.*?)';
+      names.push(match[1]);
+      cursor = match.index + match[0].length;
+    }
+    pattern += escapePattern(text.slice(cursor)) + '$';
+    return { key, names, pattern: new RegExp(pattern, 'u') };
+  })
+);
+export const translateSystemText = (text) => {
+  if (!text) return text;
+  const key = sourceMessages.get(text);
+  if (key) return translate(key);
+  for (const template of systemTemplates) {
+    const match = String(text).match(template.pattern);
+    if (!match) continue;
+    const params = Object.fromEntries(template.names.map((name, index) => [name,
+      name === 'status' ? translateSystemText(match[index + 1]) : match[index + 1],
+    ]));
+    return translate(template.key, params);
+  }
+  return text;
+};
+export const translateApiError = (text) => {
+  const translated = translateSystemText(text);
+  return translated !== text || sourceMessages.has(text)
+    ? translated : translate('requestFailed');
+};
+
+export const translateStatus = (value) => translate(({ open: 'ABERTO', in_progress: 'EM_ANDAMENTO', resolved: 'RESOLVIDO', rejected: 'REJEITADO' })[value] || value);

@@ -1,18 +1,18 @@
-import { translate as _tr, useI18n as _useLocale } from '../i18n';
+import { translateSystemText, translateStatus, translateCategory, getLanguage, useI18n } from '../i18n';
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { problemsAPI, votesAPI, commentsAPI, mediaUrl } from '../services/api';
 import Avatar from '../components/Avatar';
-import { toast } from 'react-toastify';
+import { toast } from '../components/LocalizedToast';
 import { FiThumbsUp, FiMapPin, FiCalendar, FiUser } from 'react-icons/fi';
 import { formatDistanceToNow } from 'date-fns';
-import { ptBR } from 'date-fns/locale';
+import { ptBR, enUS, es } from 'date-fns/locale';
 import { useAuthStore } from '../store';
-import { useI18n } from '../i18n';
+
 import { profilePath } from '../utils/profileLinks';
 
 const ProblemDetailPage = () => {
-  _useLocale();
+
   const { id } = useParams();
   const [problem, setProblem] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -74,7 +74,7 @@ const ProblemDetailPage = () => {
       setCommentText('');
       toast.success(t('commentPublished'));
     } catch (error) {
-      toast.error(error.response?.data?.error || _tr("Erro ao publicar comentário"));
+      toast.error(error.response?.data?.error || t("Erro ao publicar comentário"));
     } finally {
       setCommentLoading(false);
     }
@@ -109,7 +109,7 @@ const ProblemDetailPage = () => {
   return (
     <div className="site-page min-h-screen py-8 text-white">
       <div className="container mx-auto px-4">
-        <button type="button" onClick={() => navigate(-1)} className="mb-4 inline-flex items-center gap-2 rounded-xl border border-white/10 px-4 py-2 text-sm font-bold hover:bg-white/10">{_tr("← Voltar")}</button>
+        <button type="button" onClick={() => navigate(-1)} className="mb-4 inline-flex items-center gap-2 rounded-xl border border-white/10 px-4 py-2 text-sm font-bold hover:bg-white/10">{t("← Voltar")}</button>
         <div className="site-detail overflow-hidden rounded-3xl shadow-md">
           {/* Imagens */}
           {problem.images?.length > 0 && (
@@ -130,7 +130,7 @@ const ProblemDetailPage = () => {
                 <div className="flex items-center gap-3 mb-2">
                   <h1 className="text-3xl font-bold">{problem.title}</h1>
                   <span className={`px-3 py-1 rounded-full text-sm font-semibold ${getStatusColor(problem.status)}`}>
-                    {problem.status}
+                    {translateStatus(problem.status)}
                   </span>
                 </div>
                 <p className="site-muted">{problem.description}</p>
@@ -160,7 +160,7 @@ const ProblemDetailPage = () => {
                 <div>
                   <p className="site-muted text-xs">{t('date')}</p>
                   <p className="font-semibold text-white">
-                    {formatDistanceToNow(new Date(problem.createdAt), { locale: ptBR, addSuffix: true })}
+                    {formatDistanceToNow(new Date(problem.createdAt), { locale: ({ 'pt-BR': ptBR, en: enUS, es })[getLanguage()], addSuffix: true })}
                   </p>
                 </div>
               </div>
@@ -172,7 +172,7 @@ const ProblemDetailPage = () => {
                 className="px-4 py-2 rounded-full text-white font-semibold inline-block"
                 style={{ backgroundColor: problem.category?.color }}
               >
-                {problem.category?.name}
+                {translateCategory(problem.category?.name)}
               </span>
             </div>
 
@@ -199,7 +199,7 @@ const ProblemDetailPage = () => {
               <div className="mt-5 space-y-4">
                 {comments.length === 0 ? <p className="site-muted">{t('noComments')}</p> : comments.map((comment) => (
                   <article key={comment.id} className="site-comment rounded-lg p-4">
-                    <div className="flex items-center justify-between gap-3"><Link to={profilePath(comment.usuario)} className="flex items-center gap-2"><Avatar user={comment.usuario} className="h-8 w-8" /><strong>{comment.usuario?.username ? `@${comment.usuario.username}` : comment.usuario?.nome}</strong></Link><span className="site-muted text-xs">{formatDistanceToNow(new Date(comment.dataCriacao), { locale: ptBR, addSuffix: true })}</span></div>
+                    <div className="flex items-center justify-between gap-3"><Link to={profilePath(comment.usuario)} className="flex items-center gap-2"><Avatar user={comment.usuario} className="h-8 w-8" /><strong>{comment.usuario?.username ? `@${comment.usuario.username}` : comment.usuario?.nome}</strong></Link><span className="site-muted text-xs">{formatDistanceToNow(new Date(comment.dataCriacao), { locale: ({ 'pt-BR': ptBR, en: enUS, es })[getLanguage()], addSuffix: true })}</span></div>
                     <p className="mt-2 text-white/70">{comment.texto}</p>
                   </article>
                 ))}
@@ -208,7 +208,7 @@ const ProblemDetailPage = () => {
 
             {problem.updates?.length > 0 && <section className="mt-8 border-t border-white/10 pt-6">
               <h2 className="text-xl font-bold mb-4">{t('updates')}</h2>
-              <div className="space-y-3">{problem.updates.map((update) => <div key={update.id} className="site-comment border-l-4 border-violet-500 p-4"><p className="font-semibold">{update.status || t('update')}</p><p className="mt-1 text-white/70">{update.texto}</p></div>)}</div>
+              <div className="space-y-3">{problem.updates.map((update) => <div key={update.id} className="site-comment border-l-4 border-violet-500 p-4"><p className="font-semibold">{translateStatus(update.status) || t('update')}</p><p className="mt-1 text-white/70">{translateSystemText(update.texto)}</p></div>)}</div>
             </section>}
           </div>
         </div>

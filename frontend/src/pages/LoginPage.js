@@ -1,16 +1,16 @@
-import { translate as _tr, useI18n as _useLocale } from '../i18n';
+import { useI18n } from '../i18n';
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuthStore } from '../store';
-import { toast } from 'react-toastify';
+import { toast } from '../components/LocalizedToast';
 import { Card, CardContent } from '../components/ui/card';
 import { Button } from '../components/ui/button';
-import { useI18n } from '../i18n';
+
 import PasswordField from '../components/PasswordField';
 import AuthErrorBalloon from '../components/AuthErrorBalloon';
 
 const LoginPage = () => {
-  _useLocale();
+
   const [formData, setFormData] = useState({
     identifier: '',
     password: '',
@@ -65,7 +65,7 @@ const LoginPage = () => {
                 name="identifier"
                 value={formData.identifier}
                 onChange={handleChange}
-                placeholder={_tr("e-mail, número ou usuário")}
+                placeholder={t("e-mail, número ou usuário")}
                 required
                 className="site-form-input w-full rounded-xl border-2 border-white/10 p-3 focus:outline-none focus:border-violet-500"
               />
@@ -81,7 +81,7 @@ const LoginPage = () => {
                 required
                 className="site-form-input w-full rounded-xl border-2 border-white/10 p-3 focus:outline-none focus:border-violet-500"
               />
-              <Link to="/forgot-password" className="mt-2 block text-right text-xs font-bold text-fuchsia-300 hover:text-white">{_tr("Esqueci minha senha")}</Link>
+              <Link to="/forgot-password" className="mt-2 block text-right text-xs font-bold text-fuchsia-300 hover:text-white">{t("Esqueci minha senha")}</Link>
             </div>
 
             <Button

@@ -1,3 +1,0 @@
-﻿const fs=require('fs'),parser=require('../frontend/node_modules/@babel/parser'),traverse=require('../frontend/node_modules/@babel/traverse').default;let out=new Set();
-for(const f of fs.readdirSync('backend/src',{recursive:true}).filter(f=>f.endsWith('.js'))){let ast;try{ast=parser.parse(fs.readFileSync('backend/src/'+f,'utf8'),{sourceType:'module'})}catch{continue}traverse(ast,{ObjectProperty(p){if(['error','message'].includes(p.node.key.name)&&p.node.value.type==='StringLiteral')out.add(p.node.value.value)}})}
-console.log([...out].map((s,i)=>i+' '+s).join('\n'));fs.writeFileSync('scripts/api-messages.json',JSON.stringify([...out]));

@@ -1,3 +1,5 @@
+import LocalizedValidation from './components/LocalizedValidation';
+import { ToastCloseButton } from './components/LocalizedToast';
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { ToastContainer } from 'react-toastify';
@@ -80,6 +82,7 @@ function App() {
     <Router basename={import.meta.env.BASE_URL}>
       <div>
         <VisitTracker />
+        <LocalizedValidation />
         <ReactiveAtmosphere />
         <ChristmasEffects />
         <Routes>
@@ -116,7 +119,7 @@ function App() {
           />
         </Routes>
       </div>
-      <ToastContainer position="bottom-right" />
+      <ToastContainer position="bottom-right" closeButton={ToastCloseButton} />
       <ChristmasUnlockNotice />
       <AuthModal />
     </Router>

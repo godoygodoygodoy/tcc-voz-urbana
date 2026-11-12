@@ -1,0 +1,9 @@
+﻿Use `const { t, language } = useI18n()` in React components. The existing provider updates every subscriber on language changes and persists the preference. Add every new interface string to all three catalogs; `src/i18n.js` contains the original keys and `src/locales/interface.json` extends that same catalog with interface and API messages. Parameterized messages use `t('key', { name: value })` and `{name}` placeholders.
+
+Do not pass publication titles, descriptions, comments, chat messages, personal names or addresses through translation. `translateCategory`, `translateStatus` and `translateSystemText` are reserved for known system-owned labels and templates. Unknown categories are preserved. For new categories or backend messages, add the corresponding catalog entries and, when necessary, the explicit system template handling.
+
+Run `npm run test:i18n` for catalog parity, missing keys, literal JSX text and accessibility attributes. Run the frontend on port 4173 and `npm run test:i18n:browser` for the three languages, administration tabs, menu ordering, access restrictions, Christmas theme, persistence and preservation of user content. Browser tests use API fixtures and never write to the production database. Set `I18N_TEST_URL` for another local server; the test uses the installed Chrome executable on Windows.
+
+Backend authorization regression: `node --experimental-vm-modules --test backend/tests/admin-access.node.js` from the repository root. It checks the real middleware against database stubs, including an ordinary user claiming an administrator role.
+
+Use the shared `toast` export from `components/LocalizedToast` for system notices so an already open toast updates when the language changes. Browser form constraint messages are localized by `LocalizedValidation`; backend errors use the same catalog, with a generic localized message for unknown diagnostics. Keep unknown technical diagnostics in server logs.

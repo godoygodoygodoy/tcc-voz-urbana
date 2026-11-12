@@ -1,4 +1,4 @@
-import { translate as _tr, useI18n as _useLocale } from '../i18n';
+import { translateCategory, useI18n } from '../i18n';
 import React, { useMemo, useState } from 'react';
 import { GoogleMap, Marker, InfoWindow, useLoadScript } from '@react-google-maps/api';
 
@@ -17,7 +17,7 @@ const toPoint = (problem) => {
 };
 
 const MapGoogle = ({ problems = [], onMarkerClick, height = '500px', className = '' }) => {
-  _useLocale();
+  const { t } = useI18n();
   const apiKey = import.meta.env.VITE_GOOGLE_MAPS_KEY;
   const { isLoaded, loadError } = useLoadScript({ googleMapsApiKey: apiKey });
   const [active, setActive] = useState(null);
@@ -36,12 +36,12 @@ const MapGoogle = ({ problems = [], onMarkerClick, height = '500px', className =
 
   if (!apiKey) {
     return (
-      <div className={`p-4 bg-yellow-50 text-yellow-800 rounded ${className}`}>{_tr("Mapa temporariamente indisponível.")}</div>
+      <div className={`p-4 bg-yellow-50 text-yellow-800 rounded ${className}`}>{t("Mapa temporariamente indisponível.")}</div>
     );
   }
 
-  if (loadError) return <div className={className}>{_tr("Erro ao carregar Google Maps")}</div>;
-  if (!isLoaded) return <div className={className}>{_tr("Carregando mapa...")}</div>;
+  if (loadError) return <div className={className}>{t("Erro ao carregar Google Maps")}</div>;
+  if (!isLoaded) return <div className={className}>{t("Carregando mapa...")}</div>;
 
   return (
     <div className={className}>
@@ -66,10 +66,10 @@ const MapGoogle = ({ problems = [], onMarkerClick, height = '500px', className =
               <h3 style={{ margin: 0, fontSize: 14 }}>{active.title}</h3>
               <p style={{ margin: '6px 0 0 0', fontSize: 12 }}>{active.description}</p>
               <p style={{ margin: '6px 0 0 0', fontSize: 12 }}>
-                <strong>{_tr("Causa:")}</strong> {active.category?.name || _tr("Não informada")}
+                <strong>{t("Causa:")}</strong> {translateCategory(active.category?.name) || t("Não informada")}
               </p>
               <p style={{ margin: '6px 0 0 0', fontSize: 12 }}>
-                <strong>{_tr("Endereço:")}</strong> {active.address || _tr("Não informado")}
+                <strong>{t("Endereço:")}</strong> {active.address || t("Não informado")}
               </p>
             </div>
           </InfoWindow>

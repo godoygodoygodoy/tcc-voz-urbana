@@ -1,4 +1,4 @@
-import { translate as _tr, useI18n as _useLocale } from '../i18n';
+import { translate as tr } from '../i18n';
 export const brazilStates = [
   ['AC', 'Acre'], ['AL', 'Alagoas'], ['AP', 'Amapá'], ['AM', 'Amazonas'], ['BA', 'Bahia'],
   ['CE', 'Ceará'], ['DF', 'Distrito Federal'], ['ES', 'Espírito Santo'], ['GO', 'Goiás'],
@@ -12,7 +12,7 @@ export const brazilStates = [
 export const fetchCities = async (state) => {
   if (!state) return [];
   const response = await fetch(`https://servicodados.ibge.gov.br/api/v1/localidades/estados/${encodeURIComponent(state)}/municipios`);
-  if (!response.ok) throw new Error(_tr("Não foi possível carregar as cidades deste estado."));
+  if (!response.ok) throw new Error(tr("Não foi possível carregar as cidades deste estado."));
   const cities = await response.json();
   return cities.sort((left, right) => left.nome.localeCompare(right.nome, 'pt-BR'))
     .map((city) => ({ value: city.nome, label: city.nome }));
@@ -29,11 +29,11 @@ export const fetchCep = async (value) => {
   const cep = normalizeCep(value);
   if (cep.length !== 8) return null;
   const response = await fetch(`https://viacep.com.br/ws/${cep}/json/`);
-  if (!response.ok) throw new Error(_tr("Não foi possível consultar o CEP."));
+  if (!response.ok) throw new Error(tr("Não foi possível consultar o CEP."));
   let result = await response.json();
   if (result.erro) {
     const fallbackResponse = await fetch(`https://brasilapi.com.br/api/cep/v2/${cep}`);
-    if (!fallbackResponse.ok) throw new Error(_tr("CEP não encontrado."));
+    if (!fallbackResponse.ok) throw new Error(tr("CEP não encontrado."));
     const fallback = await fallbackResponse.json();
     result = {
       cep: fallback.cep,
