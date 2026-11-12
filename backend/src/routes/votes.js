@@ -1,3 +1,5 @@
+import { publicationImages } from '../services/publicationMedia.js';
+import { visibleProblemWhere } from '../services/socialGraph.js';
 import express from "express";
 import { prisma } from "../config/prisma.js";
 import { authMiddleware } from "../middlewares/auth.js";
@@ -18,8 +20,8 @@ router.post(
       return res.status(400).json({ error: "Tipo de voto inválido" });
     }
 
-    const problem = await prisma.problema.findUnique({
-      where: { id: problemId }
+    const problem = await prisma.problema.findFirst({
+      where: { id: problemId, ...visibleProblemWhere(req) }
     });
 
     if (!problem) {
@@ -85,7 +87,8 @@ router.post(
       createdAt: updatedProblem.dataCriacao,
       category: { id: updatedProblem.categoria.id, name: updatedProblem.categoria.nome, color: updatedProblem.categoria.cor },
       author: { id: updatedProblem.usuario.id, name: updatedProblem.usuario.nome, username: updatedProblem.usuario.username, avatar: updatedProblem.usuario.fotoPerfil },
-      images: updatedProblem.imagens,
+      images: publicationImages(updatedProblem.imagens, req),
+      imagens: publicationImages(updatedProblem.imagens, req),
       updates: updatedProblem.atualizacoes,
       votes: updatedProblem._count.votos
     });

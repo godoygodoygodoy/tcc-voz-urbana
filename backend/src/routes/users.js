@@ -1,3 +1,4 @@
+import { lockUsers } from '../services/socialGraph.js';
 import express from "express";
 import { prisma } from "../config/prisma.js";
 import { authMiddleware } from "../middlewares/auth.js";
@@ -22,6 +23,7 @@ router.get(
         username: true,
         telefone: true,
         bio: true,
+        perfilPrivado: true,
         nivel: true,
         admin: { select: { id: true } },
         fotoPerfil: true,
@@ -29,7 +31,7 @@ router.get(
         dataCriacao: true
       }
     });
-    res.json({ ...user, name: user.nome, phone: user.telefone, avatar: user.fotoPerfil, role: user.admin ? "admin" : user.nivel.toLowerCase() });
+    res.json({ ...user, isPrivate: user.perfilPrivado, name: user.nome, phone: user.telefone, avatar: user.fotoPerfil, role: user.admin ? "admin" : user.nivel.toLowerCase() });
   })
 );
 
@@ -39,6 +41,9 @@ router.put(
   profileUpload.single("avatarFile"),
   asyncHandler(async (req, res) => {
     const { name, username, phone, bio, avatar } = req.body;
+    const rawPrivacy = req.body.isPrivate;
+    if (rawPrivacy !== undefined && ![true, false, 'true', 'false'].includes(rawPrivacy)) return res.status(400).json({ error: 'invalidPrivacy' });
+    const isPrivate = rawPrivacy === undefined ? undefined : rawPrivacy === true || rawPrivacy === 'true';
   const normalizedUsername = username === undefined
     ? undefined
     : username ? username.replace(/^@/, "").trim().toLowerCase() : null;
@@ -60,9 +65,12 @@ router.put(
     if (req.file) uploadedAvatar = await storeFile(req.file, "avatars", req.userId);
 
     try {
-      const user = await prisma.usuario.update({
+      const user = await prisma.$transaction(async tx => {
+        await lockUsers(tx, [req.userId]);
+        const updated = await tx.usuario.update({
         where: { id: req.userId },
         data: {
+          ...(isPrivate !== undefined && { perfilPrivado: isPrivate }),
           ...(name !== undefined && { nome: name.trim() }),
           ...(normalizedUsername !== undefined && { username: normalizedUsername }),
           ...(phone !== undefined && { telefone: phone ? normalizePhone(phone) || null : null }),
@@ -77,6 +85,7 @@ router.put(
           username: true,
           telefone: true,
           bio: true,
+        perfilPrivado: true,
           nivel: true,
           admin: { select: { id: true } },
           fotoPerfil: true,
@@ -84,6 +93,9 @@ router.put(
           dataCriacao: true
         }
       });
+        if (isPrivate === false) await tx.seguimento.updateMany({ where: { followingId: req.userId, status: 'PENDENTE' }, data: { status: 'ACEITA' } });
+        return updated;
+      }, { isolationLevel: 'ReadCommitted' });
 
       const nextAvatar = uploadedAvatar?.url || (avatar !== undefined ? avatar || null : current?.fotoPerfil);
       if (current?.fotoPerfil && current.fotoPerfil !== nextAvatar) {
@@ -92,7 +104,7 @@ router.put(
         });
       }
 
-      res.json({ ...user, name: user.nome, phone: user.telefone, avatar: user.fotoPerfil, role: user.admin ? "admin" : user.nivel.toLowerCase() });
+      res.json({ ...user, isPrivate: user.perfilPrivado, name: user.nome, phone: user.telefone, avatar: user.fotoPerfil, role: user.admin ? "admin" : user.nivel.toLowerCase() });
     } catch (error) {
       if (uploadedAvatar) {
         await removeStoredFile(uploadedAvatar.url).catch((cleanupError) => {

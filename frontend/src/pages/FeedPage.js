@@ -1,3 +1,4 @@
+import { followButtonKey, notifySocialChange, subscribeSocialChanges } from '../utils/social';
 import { translateStatus, translateSystemText, translateCategory, getLanguage, translate as tr, useI18n } from '../i18n';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
@@ -12,6 +13,7 @@ import {
   Mail,
   Mailbox,
   MapPin,
+  Lock,
   MessageCircle,
   Plus,
   Search,
@@ -125,11 +127,18 @@ const FeedPage = () => {
   const [peopleTotal, setPeopleTotal] = useState(0);
   const [peoplePage, setPeoplePage] = useState(1);
   const [loadingUsers, setLoadingUsers] = useState(false);
-  const [friendships, setFriendships] = useState({});
+  const [relationships, setRelationships] = useState({});
   const [messages, setMessages] = useState([]);
   const [conversations, setConversations] = useState([]);
   const [selectedConversation, setSelectedConversation] = useState(null);
   const [messageText, setMessageText] = useState('');
+  const [sendingMessage, setSendingMessage] = useState(false);
+  const [historyReady, setHistoryReady] = useState(false);
+  const [historyError, setHistoryError] = useState(false);
+  const messageRequest = useRef(0);
+  const messageSending = useRef(false);
+  const selectedConversationId = useRef(null);
+  selectedConversationId.current = selectedConversation?.id || null;
   const [createForm, setCreateForm] = useState(emptyCreateForm);
   const [creating, setCreating] = useState(false);
   const [deletingPost, setDeletingPost] = useState(null);
@@ -210,11 +219,50 @@ const FeedPage = () => {
 
   useEffect(() => {
     if (!user || activeTab !== 'conversations') return undefined;
-    conversationsAPI.list()
-      .then((response) => setConversations(response.data || []))
-      .catch((error) => toast.error(error.response?.data?.error || t("Não foi possível carregar as conversas.")));
-    return undefined;
-  }, [activeTab, user]);
+    let active = true;
+    let chooseRequested = true;
+    let requestSequence = 0;
+    const refresh = async () => {
+      if (document.hidden) return;
+      const sequence = ++requestSequence;
+      try {
+        const { data } = await conversationsAPI.list();
+        if (!active || sequence !== requestSequence) return;
+        setConversations(data || []);
+        const requested = chooseRequested && data.find(item => item.id === location.state?.conversationId);
+        chooseRequested = false;
+        setSelectedConversation(current => requested || (current ? { ...current, ...(data.find(item => item.id === current.id) || {}) } : data[0] || null));
+      } catch { /* Keep existing conversations visible when a refresh fails. */ }
+    };
+    refresh();
+    const unsubscribe = subscribeSocialChanges(refresh);
+    const timer = window.setInterval(refresh, 5000);
+    return () => { active = false; ++requestSequence; unsubscribe(); window.clearInterval(timer); };
+  }, [activeTab, user?.id, location.state?.conversationId]);
+
+  const readMessages = useCallback(async (conversationId) => {
+    if (messageSending.current || selectedConversationId.current !== conversationId) return;
+    const sequence = ++messageRequest.current;
+    try {
+      const { data } = await conversationsAPI.messages(conversationId);
+      if (sequence !== messageRequest.current || selectedConversationId.current !== conversationId) return;
+      setMessages(data.messages || []);
+      setSelectedConversation(current => current?.id === conversationId ? { ...current, messaging: data.messaging } : current);
+      setHistoryReady(true); setHistoryError(false);
+    } catch {
+      if (sequence === messageRequest.current && selectedConversationId.current === conversationId) setHistoryError(true);
+    }
+  }, []);
+  useEffect(() => {
+    const conversationId = selectedConversation?.id;
+    if (activeTab !== 'conversations' || !conversationId || !user) return undefined;
+    setMessages([]); setMessageText(''); setHistoryReady(false); setHistoryError(false);
+    readMessages(conversationId);
+    const refresh = () => { if (!document.hidden) readMessages(conversationId); };
+    const unsubscribe = subscribeSocialChanges(refresh);
+    const timer = window.setInterval(refresh, 3000);
+    return () => { ++messageRequest.current; unsubscribe(); window.clearInterval(timer); };
+  }, [activeTab, selectedConversation?.id, user?.id, readMessages]);
 
   useEffect(() => {
     if (!openMenu) return undefined;
@@ -543,65 +591,68 @@ const FeedPage = () => {
     }
   };
 
-  const openConversation = async (friend) => {
+  const openConversation = async (person) => {
+    if (!user) { openAuthModal('login'); return; }
+    if (!person?.id || person.id === user.id) return;
     try {
-      const response = await conversationsAPI.create(friend.id);
-      setSelectedConversation(response.data);
-      const messagesResponse = await conversationsAPI.messages(response.data.id);
-      setMessages(messagesResponse.data || []);
-      setConversations((current) => current.some((item) => item.id === response.data.id) ? current : [response.data, ...current]);
-    } catch (error) {
-      toast.error(error.response?.data?.error || t("A amizade precisa estar confirmada para conversar."));
-    }
+      const { data } = await conversationsAPI.create(person.id);
+      ++messageRequest.current; selectedConversationId.current = data.id;
+      setMessages([]); setHistoryReady(false); setMessageText(''); setSelectedConversation(data);
+      setConversations(current => current.some(item => item.id === data.id) ? current : [data, ...current]);
+      selectTab('conversations');
+    } catch (error) { toast.error(error.response?.data?.error || t('conversationNotFound')); }
   };
-
   const sendMessage = async (event) => {
     event.preventDefault();
-    if (!messageText.trim() || !selectedConversation) return;
+    if (!messageText.trim() || !selectedConversation || !historyReady || selectedConversation.messaging?.canSend === false || messageSending.current) return;
+    const conversationId = selectedConversation.id;
+    ++messageRequest.current; messageSending.current = true; setSendingMessage(true);
     try {
-      const response = await conversationsAPI.send(selectedConversation.id, { texto: messageText.trim() });
-      setMessages((current) => [...current, response.data]);
-      setMessageText('');
-    } catch (error) {
-      toast.error(error.response?.data?.error || t("Não foi possível enviar a mensagem."));
-    }
-  };
-
-  const markNotificationsRead = async () => {
-    try { await notificationsAPI.markAllRead(); } catch (error) { /* The local state still reflects the action. */ }
-    setNotifications((current) => current.map((item) => ({ ...item, lida: true })));
-  };
-
-  const loadFriendship = async (userId) => {
-    if (!user) return;
-    try {
-      const response = await socialAPI.friendship(userId);
-      setFriendships((current) => ({ ...current, [userId]: response.data }));
-    } catch (error) {
-      toast.error(t("Não foi possível consultar a amizade."));
-    }
-  };
-
-  const changeFriendship = async (person) => {
-    if (!user) {
-      toast.info(t("Entre na sua conta para adicionar pessoas."));
-      return;
-    }
-    const relation = friendships[person.id];
-    try {
-      if (!relation || relation.status === 'NONE') {
-        const response = await socialAPI.requestFriendship(person.id);
-        setFriendships((current) => ({ ...current, [person.id]: response.data }));
-      } else {
-        const action = relation.status === 'PENDENTE' && relation.destinatarioId === user.id ? 'accept'
-          : relation.status === 'PENDENTE' ? 'cancel' : 'remove';
-        const response = await socialAPI.updateFriendship(relation.id, action);
-        setFriendships((current) => ({ ...current, [person.id]: response.data }));
+      const { data } = await conversationsAPI.send(conversationId, { texto: messageText.trim() });
+      if (selectedConversationId.current === conversationId) {
+        setMessages(current => current.some(item => item.id === data.message.id) ? current : [...current, data.message]);
+        setSelectedConversation(current => current?.id === conversationId ? { ...current, messaging: data.messaging } : current);
+        setMessageText('');
       }
+      setConversations(current => current.map(item => item.id === conversationId ? { ...item, ultimaMensagem: data.message, messaging: data.messaging } : item));
     } catch (error) {
-      toast.error(error.response?.data?.error || t("Não foi possível atualizar a amizade."));
+      if (error.response?.data?.messaging) setSelectedConversation(current => current?.id === conversationId ? { ...current, messaging: error.response.data.messaging } : current);
+      toast.error(error.response?.data?.error || t('Não foi possível enviar a mensagem.'));
+    } finally {
+      messageSending.current = false; setSendingMessage(false);
+      if (selectedConversationId.current === conversationId) readMessages(conversationId);
     }
   };
+  const markNotificationsRead = async () => {
+    try { await notificationsAPI.markAllRead(); } catch { /* Keep local read state. */ }
+    setNotifications(current => current.map(item => ({ ...item, lida: true })));
+  };
+  const loadRelationship = async (userId) => {
+    if (!user) return;
+    try { const { data } = await socialAPI.relationship(userId); setRelationships(current => ({ ...current, [userId]: data })); }
+    catch { /* An unavailable relationship must not prevent browsing profiles. */ }
+  };
+  const changeFollow = async (person) => {
+    if (!user) { openAuthModal('login'); return; }
+    const relation = relationships[person.id];
+    try {
+      const { data } = await (relation?.following || relation?.pending ? socialAPI.unfollow(person.id) : socialAPI.follow(person.id));
+      setRelationships(current => ({ ...current, [person.id]: data }));
+      notifySocialChange();
+    } catch (error) { toast.error(error.response?.data?.error || t('followError')); }
+  };
+  useEffect(() => {
+    if (!user || !userResults.length) return undefined;
+    let active = true;
+    const refresh = async () => {
+      const results = await Promise.allSettled(userResults.filter(person => person.id !== user.id).map(async person => [person.id, (await socialAPI.relationship(person.id)).data]));
+      if (active) setRelationships(current => ({ ...current, ...Object.fromEntries(results.filter(result => result.status === 'fulfilled').map(result => result.value)) }));
+    };
+    refresh();
+    const unsubscribe = subscribeSocialChanges(refresh);
+    return () => { active = false; unsubscribe(); };
+  }, [user?.id, userResults]);
+  useEffect(() => subscribeSocialChanges(() => loadFeed()), [loadFeed]);
 
   const renderPost = (post) => {
     const images = post.images?.length ? post.images : [];
@@ -638,7 +689,7 @@ const FeedPage = () => {
         <FeedAction active={liked} asset="curtir" label={t("Curtir ocorrência")} count={`${post.votes || 0} ${t('apoios')}`} onClick={() => handleVote(post)} disabled={votingPost === post.id} />
         <FeedAction asset="comentar" label={t("Comentar ocorrência")} count={t("Comentar")} onClick={() => navigate(`/problem/${post.id}#comments`)} />
         <FeedAction active={shared} asset="republicar" label={t("Republicar ocorrência")} count={t("Republicar")} onClick={() => toggleShare(post)} />
-        <button type="button" className="feed-action-icon" aria-label={t("Enviar mensagem")}><img src={actionAsset('mensagem')} alt="" /></button>
+        <button type="button" className="feed-action-icon" aria-label={t("Enviar mensagem")} onClick={() => openConversation(post.author)}><img src={actionAsset('mensagem')} alt="" /></button>
         <Link to={`/problem/${post.id}`} className="ml-auto feed-bookmark" aria-label={t("Abrir ocorrência")}><MessageCircle size={17} /></Link>
       </div>
     </article>;
@@ -660,13 +711,19 @@ const FeedPage = () => {
   </>;
 
   const renderConversations = () => <>
-    <FeedHeader title={t('conversationsTitle')} description={t("Troque mensagens com pessoas que também cuidam da cidade.")} />
+    <FeedHeader title={t('conversationsTitle')} description={t('Troque mensagens com pessoas que também cuidam da cidade.')} />
     <div className="feed-dm-shell">
       <div className="feed-dm-list">
-        <div className="feed-dm-list-head"><strong>{t("Mensagens")}</strong><button type="button" aria-label={t("Nova conversa")}><Plus size={17} /></button></div>
-        {conversations.length === 0 ? <div className="feed-empty">{t("Adicione e confirme uma amizade para iniciar conversas.")}</div> : conversations.map((conversation) => <button key={conversation.id} type="button" className={`feed-dm-contact ${selectedConversation?.id === conversation.id ? 'is-selected' : ''}`} onClick={async () => { setSelectedConversation(conversation); const response = await conversationsAPI.messages(conversation.id); setMessages(response.data || []); }}><Avatar user={conversation.amigo} /><span><strong>{conversation.amigo?.nome}</strong><small>{conversation.ultimaMensagem?.texto || t("Nenhuma mensagem ainda")}</small></span></button>)}
+        <div className="feed-dm-list-head"><strong>{t('Mensagens')}</strong><button type="button" aria-label={t('Nova conversa')} onClick={() => selectTab('search')}><Plus size={17} /></button></div>
+        {conversations.length === 0 ? <div className="feed-empty">{t('chatStartHint')}</div> : conversations.map(conversation => <button key={conversation.id} type="button" className={`feed-dm-contact ${selectedConversation?.id === conversation.id ? 'is-selected' : ''}`} onClick={() => { ++messageRequest.current; selectedConversationId.current = conversation.id; setMessages([]); setHistoryReady(false); setMessageText(''); setSelectedConversation(conversation); }}><Avatar user={conversation.participant} /><span><strong>{conversation.participant?.nome}</strong><small>{conversation.ultimaMensagem?.texto || t('Nenhuma mensagem ainda')}</small></span></button>)}
       </div>
-      <div className="feed-dm-thread"><div className="feed-dm-thread-head"><Avatar user={selectedConversation?.amigo} /><div><strong>{selectedConversation?.amigo?.nome || t("Nenhuma conversa selecionada")}</strong><small>{selectedConversation ? t("Amizade confirmada") : t("Confirme uma amizade para conversar.")}</small></div></div><div className="feed-dm-messages">{messages.length ? messages.map((message) => <div key={message.id} className={`feed-message ${message.remetenteId === user?.id ? 'is-own' : ''}`}><span>{message.texto}</span><small>{new Date(message.criadaEm).toLocaleTimeString(getLanguage(), { hour: '2-digit', minute: '2-digit' })}</small></div>) : <div className="feed-empty">{t("Nenhuma mensagem.")}</div>}</div><form onSubmit={sendMessage} className="feed-dm-compose"><input value={messageText} onChange={(event) => setMessageText(event.target.value)} placeholder={selectedConversation ? t("Escreva uma mensagem...") : t("Mensagens disponíveis para amigos confirmados.")} disabled={!selectedConversation} /><button type="submit" aria-label={t("Enviar mensagem")} disabled={!selectedConversation}><Send size={17} /></button></form></div>
+      <div className="feed-dm-thread">
+        <div className="feed-dm-thread-head"><Avatar user={selectedConversation?.participant} /><div><strong>{selectedConversation?.participant?.nome || t('Nenhuma conversa selecionada')}</strong><small>{!selectedConversation ? t('chatChooseConversation') : selectedConversation.messaging?.mutual ? t('chatUnlimited') : selectedConversation.messaging ? t('chatMessagesRemaining', { count: selectedConversation.messaging.remaining }) : t('loading')}</small></div></div>
+        {historyError && <p className="feed-dm-history-error" role="alert">{t('chatHistoryError')}</p>}
+        <div className="feed-dm-messages">{messages.length ? messages.map(message => <div key={message.id} className={`feed-message ${message.remetenteId === user?.id ? 'is-own' : ''}`}><span>{message.texto}</span><small>{new Date(message.criadaEm).toLocaleTimeString(getLanguage(), { hour: '2-digit', minute: '2-digit' })}</small></div>) : <div className="feed-empty">{t(historyReady ? 'Nenhuma mensagem.' : selectedConversation ? 'loading' : 'chatChooseConversation')}</div>}</div>
+        {selectedConversation?.messaging?.canSend === false ? <div className="feed-dm-limit" role="status"><Lock size={18} /><p>{t('chatLimitReached')}</p></div>
+          : <form onSubmit={sendMessage} className="feed-dm-compose"><input value={messageText} onChange={event => setMessageText(event.target.value)} maxLength={2000} placeholder={t(selectedConversation ? 'Escreva uma mensagem...' : 'chatChooseConversation')} disabled={!selectedConversation || !historyReady || sendingMessage} /><button type="submit" aria-label={t(sendingMessage ? 'chatSendBusy' : 'Enviar mensagem')} disabled={!selectedConversation || !historyReady || sendingMessage || !messageText.trim()}><Send size={17} /></button></form>}
+      </div>
     </div>
   </>;
 
@@ -676,8 +733,8 @@ const FeedPage = () => {
     <div className="feed-search-section">
       <div className="feed-section-label"><Users size={15} /> {t("Pessoas")}</div>
       {search.trim().replace(/^@+/, '').length < 2 ? <p className="feed-search-empty">{t("Digite pelo menos 2 caracteres para buscar pessoas.")}</p> : peopleSearchError ? <p className="feed-search-empty" role="alert">{t("Não foi possível consultar as pessoas. Verifique sua conexão e tente novamente.")}</p> : loadingUsers ? <p className="feed-search-empty">{t("Buscando pessoas...")}</p> : userResults.length === 0 ? <p className="feed-search-empty">{t("Nenhuma pessoa encontrada.")}</p> : userResults.map((person) => {
-        const relation = friendships[person.id];
-        const relationLabel = relation?.status === 'ACEITA' ? t("Amigos") : relation?.status === 'PENDENTE' && relation.destinatarioId === user?.id ? t("Aceitar") : relation?.status === 'PENDENTE' ? t("Solicitação enviada") : t("Adicionar");
+        const relation = relationships[person.id];
+        const relationLabel = t(followButtonKey(relation));
         return <div key={person.id} className="feed-search-person">
           <div className="feed-search-person-main">
             <Link to={profilePath(person)} className="feed-search-person-main">
@@ -685,7 +742,7 @@ const FeedPage = () => {
               <span><strong>{person.nome}</strong><small>{person.username ? `@${person.username}` : t('noUsername')}</small></span>
             </Link>
           </div>
-          {user && person.id !== user.id && <button type="button" onClick={() => changeFriendship(person)} onMouseEnter={() => loadFriendship(person.id)}>{relationLabel}</button>}
+          {user && person.id !== user.id && <div className="feed-person-actions"><span className="social-relationship-badge">{relation?.mutual ? t('mutualFriends') : relation?.followedBy ? t('followsYou') : ''}</span><button type="button" onClick={() => changeFollow(person)} onMouseEnter={() => loadRelationship(person.id)} title={t(relation?.following ? 'unfollowButton' : relation?.pending ? 'cancelFollowRequest' : 'followButton')}>{relationLabel}</button><button type="button" aria-label={t('Enviar mensagem')} onClick={() => openConversation(person)}><MessageCircle size={16} /></button></div>}
         </div>;
       })}
       {peopleTotal > 12 && <nav className="flex items-center justify-between gap-3" aria-label={t("Páginas de pessoas")}><button type="button" disabled={loadingUsers || peoplePage === 1} onClick={() => setPeoplePage(current => current - 1)}>{t("Anterior")}</button><span>{t("Página")} {peoplePage} {t("de")} {Math.ceil(peopleTotal / 12)}</span><button type="button" disabled={loadingUsers || peoplePage * 12 >= peopleTotal} onClick={() => setPeoplePage(current => current + 1)}>{t("Próxima")}</button></nav>}

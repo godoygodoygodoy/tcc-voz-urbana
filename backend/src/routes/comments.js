@@ -1,12 +1,14 @@
+import { visibleProblemWhere } from '../services/socialGraph.js';
 import express from "express";
 import { prisma } from "../config/prisma.js";
-import { authMiddleware } from "../middlewares/auth.js";
+import { authMiddleware, optionalAuthMiddleware } from "../middlewares/auth.js";
 import { asyncHandler } from "../middlewares/errorHandler.js";
 import { createNotification } from "../utils/notifications.js";
 
 const router = express.Router();
 
-router.get("/:problemId", asyncHandler(async (req, res) => {
+router.get("/:problemId", optionalAuthMiddleware, asyncHandler(async (req, res) => {
+  if (!await prisma.problema.findFirst({ where: { id: req.params.problemId, ...visibleProblemWhere(req) }, select: { id: true } })) return res.status(404).json({ error: 'problemNotFound' });
   const comments = await prisma.comentario.findMany({
     where: { problemaId: req.params.problemId },
     include: { usuario: { select: { id: true, nome: true, username: true, fotoPerfil: true } } },
@@ -21,7 +23,7 @@ router.post("/:problemId", authMiddleware, asyncHandler(async (req, res) => {
     return res.status(400).json({ error: "O comentário deve ter entre 2 e 1000 caracteres" });
   }
 
-  const problem = await prisma.problema.findUnique({ where: { id: req.params.problemId } });
+  const problem = await prisma.problema.findFirst({ where: { id: req.params.problemId, ...visibleProblemWhere(req) } });
   if (!problem) return res.status(404).json({ error: "Problema não encontrado" });
 
   const comment = await prisma.comentario.create({

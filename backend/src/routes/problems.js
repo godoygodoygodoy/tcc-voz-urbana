@@ -1,3 +1,5 @@
+import { publicationImages } from '../services/publicationMedia.js';
+import { visibleProblemWhere } from '../services/socialGraph.js';
 import express from "express";
 import { memoryImageUpload } from "../middleware/memoryUpload.js";
 import { removeStoredFiles, storeFiles } from "../config/storage.js";
@@ -142,7 +144,7 @@ const parseOccurrenceDateTime = (date, time) => {
   return occurrence;
 };
 
-const serializeProblem = (problem) => ({
+const serializeProblem = (problem, req) => ({
   ...problem,
   title: problem.titulo,
   description: problem.descricao,
@@ -169,7 +171,8 @@ const serializeProblem = (problem) => ({
     username: problem.usuario.username,
     avatar: problem.usuario.fotoPerfil
   } : null,
-  images: problem.imagens || [],
+  images: publicationImages(problem.imagens, req),
+  imagens: publicationImages(problem.imagens, req),
   updates: problem.atualizacoes || [],
   votes: problem._count?.votos || problem.votos?.length || 0
 });
@@ -197,7 +200,7 @@ router.get(
     const pageNumber = Math.max(1, Number(page));
     const pageSize = Math.min(100, Math.max(1, Number(limit)));
     const skip = (pageNumber - 1) * pageSize;
-    const where = {};
+    const where = { ...visibleProblemWhere(req) };
 
     if (status) where.status = status;
 
@@ -264,7 +267,7 @@ router.get(
       total,
       page: pageNumber,
       limit: pageSize,
-      data: data.map((item) => ({ ...serializeProblem(item), supportedByMe: Boolean(item.votos?.length) }))
+      data: data.map((item) => ({ ...serializeProblem(item, req), supportedByMe: Boolean(item.votos?.length) }))
     });
   })
 );
@@ -341,7 +344,7 @@ router.post(
       where: { id: problem.id },
       include: { categoria: true,       usuario: { select: { id: true, nome: true, username: true, fotoPerfil: true } }, imagens: true, atualizacoes: { orderBy: { dataCriacao: "desc" } } }
     });
-    res.status(201).json(serializeProblem(createdProblem));
+    res.status(201).json(serializeProblem(createdProblem, req));
   })
 );
 
@@ -433,7 +436,7 @@ router.put(
         _count: { select: { votos: true } }
       }
     });
-    res.json({ ...serializeProblem(updated), supportedByMe: Boolean(updated.votos?.length) });
+    res.json({ ...serializeProblem(updated, req), supportedByMe: Boolean(updated.votos?.length) });
   })
 );
 
@@ -465,9 +468,10 @@ router.delete(
 // Obter problema por ID
 router.get(
   "/:id",
+  optionalAuthMiddleware,
   asyncHandler(async (req, res) => {
-    const problem = await prisma.problema.findUnique({
-      where: { id: req.params.id },
+    const problem = await prisma.problema.findFirst({
+      where: { id: req.params.id, ...visibleProblemWhere(req) },
       include: {
         categoria: true,
         usuario: {
@@ -489,7 +493,7 @@ router.get(
       return res.status(404).json({ error: "Problema não encontrado" });
     }
 
-    res.json(serializeProblem(problem));
+    res.json(serializeProblem(problem, req));
   })
 );
 

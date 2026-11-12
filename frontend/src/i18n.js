@@ -164,6 +164,8 @@ const systemTemplates = Object.values(interfaceMessages).flatMap((messages) =>
 );
 export const translateSystemText = (text) => {
   if (!text) return text;
+  const direct = translate(text);
+  if (direct !== text) return direct;
   const key = sourceMessages.get(text);
   if (key) return translate(key);
   for (const template of systemTemplates) {

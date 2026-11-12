@@ -1,3 +1,6 @@
+import { notifySocialChange, subscribeSocialChanges } from '../utils/social';
+import { Link } from 'react-router-dom';
+import { profilePath } from '../utils/profileLinks';
 import { useI18n } from '../i18n';
 import React, { useState, useEffect } from 'react';
 import { socialAPI, usersAPI, mediaUrl } from '../services/api';
@@ -18,13 +21,14 @@ const ProfilePage = () => {
     username: '',
     phone: '',
     bio: '',
+    isPrivate: false,
     avatar: '',
     avatarFile: null,
   });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [cropFile, setCropFile] = useState(null);
-  const [friendRequests, setFriendRequests] = useState([]);
+  const [followRequests, setFollowRequests] = useState([]);
   const [sentRequests, setSentRequests] = useState([]);
   const setUser = useAuthStore((state) => state.setUser);
   const { t } = useI18n();
@@ -41,6 +45,7 @@ const ProfilePage = () => {
           username: res.data.username || '',
           phone: formatBrazilianPhone(res.data.phone || res.data.telefone || ''),
           bio: res.data.bio || '',
+          isPrivate: Boolean(res.data.isPrivate),
           avatar: res.data.avatar || res.data.fotoPerfil || '',
         });
       } catch (error) {
@@ -52,9 +57,23 @@ const ProfilePage = () => {
 
     fetchProfile();
     Promise.all([socialAPI.requests(), socialAPI.sentRequests()])
-      .then(([received, sent]) => { setFriendRequests(received.data || []); setSentRequests(sent.data || []); })
+      .then(([received, sent]) => { setFollowRequests(received.data || []); setSentRequests(sent.data || []); })
       .catch(() => {});
   }, [t]);
+
+  useEffect(() => {
+    let active = true;
+    const refresh = async () => {
+      if (document.hidden) return;
+      try {
+        const [received, sent] = await Promise.all([socialAPI.requests(), socialAPI.sentRequests()]);
+        if (active) { setFollowRequests(received.data || []); setSentRequests(sent.data || []); }
+      } catch { /* A failed refresh must not discard pending requests. */ }
+    };
+    const unsubscribe = subscribeSocialChanges(refresh);
+    const timer = window.setInterval(refresh, 5000);
+    return () => { active = false; unsubscribe(); window.clearInterval(timer); };
+  }, []);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -85,6 +104,7 @@ const ProfilePage = () => {
       payload.append('username', formData.username);
       payload.append('phone', normalizeDigits(formData.phone));
       payload.append('bio', formData.bio);
+      payload.append('isPrivate', String(formData.isPrivate));
       if (formData.avatarFile) payload.append('avatarFile', formData.avatarFile);
       else payload.append('avatar', formData.avatar);
       const response = await usersAPI.updateMe(payload);
@@ -92,6 +112,7 @@ const ProfilePage = () => {
       setProfile((current) => ({ ...current, ...updatedProfile }));
       setFormData((current) => ({ ...current, avatar: updatedProfile.avatar || updatedProfile.fotoPerfil || '', avatarFile: null }));
       setUser({ ...useAuthStore.getState().user, ...updatedProfile });
+      notifySocialChange();
       toast.success(t('profileUpdated'));
     } catch (error) {
       toast.error(error.response?.data?.error || t('profileError'));
@@ -102,9 +123,11 @@ const ProfilePage = () => {
 
   const updateRequest = async (request, action) => {
     try {
-      await socialAPI.updateFriendship(request.id, action);
-      setFriendRequests((current) => current.filter((item) => item.id !== request.id));
-      if (action === 'accept') toast.success(t("Amizade confirmada."));
+      await socialAPI.respondFollowRequest(request.id, action);
+      setFollowRequests((current) => current.filter((item) => item.id !== request.id));
+      setSentRequests((current) => current.filter((item) => item.id !== request.id));
+      notifySocialChange();
+      if (action === 'accept') toast.success(t('followRequestAccepted'));
     } catch (error) {
       toast.error(error.response?.data?.error || t("Não foi possível atualizar a solicitação."));
     }
@@ -213,6 +236,10 @@ const ProfilePage = () => {
             </div>
 
             <div>
+              <label className="block text-sm font-semibold mb-2">{t('profilePrivacy')}</label>
+              <FloatingSelect value={formData.isPrivate ? 'private' : 'public'} onChange={value => setFormData(current => ({ ...current, isPrivate: value === 'private' }))} options={[{ value: 'public', label: t('publicProfile') }, { value: 'private', label: t('privateProfile') }]} />
+              <p className="site-muted mt-2 text-xs">{t('profilePrivacyHint')}</p>
+              <p className="site-muted mb-5 mt-2 text-xs">{t('publicProfileHint')}</p>
               <label className="block text-sm font-semibold mb-2">{t('role')}</label>
               <input
                 type="text"
@@ -248,10 +275,10 @@ const ProfilePage = () => {
             <p className="site-muted mt-2 text-xs">{t("Preferências salvas neste navegador, mesmo após sair da conta.")}</p>
           </section>}
           <section className="mt-10 border-t border-white/10 pt-6">
-            <h2 className="mb-4 text-xl font-bold">{t("Solicitações de amizade")}</h2>
-            {friendRequests.length === 0 && sentRequests.length === 0 && <p className="text-sm text-white/55">{t("Nenhuma solicitação pendente.")}</p>}
-            <div className="space-y-3">{friendRequests.map((request) => <div key={request.id} className="flex items-center justify-between gap-3 rounded-xl bg-white/5 p-3"><span><strong>{request.solicitante.nome}</strong><small className="ml-2 text-white/50">{request.solicitante.username ? `@${request.solicitante.username}` : ''}</small></span><span className="flex gap-2"><button type="button" onClick={() => updateRequest(request, 'accept')} className="rounded-lg bg-violet-600 px-3 py-1 text-xs font-bold">{t("Aceitar")}</button><button type="button" onClick={() => updateRequest(request, 'reject')} className="rounded-lg border border-white/10 px-3 py-1 text-xs">{t("Recusar")}</button></span></div>)}</div>
-            <div className="mt-3 space-y-3">{sentRequests.map((request) => <div key={request.id} className="flex items-center justify-between rounded-xl bg-white/5 p-3 text-sm"><span>{t("Para")} <strong>{request.destinatario.nome}</strong></span><button type="button" onClick={() => updateRequest(request, 'cancel')} className="rounded-lg border border-white/10 px-3 py-1 text-xs">{t("Cancelar")}</button></div>)}</div>
+            <h2 className="mb-4 text-xl font-bold">{t('followRequestsTitle')}</h2>
+            {followRequests.length === 0 && sentRequests.length === 0 && <p className="text-sm text-white/55">{t("Nenhuma solicitação pendente.")}</p>}
+            <div className="space-y-3">{followRequests.map((request) => <div key={request.id} className="flex items-center justify-between gap-3 rounded-xl bg-white/5 p-3"><span><Link to={profilePath(request.follower)}><strong>{request.follower.nome}</strong></Link><small className="ml-2 text-white/50">{request.follower.username ? `@${request.follower.username}` : ''}</small></span><span className="flex gap-2"><button type="button" onClick={() => updateRequest(request, 'accept')} className="rounded-lg bg-violet-600 px-3 py-1 text-xs font-bold">{t("Aceitar")}</button><button type="button" onClick={() => updateRequest(request, 'reject')} className="rounded-lg border border-white/10 px-3 py-1 text-xs">{t("Recusar")}</button></span></div>)}</div>
+            <div className="mt-3 space-y-3">{sentRequests.map((request) => <div key={request.id} className="flex items-center justify-between rounded-xl bg-white/5 p-3 text-sm"><span>{t("Para")} <Link to={profilePath(request.following)}><strong>{request.following.nome}</strong></Link></span><button type="button" onClick={() => updateRequest(request, 'cancel')} className="rounded-lg border border-white/10 px-3 py-1 text-xs">{t("Cancelar")}</button></div>)}</div>
           </section>
         </div>
       </div>

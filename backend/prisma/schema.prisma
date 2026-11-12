@@ -16,6 +16,7 @@ model Usuario {
   username               String?               @unique @db.VarChar(30)
   telefone               String?               @db.VarChar(30)
   bio                    String?               @db.Text
+  perfilPrivado          Boolean               @default(false) @map("perfil_privado")
   nivel                  String                @default("USUARIO") @db.VarChar(20)
   // Campos legados preservados para futura reativacao da verificacao de e-mail.
   emailVerificado        Boolean               @default(false) @map("email_verificado")
@@ -30,8 +31,8 @@ model Usuario {
   votos                  Voto[]
   publicacoesSalvas      PublicacaoSalva[]
   visitas                Visita[]
-  amizadesEnviadas       Amizade[]             @relation("amizadeSolicitante")
-  amizadesRecebidas      Amizade[]             @relation("amizadeDestinatario")
+  seguindo               Seguimento[]          @relation("seguimentoOrigem")
+  seguidores             Seguimento[]          @relation("seguimentoDestino")
   conversasIniciadas     Conversa[]             @relation("conversaRemetente")
   conversasRecebidas     Conversa[]             @relation("conversaDestinatario")
   mensagensEnviadas      Mensagem[]
@@ -165,18 +166,20 @@ model Voto {
   @@map("votos")
 }
 
-model Amizade {
-  id             String        @id @default(uuid()) @db.Char(36)
-  status         StatusAmizade @default(PENDENTE)
-  solicitanteId  String        @map("solicitante_id") @db.Char(36)
-  destinatarioId String        @map("destinatario_id") @db.Char(36)
-  criadaEm       DateTime      @default(now()) @map("criada_em")
-  atualizadaEm   DateTime      @updatedAt @map("atualizada_em")
-  solicitante    Usuario       @relation("amizadeSolicitante", fields: [solicitanteId], references: [id], onDelete: Cascade)
-  destinatario   Usuario       @relation("amizadeDestinatario", fields: [destinatarioId], references: [id], onDelete: Cascade)
+// Reuses the existing table and preserves all relationship IDs and statuses.
+model Seguimento {
+  id            String        @id @default(uuid()) @db.Char(36)
+  status        StatusAmizade  @default(PENDENTE)
+  followerId    String        @map("solicitante_id") @db.Char(36)
+  followingId   String        @map("destinatario_id") @db.Char(36)
+  criadaEm      DateTime      @default(now()) @map("criada_em")
+  atualizadaEm  DateTime      @updatedAt @map("atualizada_em")
+  follower      Usuario       @relation("seguimentoOrigem", fields: [followerId], references: [id], onDelete: Cascade, map: "amizades_solicitante_id_fkey")
+  following     Usuario       @relation("seguimentoDestino", fields: [followingId], references: [id], onDelete: Cascade, map: "amizades_destinatario_id_fkey")
 
-  @@unique([solicitanteId, destinatarioId])
-  @@index([destinatarioId, status])
+  @@unique([followerId, followingId], map: "amizades_solicitante_id_destinatario_id_key")
+  @@index([followingId, status], map: "amizades_destinatario_id_status_idx")
+  @@index([followerId, status], map: "amizades_solicitante_id_status_idx")
   @@map("amizades")
 }
 
@@ -206,6 +209,7 @@ model Mensagem {
   remetente   Usuario  @relation(fields: [remetenteId], references: [id], onDelete: Cascade)
 
   @@index([conversaId, criadaEm])
+  @@index([conversaId, remetenteId])
   @@index([remetenteId, criadaEm])
   @@map("mensagens")
 }

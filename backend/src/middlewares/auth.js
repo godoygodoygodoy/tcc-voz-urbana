@@ -32,8 +32,8 @@ export const optionalAuthMiddleware = async (req, res, next) => {
   if (!token) return next();
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    const user = await prisma.usuario.findUnique({ where: { id: decoded.id }, select: { id: true } });
-    if (user) req.userId = user.id;
+    const user = await prisma.usuario.findUnique({ where: { id: decoded.id }, select: { id: true, admin: { select: { id: true } } } });
+    if (user) { req.userId = user.id; req.userRole = user.admin ? 'admin' : 'usuario'; }
   } catch {
     // Public feed requests remain valid when an expired token is present.
   }

@@ -1,3 +1,5 @@
+import publicationMediaRoutes from './routes/media.js';
+import { securePublicationStorage } from './config/storage.js';
 import "./config/environment.js";
 import express from "express";
 import cors from "cors";
@@ -76,11 +78,14 @@ app.get("/api/health", (req, res) => {
   res.json({ status: "OK", timestamp: new Date().toISOString() });
 });
 
+app.use('/api', (req, res, next) => { res.set('Cache-Control', 'private, no-store'); next(); });
+
 // Rotas públicas
 app.use("/api/auth", authRoutes);
 app.use("/api/visits", visitRoutes);
 app.use("/api/categories", categoryRoutes);
 app.use("/api/problems", problemRoutes);
+app.use("/api/media", publicationMediaRoutes);
 app.use("/api/comments", commentRoutes);
 app.use('/api/social', publicSocialRouter);
 
@@ -110,6 +115,7 @@ let stopBackups = () => {};
   try {
     checkPersistenceIdentity();
     await prisma.$connect();
+    await securePublicationStorage();
     stopBackups = startAutomaticBackup();
     console.log("✅ Conectado ao banco de dados MySQL via Prisma");
 

@@ -1,3 +1,5 @@
+import { publicationImages } from '../services/publicationMedia.js';
+import { visibleProblemWhere } from '../services/socialGraph.js';
 import express from "express";
 import { prisma } from "../config/prisma.js";
 import { asyncHandler } from "../middlewares/errorHandler.js";
@@ -17,7 +19,7 @@ const includeProblem = {
   }
 };
 
-const serialize = (saved) => {
+const serialize = (saved, req) => {
   const problem = saved.problema;
   return {
     ...problem,
@@ -40,7 +42,8 @@ const serialize = (saved) => {
       username: problem.usuario.username,
       avatar: problem.usuario.fotoPerfil
     } : null,
-    images: problem.imagens || [],
+    images: publicationImages(problem.imagens, req),
+    imagens: publicationImages(problem.imagens, req),
     updates: problem.atualizacoes || [],
     votes: problem._count?.votos || 0,
     savedAt: saved.criadaEm,
@@ -50,15 +53,15 @@ const serialize = (saved) => {
 
 router.get("/", authMiddleware, asyncHandler(async (req, res) => {
   const saved = await prisma.publicacaoSalva.findMany({
-    where: { usuarioId: req.userId },
+    where: { usuarioId: req.userId, problema: { is: visibleProblemWhere(req) } },
     include: includeProblem,
     orderBy: { criadaEm: "desc" }
   });
-  res.json(saved.map(serialize));
+  res.json(saved.map(item => serialize(item, req)));
 }));
 
 router.post("/:problemId", authMiddleware, asyncHandler(async (req, res) => {
-  const problem = await prisma.problema.findUnique({ where: { id: req.params.problemId }, select: { id: true } });
+  const problem = await prisma.problema.findFirst({ where: { id: req.params.problemId, ...visibleProblemWhere(req) }, select: { id: true } });
   if (!problem) return res.status(404).json({ error: "Publicação não encontrada." });
   const saved = await prisma.publicacaoSalva.upsert({
     where: { usuarioId_problemaId: { usuarioId: req.userId, problemaId: problem.id } },
