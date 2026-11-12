@@ -1,4 +1,4 @@
-﻿import jwt from 'jsonwebtoken';
+import jwt from 'jsonwebtoken';
 // These tickets grant access to one image only. Authorization is rechecked on every read.
 export const publicationImages = (images = [], req) => images.map(image => ({
   ...image,

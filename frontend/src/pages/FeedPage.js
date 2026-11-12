@@ -1,3 +1,9 @@
+const StoriesRail = React.lazy(() => import('../components/StoriesRail'));
+import { ConfirmDialog } from '../components/SiteDialog';
+const CollectionsPanel = React.lazy(() => import('../components/CollectionsPanel'));
+import { useObjectUrls } from '../utils/useObjectUrls';
+import { createVisibilityPoller, retainEqual } from '../utils/polling';
+import { shallow } from 'zustand/shallow';
 import { followButtonKey, notifySocialChange, subscribeSocialChanges } from '../utils/social';
 import { translateStatus, translateSystemText, translateCategory, getLanguage, translate as tr, useI18n } from '../i18n';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -37,7 +43,7 @@ import Avatar from '../components/Avatar';
 import ImageCropper from '../components/ImageCropper';
 import { profilePath } from '../utils/profileLinks';
 
-const actionAsset = (name) => `${import.meta.env.BASE_URL}feed-actions/${name}.png`;
+const actionAsset = (name) => `${import.meta.env.BASE_URL}feed-actions/${name}.webp`;
 
 const navItems = [
   { key: 'home', label: 'navHome', icon: Mailbox },
@@ -72,7 +78,7 @@ const sharePost = async (post) => {
   } catch (error) {
     if (error.name !== 'AbortError') toast.error(tr("Não foi possível compartilhar a publicação."));
   } finally {
-    setOpenMenu(null);
+    // Closing the local menu is handled by its caller.
   }
 };
 const MAX_IMAGE_COUNT = 8;
@@ -86,7 +92,7 @@ const FeedAction = ({ active, asset, label, count, onClick, disabled }) => { con
     aria-label={label}
     className={`group/action inline-flex min-w-[76px] items-center gap-2 rounded-xl px-2 py-1.5 text-xs font-bold transition hover:bg-white/8 disabled:cursor-wait disabled:opacity-60 ${active ? 'text-fuchsia-300' : 'text-white/60'}`}
   >
-    <img src={actionAsset(active ? (asset === 'curtir' ? 'curtido' : 'republicado') : asset)} alt="" className="h-8 w-8 object-contain transition group-hover/action:scale-110" />
+    <img width="32" height="32" decoding="async" src={actionAsset(active ? (asset === 'curtir' ? 'curtido' : 'republicado') : asset)} alt="" className="h-8 w-8 object-contain transition group-hover/action:scale-110" />
     <span>{count ?? label}</span>
   </button>); };
 
@@ -99,10 +105,49 @@ const FeedHeader = ({ title, description, children }) => { const { t } = useI18n
     <div className="feed-view-actions">{children}</div>
   </div>); };
 
+const FeedPost = React.memo(function FeedPost({ post, slide, liked, shared, menuOpen, saved, canManage, voting, onAction }) {
+    const { t } = useI18n();
+    const images = post.images?.length ? post.images : [];
+    const authorName = post.author?.name || t("Usuário");
+    const authorHandle = post.author?.username ? `@${post.author.username.replace(/^@/, '')}` : t("perfil sem @");
+    return <article key={post.id} className="feed-post">
+      <div className="feed-post-head">
+        <Link to={profilePath(post.author)} className="feed-post-author"><Avatar user={post.author} className="feed-avatar" /></Link>
+        <Link to={profilePath(post.author)} className="min-w-0 feed-post-author-copy"><strong>{authorHandle}</strong><span>{authorName} · {post.createdAt ? formatDistanceToNow(new Date(post.createdAt), { locale: ({ 'pt-BR': ptBR, en: enUS, es })[getLanguage()], addSuffix: true }) : t('now')}</span></Link>
+        <div className="relative flex items-center gap-1">
+          <button type="button" className="feed-more" aria-label={t("Mais opções")} onClick={() => onAction('menu', post.id, 'toggle')}><Ellipsis size={18} /></button>
+              {menuOpen && <div className="feed-post-menu" role="menu">
+            {canManage && <button type="button" onClick={() => { onAction('startEditing', post); onAction('menu', null); }}><Ellipsis size={14} /> {t("Editar publicação")}</button>}
+            {canManage && <button type="button" onClick={() => { onAction('menu', null); onAction('deletePost', post); }}><Trash2 size={14} /> {t("Apagar publicação")}</button>}
+            <button type="button" onClick={() => onAction('toggleSaved', post)}><Bookmark size={14} /> {saved ? t("Remover dos salvos") : t("Salvar publicação")}</button>
+            <button type="button" onClick={() => onAction('copyPostLink', post)}><Copy size={14} /> {t("Copiar link")}</button>
+            <button type="button" onClick={() => onAction('sharePost', post)}><Share2 size={14} /> {t("Compartilhar publicação")}</button>
+            <button type="button" onClick={() => { onAction('menu', null); onAction('navigate', `/problem/${post.id}`); }}><Check size={14} /> {t("Ver detalhes")}</button>
+            <button type="button" onClick={() => { onAction('menu', null); toast.info(t("Obrigado. A denúncia será analisada.")); }}><Flag size={14} /> {t("Denunciar")}</button>
+          </div>}
+        </div>
+      </div>
+      <Link to={`/problem/${post.id}`} className="block">
+        <div className="feed-post-copy"><span className="feed-category">{translateCategory(post.category?.name) || t('noCategory')}</span><h2>{post.title}{post.isEdited && <small className="ml-2 text-xs text-white/45">{t("(editado)")}</small>}</h2><p>{post.description}</p><span className="feed-location"><MapPin size={13} />{post.address || t('locationOnMap')}</span></div>
+        <div className="feed-media" style={{ aspectRatio: images.length ? (images[slide].proporcao === '16:9' ? '16 / 9' : images[slide].proporcao === '9:16' ? '9 / 16' : images[slide].proporcao === '4:5' ? '4 / 5' : images[slide].proporcao === '5:4' ? '5 / 4' : '1 / 1') : '1.85 / 1' }}>
+          {images.length > 0 ? <button type="button" className="block h-full w-full" style={{ aspectRatio: images[slide].proporcao === '16:9' ? '16 / 9' : images[slide].proporcao === '9:16' ? '9 / 16' : images[slide].proporcao === '4:5' ? '4 / 5' : images[slide].proporcao === '5:4' ? '5 / 4' : '1 / 1' }} onClick={(event) => { event.preventDefault(); onAction('setLightboxImage', mediaUrl(images[slide].url)); }}><img loading="lazy" decoding="async" src={mediaUrl(images[slide].url)} alt={post.title} /></button> : <div className="feed-media-placeholder"><span>Voz Urbana</span><strong>{post.title}</strong><small>{translateStatus(post.status)}</small></div>}
+          {images.length > 1 && <><button type="button" onClick={(event) => { event.preventDefault(); onAction('changeSlide', post.id, -1, images.length); }} className="feed-slide feed-slide-left" aria-label={t("Imagem anterior")}><ChevronLeft size={20} /></button><button type="button" onClick={(event) => { event.preventDefault(); onAction('changeSlide', post.id, 1, images.length); }} className="feed-slide feed-slide-right" aria-label={t("Próxima imagem")}><ChevronRight size={20} /></button><div className="feed-dots">{images.map((image, index) => <span key={image.id || index} className={index === slide ? 'is-current' : ''} />)}</div></>}
+        </div>
+      </Link>
+      <div className="feed-post-actions">
+        <FeedAction active={liked} asset="curtir" label={t("Curtir ocorrência")} count={`${post.votes || 0} ${t('apoios')}`} onClick={() => onAction('handleVote', post)} disabled={voting} />
+        <FeedAction asset="comentar" label={t("Comentar ocorrência")} count={t("Comentar")} onClick={() => onAction('navigate', `/problem/${post.id}#comments`)} />
+        <FeedAction active={shared} asset="republicar" label={t("Republicar ocorrência")} count={t("Republicar")} onClick={() => onAction('toggleShare', post)} />
+        <button type="button" className="feed-action-icon" aria-label={t("Enviar mensagem")} onClick={() => onAction('openConversation', post.author)}><img width="32" height="32" decoding="async" src={actionAsset('mensagem')} alt="" /></button>
+        <Link to={`/problem/${post.id}`} className="ml-auto feed-bookmark" aria-label={t("Abrir ocorrência")}><MessageCircle size={17} /></Link>
+      </div>
+    </article>;
+});
+
 const FeedPage = () => {
 
   const { t, language } = useI18n();
-  const { user, openAuthModal } = useAuthStore();
+  const { user, openAuthModal } = useAuthStore(state => ({ user: state.user, openAuthModal: state.openAuthModal }), shallow);
   const location = useLocation();
   const navigate = useNavigate();
   const [posts, setPosts] = useState([]);
@@ -120,6 +165,7 @@ const FeedPage = () => {
   const [sharedPosts, setSharedPosts] = useState(() => new Set());
   const [slideByPost, setSlideByPost] = useState({});
   const [votingPost, setVotingPost] = useState(null);
+  const votesInFlight = useRef(new Set());
   const [notifications, setNotifications] = useState([]);
   const [loadingNotifications, setLoadingNotifications] = useState(false);
   const [userResults, setUserResults] = useState([]);
@@ -129,12 +175,17 @@ const FeedPage = () => {
   const [loadingUsers, setLoadingUsers] = useState(false);
   const [relationships, setRelationships] = useState({});
   const [messages, setMessages] = useState([]);
+  const messageCursor = useRef(null);
+  const [hasOlderMessages, setHasOlderMessages] = useState(false);
+  const [loadingOlderMessages, setLoadingOlderMessages] = useState(false);
   const [conversations, setConversations] = useState([]);
   const [selectedConversation, setSelectedConversation] = useState(null);
   const [messageText, setMessageText] = useState('');
   const [sendingMessage, setSendingMessage] = useState(false);
   const [historyReady, setHistoryReady] = useState(false);
   const [historyError, setHistoryError] = useState(false);
+  const dmMessages = useRef(null);
+  const dmAtBottom = useRef(true);
   const messageRequest = useRef(0);
   const messageSending = useRef(false);
   const selectedConversationId = useRef(null);
@@ -142,10 +193,12 @@ const FeedPage = () => {
   const [createForm, setCreateForm] = useState(emptyCreateForm);
   const [creating, setCreating] = useState(false);
   const [deletingPost, setDeletingPost] = useState(null);
+  const [deleteCandidate, setDeleteCandidate] = useState(null);
   const [cities, setCities] = useState([]);
   const [loadingCities, setLoadingCities] = useState(false);
   const [loadingCep, setLoadingCep] = useState(false);
   const [createImages, setCreateImages] = useState([]);
+  const createPreviews = useObjectUrls(createImages);
   const [editingPost, setEditingPost] = useState(null);
   const [editImages, setEditImages] = useState([]);
   const [removedEditImages, setRemovedEditImages] = useState([]);
@@ -173,7 +226,9 @@ const FeedPage = () => {
     };
   }, [editingPost, lightboxImage]);
 
+  const feedRequest = useRef(0);
   const loadFeed = useCallback(async () => {
+    const sequence = ++feedRequest.current;
     try {
       setLoading(true);
       setFeedError(false);
@@ -181,6 +236,7 @@ const FeedPage = () => {
         problemsAPI.list({ category: category || undefined, status: status || undefined, sort, page, limit: 9 }),
         categoriesAPI.list(),
       ]);
+      if (sequence !== feedRequest.current) return;
       if (problemsResult.status === 'rejected') throw problemsResult.reason;
       const problemsResponse = problemsResult.value;
       setPosts(problemsResponse.data?.data || []);
@@ -191,21 +247,22 @@ const FeedPage = () => {
         || categoriesResult.value.data.length === 0) {
         setCategories([]);
         setCategoryError(true);
-        toast.error(t("Não foi possível carregar as categorias."));
+        toast.error(tr("Não foi possível carregar as categorias."));
       } else {
         setCategories(categoriesResult.value.data);
         setCategoryError(false);
       }
     } catch (error) {
+      if (sequence !== feedRequest.current) return;
       setCategoryError(true);
       setFeedError(true);
-      toast.error(t('apiUnavailable'));
+      toast.error(tr('apiUnavailable'));
     } finally {
-      setLoading(false);
+      if (sequence === feedRequest.current) setLoading(false);
     }
-  }, [category, page, sort, status, t]);
+  }, [category, page, sort, status]);
 
-  useEffect(() => { loadFeed(); }, [loadFeed]);
+  useEffect(() => { loadFeed(); return () => { ++feedRequest.current; }; }, [loadFeed]);
 
   useEffect(() => {
     if (!user) {
@@ -228,26 +285,41 @@ const FeedPage = () => {
       try {
         const { data } = await conversationsAPI.list();
         if (!active || sequence !== requestSequence) return;
-        setConversations(data || []);
+        setConversations(current => retainEqual(current, data || []));
         const requested = chooseRequested && data.find(item => item.id === location.state?.conversationId);
         chooseRequested = false;
-        setSelectedConversation(current => requested || (current ? { ...current, ...(data.find(item => item.id === current.id) || {}) } : data[0] || null));
+        setSelectedConversation(current => retainEqual(current, requested || (current ? { ...current, participant: data.find(item => item.id === current.id)?.participant || current.participant } : data[0] || null)));
       } catch { /* Keep existing conversations visible when a refresh fails. */ }
     };
     refresh();
-    const unsubscribe = subscribeSocialChanges(refresh);
-    const timer = window.setInterval(refresh, 5000);
-    return () => { active = false; ++requestSequence; unsubscribe(); window.clearInterval(timer); };
+    const poller = createVisibilityPoller(refresh, 5000);
+    const unsubscribe = subscribeSocialChanges(poller.refresh);
+    return () => { active = false; ++requestSequence; unsubscribe(); poller.dispose(); };
   }, [activeTab, user?.id, location.state?.conversationId]);
+
+  useEffect(() => {
+    if (dmMessages.current && dmAtBottom.current) dmMessages.current.scrollTop = dmMessages.current.scrollHeight;
+  }, [messages]);
+  useEffect(() => {
+    ++messageRequest.current; selectedConversationId.current = null;
+    setMessages([]); setSelectedConversation(null); setConversations([]); setRelationships({}); setHistoryReady(false);
+  }, [user?.id]);
 
   const readMessages = useCallback(async (conversationId) => {
     if (messageSending.current || selectedConversationId.current !== conversationId) return;
     const sequence = ++messageRequest.current;
     try {
-      const { data } = await conversationsAPI.messages(conversationId);
+      const after = messageCursor.current;
+      const { data } = await conversationsAPI.messages(conversationId, after ? { after } : undefined);
       if (sequence !== messageRequest.current || selectedConversationId.current !== conversationId) return;
-      setMessages(data.messages || []);
-      setSelectedConversation(current => current?.id === conversationId ? { ...current, messaging: data.messaging } : current);
+      setMessages(current => {
+        const known = new Set(current.map(item => item.id));
+        const fresh = (data.messages || []).filter(item => !known.has(item.id));
+        return fresh.length ? [...current, ...fresh] : current;
+      });
+      if (data.messages?.length) messageCursor.current = data.messages[data.messages.length - 1].id;
+      if (!after) setHasOlderMessages(Boolean(data.pageInfo?.hasOlder));
+      setSelectedConversation(current => current?.id === conversationId ? retainEqual(current, { ...current, messaging: data.messaging }) : current);
       setHistoryReady(true); setHistoryError(false);
     } catch {
       if (sequence === messageRequest.current && selectedConversationId.current === conversationId) setHistoryError(true);
@@ -256,12 +328,14 @@ const FeedPage = () => {
   useEffect(() => {
     const conversationId = selectedConversation?.id;
     if (activeTab !== 'conversations' || !conversationId || !user) return undefined;
+    dmAtBottom.current = true;
+    messageCursor.current = null; setHasOlderMessages(false);
     setMessages([]); setMessageText(''); setHistoryReady(false); setHistoryError(false);
     readMessages(conversationId);
-    const refresh = () => { if (!document.hidden) readMessages(conversationId); };
-    const unsubscribe = subscribeSocialChanges(refresh);
-    const timer = window.setInterval(refresh, 3000);
-    return () => { ++messageRequest.current; unsubscribe(); window.clearInterval(timer); };
+    const refresh = () => !document.hidden && readMessages(conversationId);
+    const poller = createVisibilityPoller(refresh, 3000);
+    const unsubscribe = subscribeSocialChanges(poller.refresh);
+    return () => { ++messageRequest.current; unsubscribe(); poller.dispose(); };
   }, [activeTab, selectedConversation?.id, user?.id, readMessages]);
 
   useEffect(() => {
@@ -416,6 +490,7 @@ const FeedPage = () => {
       return undefined;
     }
     let cancelled = false;
+    const controller = new AbortController();
     setLoadingUsers(true);
     setPeopleSearchError(false);
     setUserResults([]);
@@ -423,7 +498,7 @@ const FeedPage = () => {
     const loadUsers = async () => {
       try {
         setLoadingUsers(true);
-        const response = await socialAPI.searchUsers({ q: normalizedSearch, page: peoplePage, limit: 12 });
+        const response = await socialAPI.searchUsers({ q: normalizedSearch, page: peoplePage, limit: 12 }, { signal: controller.signal });
         if (!cancelled) {
           setUserResults(response.data?.data || []);
           setPeopleTotal(response.data?.total || 0);
@@ -435,7 +510,7 @@ const FeedPage = () => {
       }
     };
     const timer = window.setTimeout(loadUsers, 300);
-    return () => { cancelled = true; window.clearTimeout(timer); };
+    return () => { cancelled = true; controller.abort(); window.clearTimeout(timer); };
   }, [activeTab, search, peoplePage]);
 
   useEffect(() => { setPeoplePage(1); }, [search]);
@@ -468,19 +543,22 @@ const FeedPage = () => {
       openAuthModal('login');
       return;
     }
+    if (votesInFlight.current.has(post.id)) return;
+    votesInFlight.current.add(post.id);
+    const wasLiked = likedPosts.has(post.id), previousVotes = post.votes || 0;
+    setVotingPost(post.id);
+    setLikedPosts(current => { const next = new Set(current); if (wasLiked) next.delete(post.id); else next.add(post.id); return next; });
+    setPosts(current => current.map(item => item.id === post.id ? { ...item, votes: Math.max(0, previousVotes + (wasLiked ? -1 : 1)) } : item));
     try {
-      setVotingPost(post.id);
       const response = await votesAPI.vote(post.id, { type: 'up' });
-      setPosts((current) => current.map((item) => item.id === post.id ? { ...item, votes: response.data.votes } : item));
-      setLikedPosts((current) => {
-        const next = new Set(current);
-        if (next.has(post.id)) next.delete(post.id); else next.add(post.id);
-        return next;
-      });
+      setPosts(current => current.map(item => item.id === post.id ? { ...item, votes: response.data.votes } : item));
     } catch (error) {
+      setPosts(current => current.map(item => item.id === post.id ? { ...item, votes: previousVotes } : item));
+      setLikedPosts(current => { const next = new Set(current); if (wasLiked) next.add(post.id); else next.delete(post.id); return next; });
       toast.error(error.response?.data?.error || t('reportError'));
     } finally {
-      setVotingPost(null);
+      votesInFlight.current.delete(post.id);
+      setVotingPost(current => current === post.id ? null : current);
     }
   };
 
@@ -576,13 +654,14 @@ const FeedPage = () => {
     }
   };
 
-  const deletePost = async (post) => {
-    if (!window.confirm(t('confirmDeletePublication'))) return;
+  const deletePost = post => setDeleteCandidate(post);
+  const performDeletePost = async (post) => {
     try {
       setDeletingPost(post.id);
       await problemsAPI.remove(post.id);
       setPosts((current) => current.filter((item) => item.id !== post.id));
       setTotal((current) => Math.max(0, current - 1));
+      setDeleteCandidate(null);
       toast.success(t('publicationDeleted'));
     } catch (error) {
       toast.error(error.response?.data?.error || t('deletePublicationError'));
@@ -606,6 +685,7 @@ const FeedPage = () => {
     event.preventDefault();
     if (!messageText.trim() || !selectedConversation || !historyReady || selectedConversation.messaging?.canSend === false || messageSending.current) return;
     const conversationId = selectedConversation.id;
+    dmAtBottom.current = true;
     ++messageRequest.current; messageSending.current = true; setSendingMessage(true);
     try {
       const { data } = await conversationsAPI.send(conversationId, { texto: messageText.trim() });
@@ -654,48 +734,14 @@ const FeedPage = () => {
   }, [user?.id, userResults]);
   useEffect(() => subscribeSocialChanges(() => loadFeed()), [loadFeed]);
 
-  const renderPost = (post) => {
-    const images = post.images?.length ? post.images : [];
-    const slide = slideByPost[post.id] || 0;
-    const liked = likedPosts.has(post.id);
-    const shared = sharedPosts.has(post.id);
-    const authorName = post.author?.name || t("Usuário");
-    const authorHandle = post.author?.username ? `@${post.author.username.replace(/^@/, '')}` : t("perfil sem @");
-    return <article key={post.id} className="feed-post">
-      <div className="feed-post-head">
-        <Link to={profilePath(post.author)} className="feed-post-author"><Avatar user={post.author} className="feed-avatar" /></Link>
-        <Link to={profilePath(post.author)} className="min-w-0 feed-post-author-copy"><strong>{authorHandle}</strong><span>{authorName} · {post.createdAt ? formatDistanceToNow(new Date(post.createdAt), { locale: ({ 'pt-BR': ptBR, en: enUS, es })[getLanguage()], addSuffix: true }) : t('now')}</span></Link>
-        <div className="relative flex items-center gap-1">
-          <button type="button" className="feed-more" aria-label={t("Mais opções")} onClick={() => setOpenMenu((current) => current === post.id ? null : post.id)}><Ellipsis size={18} /></button>
-              {openMenu === post.id && <div className="feed-post-menu" role="menu">
-            {(post.author?.id === user?.id || user?.role === 'admin') && <button type="button" onClick={() => { startEditing(post); setOpenMenu(null); }}><Ellipsis size={14} /> {t("Editar publicação")}</button>}
-            {(post.author?.id === user?.id || user?.role === 'admin') && <button type="button" onClick={() => { setOpenMenu(null); deletePost(post); }}><Trash2 size={14} /> {t("Apagar publicação")}</button>}
-            <button type="button" onClick={() => toggleSaved(post)}><Bookmark size={14} /> {savedPosts.some((item) => item.id === post.id) ? t("Remover dos salvos") : t("Salvar publicação")}</button>
-            <button type="button" onClick={() => copyPostLink(post)}><Copy size={14} /> {t("Copiar link")}</button>
-            <button type="button" onClick={() => sharePost(post)}><Share2 size={14} /> {t("Compartilhar publicação")}</button>
-            <button type="button" onClick={() => { setOpenMenu(null); navigate(`/problem/${post.id}`); }}><Check size={14} /> {t("Ver detalhes")}</button>
-            <button type="button" onClick={() => { setOpenMenu(null); toast.info(t("Obrigado. A denúncia será analisada.")); }}><Flag size={14} /> {t("Denunciar")}</button>
-          </div>}
-        </div>
-      </div>
-      <Link to={`/problem/${post.id}`} className="block">
-        <div className="feed-post-copy"><span className="feed-category">{translateCategory(post.category?.name) || t('noCategory')}</span><h2>{post.title}{post.isEdited && <small className="ml-2 text-xs text-white/45">{t("(editado)")}</small>}</h2><p>{post.description}</p><span className="feed-location"><MapPin size={13} />{post.address || t('locationOnMap')}</span></div>
-        <div className="feed-media" style={{ aspectRatio: images.length ? (images[slide].proporcao === '16:9' ? '16 / 9' : images[slide].proporcao === '9:16' ? '9 / 16' : images[slide].proporcao === '4:5' ? '4 / 5' : images[slide].proporcao === '5:4' ? '5 / 4' : '1 / 1') : '1.85 / 1' }}>
-          {images.length > 0 ? <button type="button" className="block h-full w-full" style={{ aspectRatio: images[slide].proporcao === '16:9' ? '16 / 9' : images[slide].proporcao === '9:16' ? '9 / 16' : images[slide].proporcao === '4:5' ? '4 / 5' : images[slide].proporcao === '5:4' ? '5 / 4' : '1 / 1' }} onClick={(event) => { event.preventDefault(); setLightboxImage(mediaUrl(images[slide].url)); }}><img src={mediaUrl(images[slide].url)} alt={post.title} /></button> : <div className="feed-media-placeholder"><span>Voz Urbana</span><strong>{post.title}</strong><small>{statusLabels[post.status] || translateStatus(post.status)}</small></div>}
-          {images.length > 1 && <><button type="button" onClick={(event) => { event.preventDefault(); changeSlide(post.id, -1, images.length); }} className="feed-slide feed-slide-left" aria-label={t("Imagem anterior")}><ChevronLeft size={20} /></button><button type="button" onClick={(event) => { event.preventDefault(); changeSlide(post.id, 1, images.length); }} className="feed-slide feed-slide-right" aria-label={t("Próxima imagem")}><ChevronRight size={20} /></button><div className="feed-dots">{images.map((image, index) => <span key={image.id || index} className={index === slide ? 'is-current' : ''} />)}</div></>}
-        </div>
-      </Link>
-      <div className="feed-post-actions">
-        <FeedAction active={liked} asset="curtir" label={t("Curtir ocorrência")} count={`${post.votes || 0} ${t('apoios')}`} onClick={() => handleVote(post)} disabled={votingPost === post.id} />
-        <FeedAction asset="comentar" label={t("Comentar ocorrência")} count={t("Comentar")} onClick={() => navigate(`/problem/${post.id}#comments`)} />
-        <FeedAction active={shared} asset="republicar" label={t("Republicar ocorrência")} count={t("Republicar")} onClick={() => toggleShare(post)} />
-        <button type="button" className="feed-action-icon" aria-label={t("Enviar mensagem")} onClick={() => openConversation(post.author)}><img src={actionAsset('mensagem')} alt="" /></button>
-        <Link to={`/problem/${post.id}`} className="ml-auto feed-bookmark" aria-label={t("Abrir ocorrência")}><MessageCircle size={17} /></Link>
-      </div>
-    </article>;
-  };
+  const postActions = useRef({});
+  postActions.current = { startEditing, deletePost, toggleSaved, copyPostLink, sharePost: async post => { setOpenMenu(null); await sharePost(post); }, navigate, setLightboxImage, changeSlide, handleVote, toggleShare, openConversation,
+    menu: (id, mode) => setOpenMenu(current => mode === 'toggle' && current === id ? null : id) };
+  const dispatchPostAction = useCallback((name, ...args) => postActions.current[name](...args), []);
+  const renderPost = post => <FeedPost key={post.id} post={post} slide={slideByPost[post.id] || 0} liked={likedPosts.has(post.id)} shared={sharedPosts.has(post.id)} menuOpen={openMenu === post.id} saved={savedPosts.some(item => item.id === post.id)} canManage={post.author?.id === user?.id || user?.role === 'admin'} voting={votingPost === post.id} onAction={dispatchPostAction} />;
 
   const renderHome = () => <>
+    <React.Suspense fallback={null}><StoriesRail/></React.Suspense>
     <FeedHeader title={t('recentIdentifications')} description={t("Relatos urbanos, apoio comunitário e acompanhamento real.")}>
       <button type="button" onClick={() => selectTab('create')} className="feed-report-button"><Plus size={15} /> <span>{t('reportProblem')}</span></button>
     </FeedHeader>
@@ -706,9 +752,25 @@ const FeedPage = () => {
       <FloatingSelect value={sort} onChange={(value) => { setSort(value); setPage(1); }} options={[{ value: 'recent', label: t("Ocorrências recentes") }, { value: 'votes', label: t("Mais apoiadas") }]} />
     </section>
     {feedError && <div className="feed-empty" role="alert">{t("Não foi possível consultar as publicações. Isso não significa que foram apagadas.")}<button type="button" onClick={loadFeed}>{t("Tentar novamente")}</button></div>}
-    {loading ? <div className="feed-empty">{t('loadingPosts')}</div> : feedError && filteredPosts.length === 0 ? null : filteredPosts.length === 0 ? <div className="feed-empty"><ImageIcon size={30} />{t('noPosts')}</div> : <div className="space-y-5">{filteredPosts.map(renderPost)}</div>}
+    {loading && posts.length === 0 ? <div className="feed-post-skeleton" role="status" aria-busy="true"><span className="sr-only">{t('loadingPosts')}</span><div className="route-skeleton-title" /><div className="route-skeleton-line" /><div className="route-skeleton-card" /></div> : feedError && filteredPosts.length === 0 ? null : filteredPosts.length === 0 ? <div className="feed-empty"><ImageIcon size={30} />{t('noPosts')}</div> : <div className="space-y-5">{filteredPosts.map(renderPost)}</div>}
     <footer className="feed-pagination"><span>{total} {t("publicações")}</span><div><button type="button" disabled={page <= 1} onClick={() => setPage((value) => value - 1)}><ChevronLeft size={16} /></button><span>{page}</span><button type="button" disabled={page * 9 >= total} onClick={() => setPage((value) => value + 1)}><ChevronRight size={16} /></button></div></footer>
   </>;
+
+  const loadOlderMessages = async () => {
+    if (!selectedConversation || loadingOlderMessages || !messages.length) return;
+    const id = selectedConversation.id;
+    setLoadingOlderMessages(true);
+    const element = dmMessages.current, height = element?.scrollHeight || 0;
+    dmAtBottom.current = false;
+    try {
+      const { data } = await conversationsAPI.messages(id, { before: messages[0].id });
+      if (selectedConversationId.current !== id) return;
+      setMessages(current => { const known = new Set(current.map(item => item.id)); return [...data.messages.filter(item => !known.has(item.id)), ...current]; });
+      setHasOlderMessages(Boolean(data.pageInfo?.hasOlder));
+      requestAnimationFrame(() => { if (element) element.scrollTop += element.scrollHeight - height; });
+    } catch { if (selectedConversationId.current === id) setHistoryError(true); }
+    finally { setLoadingOlderMessages(false); }
+  };
 
   const renderConversations = () => <>
     <FeedHeader title={t('conversationsTitle')} description={t('Troque mensagens com pessoas que também cuidam da cidade.')} />
@@ -720,7 +782,7 @@ const FeedPage = () => {
       <div className="feed-dm-thread">
         <div className="feed-dm-thread-head"><Avatar user={selectedConversation?.participant} /><div><strong>{selectedConversation?.participant?.nome || t('Nenhuma conversa selecionada')}</strong><small>{!selectedConversation ? t('chatChooseConversation') : selectedConversation.messaging?.mutual ? t('chatUnlimited') : selectedConversation.messaging ? t('chatMessagesRemaining', { count: selectedConversation.messaging.remaining }) : t('loading')}</small></div></div>
         {historyError && <p className="feed-dm-history-error" role="alert">{t('chatHistoryError')}</p>}
-        <div className="feed-dm-messages">{messages.length ? messages.map(message => <div key={message.id} className={`feed-message ${message.remetenteId === user?.id ? 'is-own' : ''}`}><span>{message.texto}</span><small>{new Date(message.criadaEm).toLocaleTimeString(getLanguage(), { hour: '2-digit', minute: '2-digit' })}</small></div>) : <div className="feed-empty">{t(historyReady ? 'Nenhuma mensagem.' : selectedConversation ? 'loading' : 'chatChooseConversation')}</div>}</div>
+        <div className="feed-dm-messages" ref={dmMessages} onScroll={event => { const el = event.currentTarget; dmAtBottom.current = el.scrollHeight - el.scrollTop - el.clientHeight < 60; }}>{hasOlderMessages && <button type="button" disabled={loadingOlderMessages} onClick={loadOlderMessages}>{t(loadingOlderMessages ? 'loading' : 'loadMore')}</button>}{messages.length ? messages.map(message => <div key={message.id} className={`feed-message ${message.remetenteId === user?.id ? 'is-own' : ''}`}><span>{message.texto}</span><small>{new Date(message.criadaEm).toLocaleTimeString(getLanguage(), { hour: '2-digit', minute: '2-digit' })}</small></div>) : <div className="feed-empty">{t(historyReady ? 'Nenhuma mensagem.' : selectedConversation ? 'loading' : 'chatChooseConversation')}</div>}</div>
         {selectedConversation?.messaging?.canSend === false ? <div className="feed-dm-limit" role="status"><Lock size={18} /><p>{t('chatLimitReached')}</p></div>
           : <form onSubmit={sendMessage} className="feed-dm-compose"><input value={messageText} onChange={event => setMessageText(event.target.value)} maxLength={2000} placeholder={t(selectedConversation ? 'Escreva uma mensagem...' : 'chatChooseConversation')} disabled={!selectedConversation || !historyReady || sendingMessage} /><button type="submit" aria-label={t(sendingMessage ? 'chatSendBusy' : 'Enviar mensagem')} disabled={!selectedConversation || !historyReady || sendingMessage || !messageText.trim()}><Send size={17} /></button></form>}
       </div>
@@ -760,6 +822,7 @@ const FeedPage = () => {
 
   const renderSaved = () => <>
     <FeedHeader title={t("Publicações salvas")} description={t("Acesse rapidamente os relatos que você escolheu acompanhar.")} />
+    {user && <React.Suspense fallback={<p>{t('loading')}</p>}><CollectionsPanel ownerId={user.id} savedPosts={savedPosts} renderPost={renderPost}/></React.Suspense>}
     {savedPosts.length ? <div className="space-y-5">{savedPosts.map(renderPost)}</div> : <div className="feed-empty"><Bookmark size={30} />{t("Nenhuma publicação salva.")}</div>}
   </>;
 
@@ -790,7 +853,7 @@ const FeedPage = () => {
         </div>
       </fieldset>
       <UploadField accept={IMAGE_TYPES.join(',')} multiple files={createImages} maxFiles={MAX_IMAGE_COUNT} maxSizeMb={5} label={t("Adicionar fotos")} onChange={handleCreateImages} />
-      {createImages.length > 0 && <div className="grid grid-cols-4 gap-2">{createImages.map((file, index) => <div key={`${file.name}-${index}`} className="relative"><img src={URL.createObjectURL(file)} alt="" className="h-20 w-full rounded object-cover" /><button type="button" onClick={() => setCreateImages((current) => current.filter((_, imageIndex) => imageIndex !== index))} className="absolute right-1 top-1">×</button></div>)}</div>}
+      {createImages.length > 0 && <div className="grid grid-cols-4 gap-2">{createImages.map((file, index) => <div key={`${file.name}-${index}`} className="relative"><img src={createPreviews[index]} alt="" className="h-20 w-full rounded object-cover" /><button type="button" onClick={() => setCreateImages((current) => current.filter((_, imageIndex) => imageIndex !== index))} className="absolute right-1 top-1">×</button></div>)}</div>}
       <button type="submit" disabled={creating} className="feed-create-submit"><Send size={16} /> {creating ? 'Publicando...' : t("Publicar identificação")}</button>
     </form>
   </>;
@@ -799,6 +862,7 @@ const FeedPage = () => {
 
   return (
     <main className="feed-shell min-h-screen bg-[#090b0e] text-white">
+      {deleteCandidate && <ConfirmDialog title={t('confirmDeletePublication')} description={deleteCandidate.title} busy={Boolean(deletingPost)} onClose={() => setDeleteCandidate(null)} onConfirm={() => performDeletePost(deleteCandidate)}/>}
       <AmbientContour variant="feed" />
       <div className="feed-layout site-menu-safe-layout mx-auto max-w-[1440px] px-4 py-6 lg:px-8">
         <aside className="feed-rail hidden lg:flex">

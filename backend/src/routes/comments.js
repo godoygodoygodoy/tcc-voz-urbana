@@ -9,12 +9,20 @@ const router = express.Router();
 
 router.get("/:problemId", optionalAuthMiddleware, asyncHandler(async (req, res) => {
   if (!await prisma.problema.findFirst({ where: { id: req.params.problemId, ...visibleProblemWhere(req) }, select: { id: true } })) return res.status(404).json({ error: 'problemNotFound' });
+  const limit = Math.min(100, Math.max(1, Number.parseInt(req.query.limit, 10) || 30));
+  const page = Math.max(1, Number.parseInt(req.query.page, 10) || 1);
   const comments = await prisma.comentario.findMany({
     where: { problemaId: req.params.problemId },
     include: { usuario: { select: { id: true, nome: true, username: true, fotoPerfil: true } } },
-    orderBy: { dataCriacao: "asc" }
+    orderBy: [{ dataCriacao: "asc" }, { id: "asc" }],
+    skip: (page - 1) * limit, take: limit + 1
   });
-  res.json(comments);
+  const hasMore = comments.length > limit;
+  if (req.query.paginated === 'true') {
+    const total = await prisma.comentario.count({ where: { problemaId: req.params.problemId } });
+    return res.json({ data: comments.slice(0, limit), page, limit, hasMore, total });
+  }
+  res.json(comments.slice(0, limit));
 }));
 
 router.post("/:problemId", authMiddleware, asyncHandler(async (req, res) => {

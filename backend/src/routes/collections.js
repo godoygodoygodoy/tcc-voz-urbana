@@ -1,0 +1,16 @@
+﻿import express from 'express';
+import { prisma } from '../config/prisma.js';
+import { authMiddleware, optionalAuthMiddleware } from '../middlewares/auth.js';
+import { asyncHandler } from '../middlewares/errorHandler.js';
+import { createCollections } from '../services/collections.js';
+const router = express.Router(), collections = createCollections(prisma);
+router.get('/public/:ownerId', optionalAuthMiddleware, asyncHandler(async(req,res)=>res.json(await collections.list(req,req.params.ownerId))));
+router.get('/', authMiddleware, asyncHandler(async(req,res)=>res.json(await collections.list(req))));
+router.get('/:id', optionalAuthMiddleware, asyncHandler(async(req,res)=>res.json(await collections.get(req,req.params.id))));
+router.use(authMiddleware);
+router.post('/', asyncHandler(async(req,res)=>res.status(201).json(await collections.create(req,req.body))));
+router.patch('/:id', asyncHandler(async(req,res)=>res.json(await collections.update(req,req.params.id,req.body))));
+router.delete('/:id', asyncHandler(async(req,res)=>{await collections.remove(req,req.params.id);res.sendStatus(204);}));
+router.put('/:id/items/:problemId', asyncHandler(async(req,res)=>{await collections.add(req,req.params.id,req.params.problemId);res.sendStatus(204);}));
+router.delete('/:id/items/:problemId', asyncHandler(async(req,res)=>{await collections.removeItem(req,req.params.id,req.params.problemId);res.sendStatus(204);}));
+export default router;

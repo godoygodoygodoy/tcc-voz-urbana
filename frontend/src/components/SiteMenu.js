@@ -1,285 +1,82 @@
 import { useI18n } from '../i18n';
-import React, { useEffect, useLayoutEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { FiCompass, FiFileText, FiHome, FiInfo, FiMail, FiMenu, FiMap, FiShield, FiX } from 'react-icons/fi';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-
 import { useAuthStore } from '../store';
+import { subscribeAnimation, useMotionBudget } from '../utils/motion';
 
 const SiteMenu = () => {
-
-  const { t } = useI18n();
-  const location = useLocation();
-  const navigate = useNavigate();
-  const user = useAuthStore((state) => state.user);
-  const [open, setOpen] = useState(false);
-  const [clickedIndex, setClickedIndex] = useState(null);
-  const [clickPulse, setClickPulse] = useState(0);
-  const [pointerInside, setPointerInside] = useState(false);
-  const [pointerIndex, setPointerIndex] = useState(null);
-  const pointerIndexRef = useRef(null);
-  const navRef = useRef(null);
-  const linkRefs = useRef([]);
-  const labelRefs = useRef([]);
-  const indicatorRef = useRef(null);
-  const physicsRef = useRef({ currentX: 0, currentY: 0, targetX: 0, targetY: 0, velocityX: 0, velocityY: 0, frame: 0 });
-  const navigationRef = useRef(null);
-
-  const items = [
-    { label: t('navHome'), href: '/', icon: FiHome },
-    { label: t('navHow'), href: '/#como', icon: FiCompass },
-    { label: t('navMap'), href: '/map', icon: FiMap },
-    { label: t('navFeed'), href: '/feed', icon: FiFileText },
-    { label: t('navAbout'), href: '/#sobre', icon: FiInfo },
-    { label: t('navContact'), href: '/#contato', icon: FiMail },
-    { label: t('reportProblem'), href: '/feed#create', icon: FiFileText, variant: 'create' },
-    ...(user?.role?.toLowerCase() === 'admin' ? [{ label: t('adminNav'), href: '/admin', icon: FiShield, variant: 'admin' }] : []),
+  const { t } = useI18n(),location=useLocation(),navigate=useNavigate();
+  const user=useAuthStore(state=>state.user);
+  const {reduced,hidden}=useMotionBudget();
+  const [open,setOpen]=useState(false),[clickedIndex,setClickedIndex]=useState(null),[clickPulse,setClickPulse]=useState(0),[pointerInside,setPointerInside]=useState(false),[pointerIndex,setPointerIndex]=useState(null);
+  const pointerIndexRef=useRef(null),navRef=useRef(null),linkRefs=useRef([]),labelRefs=useRef([]),indicatorRef=useRef(null),navigationRef=useRef(null),bounds=useRef([]),physicsStop=useRef(null);
+  const physicsRef=useRef({currentX:0,currentY:0,targetX:0,targetY:0,velocityX:0,velocityY:0,frame:0});
+  const items=[
+    {label:t('navHome'),href:'/',icon:FiHome},{label:t('navHow'),href:'/#como',icon:FiCompass},
+    {label:t('navMap'),href:'/map',icon:FiMap},{label:t('navFeed'),href:'/feed',icon:FiFileText},
+    {label:t('navAbout'),href:'/#sobre',icon:FiInfo},{label:t('navContact'),href:'/#contato',icon:FiMail},
+    {label:t('reportProblem'),href:'/feed#create',icon:FiFileText,variant:'create'},
+    ...(user?.role?.toLowerCase()==='admin'?[{label:t('adminNav'),href:'/admin',icon:FiShield,variant:'admin'}]:[]),
   ];
-
-  const currentIndex = items.findIndex(({ href }) => {
-    const [path, hash] = href.split('#');
-    if (location.pathname !== path) return false;
-    return hash ? location.hash === `#${hash}` : !location.hash;
-  });
-  const routeIndex = location.pathname === '/report' ? 6 : currentIndex;
-  const selectedIndex = clickedIndex ?? (routeIndex >= 0 ? routeIndex : null);
-  const indicatorIndex = pointerInside ? null : selectedIndex;
-
-  useEffect(() => {
-    setClickedIndex(null);
-    setPointerInside(false);
-    setPointerIndex(null);
-    pointerIndexRef.current = null;
-  }, [location.pathname, location.hash]);
-
-  useEffect(() => {
-    const handleKeyDown = (event) => {
-      if (event.key === 'Escape' && navigationRef.current) {
-        navigationRef.current.cancelled = true;
-        navigationRef.current = null;
-        setOpen(false);
-      }
-    };
-    const handleManualScroll = () => {
-      if (navigationRef.current && !navigationRef.current.programmatic) {
-        navigationRef.current.cancelled = true;
-        navigationRef.current = null;
-        setOpen(false);
-      }
-    };
-    document.addEventListener('keydown', handleKeyDown);
-    window.addEventListener('scroll', handleManualScroll, { passive: true });
-    return () => {
-      document.removeEventListener('keydown', handleKeyDown);
-      window.removeEventListener('scroll', handleManualScroll);
-    };
-  }, []);
-
-  useEffect(() => () => {
-    if (navigationRef.current) navigationRef.current.cancelled = true;
-  }, []);
-
-  const targetForIndex = (index) => {
-    const label = labelRefs.current[index];
-    const nav = navRef.current;
-    if (!label || !nav) return null;
-    const labelRect = label.getBoundingClientRect();
-    const navRect = nav.getBoundingClientRect();
-    const rail = indicatorRef.current;
-    const svg = rail?.querySelector('.site-menu-arrow-svg');
-    const railRect = rail?.getBoundingClientRect();
-    const svgRect = svg?.getBoundingClientRect();
-    const tipInset = railRect && svgRect
-      ? svgRect.left - railRect.left + (svgRect.width * (3 / 34))
-      : 4.85;
-    return {
-      x: labelRect.right - navRect.left + 4 - tipInset,
-      y: labelRect.top + labelRect.height / 2 - navRect.top,
-    };
+  const currentIndex=items.findIndex(({href})=>{const[path,hash]=href.split('#');return location.pathname===path&&(hash?location.hash==='#'+hash:!location.hash);});
+  const routeIndex=location.pathname==='/report'?6:currentIndex;
+  const selectedIndex=clickedIndex??(routeIndex>=0?routeIndex:null),indicatorIndex=pointerInside?null:selectedIndex;
+  const writePhysics=()=>{const p=physicsRef.current;if(indicatorRef.current){indicatorRef.current.style.transform=`translate3d(${p.currentX}px,${p.currentY}px,0) translateY(-50%)`;indicatorRef.current.style.setProperty('--arrow-stretch',Math.min(1.08,1+Math.abs(p.velocityY)*.012).toFixed(3));}};
+  const startPhysics=useCallback(()=>{
+    if(physicsStop.current||!open||hidden||reduced)return;
+    physicsStop.current=subscribeAnimation(()=>{
+      const p=physicsRef.current,dx=p.targetX-p.currentX,dy=p.targetY-p.currentY;
+      p.velocityX=p.velocityX*.72+dx*.18;p.velocityY=p.velocityY*.72+dy*.18;p.currentX+=p.velocityX;p.currentY+=p.velocityY;
+      const settled=Math.abs(dx)+Math.abs(dy)+Math.abs(p.velocityX)+Math.abs(p.velocityY)<.12;
+      if(settled){p.currentX=p.targetX;p.currentY=p.targetY;p.velocityX=0;p.velocityY=0;physicsStop.current=null;}
+      writePhysics();return!settled;
+    });
+  },[open,hidden,reduced]);
+  const targetForIndex=index=>bounds.current[index]?.target||null;
+  const setIndicatorTarget=value=>{
+    if(!value)return;const p=physicsRef.current;
+    if(p.targetX===value.x&&p.targetY===value.y)return;
+    p.targetX=value.x;p.targetY=value.y;
+    if(reduced){p.currentX=value.x;p.currentY=value.y;writePhysics();}else startPhysics();
   };
-
-  const setIndicatorTarget = (value) => {
-    if (value == null) return;
-    physicsRef.current.targetX = value.x;
-    physicsRef.current.targetY = value.y;
+  const measure=useCallback(()=>{
+    if(!navRef.current)return;const nav=navRef.current.getBoundingClientRect();
+    bounds.current=labelRefs.current.map(label=>{if(!label)return null;const rect=label.getBoundingClientRect();return{center:rect.top+rect.height/2,target:{x:rect.right-nav.left-.85,y:rect.top+rect.height/2-nav.top}};});
+  },[]);
+  useLayoutEffect(()=>{
+    if(!open)return;measure();const target=targetForIndex(selectedIndex);if(target){Object.assign(physicsRef.current,{currentX:target.x,currentY:target.y,targetX:target.x,targetY:target.y});writePhysics();}
+  },[open,t,selectedIndex,measure]);
+  useEffect(()=>{
+    if(!open)return undefined;
+    let frame=0;const update=()=>{cancelAnimationFrame(frame);frame=requestAnimationFrame(measure);};
+    window.addEventListener('resize',update);document.fonts?.addEventListener?.('loadingdone',update);
+    return()=>{cancelAnimationFrame(frame);window.removeEventListener('resize',update);document.fonts?.removeEventListener?.('loadingdone',update);};
+  },[open,measure]);
+  useEffect(()=>()=>{physicsStop.current?.();physicsStop.current=null;},[open,hidden,reduced]);
+  const handleNavPointerMove=event=>{
+    let nearest=null,distance=Infinity;
+    bounds.current.forEach((item,index)=>{if(item&&Math.abs(event.clientY-item.center)<distance){nearest=index;distance=Math.abs(event.clientY-item.center);}});
+    if(nearest==null)return;
+    const current=pointerIndexRef.current;
+    if(current!=null&&bounds.current[current]&&Math.abs(event.clientY-bounds.current[current].center)<=distance+8)nearest=current;
+    if(!pointerInside)setPointerInside(true);
+    if(current===nearest)return;
+    pointerIndexRef.current=nearest;setPointerIndex(nearest);setIndicatorTarget(targetForIndex(nearest));
   };
-
-  useLayoutEffect(() => {
-    const initial = selectedIndex == null ? null : targetForIndex(selectedIndex);
-    if (initial == null) return undefined;
-    physicsRef.current.currentX = initial.x;
-    physicsRef.current.currentY = initial.y;
-    physicsRef.current.targetX = initial.x;
-    physicsRef.current.targetY = initial.y;
-    if (indicatorRef.current) indicatorRef.current.style.transform = `translate3d(${initial.x}px, ${initial.y}px, 0) translateY(-50%)`;
-    return undefined;
-  }, [open, selectedIndex, t]);
-
-  useEffect(() => {
-    if (!open) return undefined;
-    const physics = physicsRef.current;
-    const reducedMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
-    const tick = () => {
-      const distanceX = physics.targetX - physics.currentX;
-      const distanceY = physics.targetY - physics.currentY;
-      physics.velocityX = physics.velocityX * 0.72 + distanceX * 0.18;
-      physics.velocityY = physics.velocityY * 0.72 + distanceY * 0.18;
-      physics.currentX += physics.velocityX;
-      physics.currentY += physics.velocityY;
-      if (indicatorRef.current) {
-        const stretch = Math.min(1.08, 1 + Math.min(0.08, Math.abs(physics.velocityY) * 0.012));
-        indicatorRef.current.style.transform = `translate3d(${physics.currentX}px, ${physics.currentY}px, 0) translateY(-50%)`;
-        indicatorRef.current.style.setProperty('--arrow-stretch', stretch.toFixed(3));
-      }
-      physics.frame = requestAnimationFrame(tick);
-    };
-    if (!reducedMotion) physics.frame = requestAnimationFrame(tick);
-    return () => cancelAnimationFrame(physics.frame);
-  }, [open]);
-
-  useEffect(() => {
-    const update = () => {
-      if (pointerInside && pointerIndexRef.current != null) {
-        setIndicatorTarget(targetForIndex(pointerIndexRef.current));
-      } else if (selectedIndex != null) {
-        setIndicatorTarget(targetForIndex(selectedIndex));
-      }
-    };
-    window.addEventListener('resize', update);
-    document.fonts?.addEventListener?.('loadingdone', update);
-    update();
-    return () => {
-      window.removeEventListener('resize', update);
-      document.fonts?.removeEventListener?.('loadingdone', update);
-    };
-  }, [open, pointerInside, pointerIndex, selectedIndex, items.length, t]);
-
-  const handleNavPointerMove = (event) => {
-    const nav = navRef.current;
-    if (!nav) return;
-    const targets = labelRefs.current.map((label) => {
-      if (!label) return null;
-      const rect = label.getBoundingClientRect();
-      return { x: rect.right, y: rect.top + rect.height / 2 };
-    }).filter((target) => target != null);
-    if (!targets.length) return;
-    setPointerInside(true);
-    const distances = targets.map((target) => Math.abs(event.clientY - target.y));
-    const nearestIndex = distances.indexOf(Math.min(...distances));
-    const currentIndex = pointerIndexRef.current;
-    const hysteresis = 8;
-    const nextIndex = currentIndex != null
-      && distances[currentIndex] <= distances[nearestIndex] + hysteresis
-      ? currentIndex
-      : nearestIndex;
-    pointerIndexRef.current = nextIndex;
-    setPointerIndex(nextIndex);
-    setIndicatorTarget(targetForIndex(nextIndex));
-  };
-
-  const waitForSequence = (sequence, duration) => new Promise((resolve) => {
-    const timeout = window.setTimeout(() => {
-      sequence.timers.delete(timeout);
-      resolve(!sequence.cancelled);
-    }, duration);
-    sequence.timers.add(timeout);
-  });
-
-  const animateDocumentScroll = (sequence, target) => new Promise((resolve) => {
-    const start = window.scrollY;
-    const distance = target - start;
-    const duration = Math.min(1600, Math.max(900, Math.abs(distance) * 0.55));
-    const startedAt = performance.now();
-    sequence.programmatic = true;
-    const frame = (now) => {
-      if (sequence.cancelled) {
-        sequence.programmatic = false;
-        resolve(false);
-        return;
-      }
-      const progress = Math.min(1, (now - startedAt) / duration);
-      const eased = 1 - ((1 - progress) ** 4);
-      window.scrollTo({ top: start + distance * eased, behavior: 'auto' });
-      if (progress < 1) {
-        sequence.frame = requestAnimationFrame(frame);
-      } else {
-        sequence.programmatic = false;
-        resolve(true);
-      }
-    };
-    sequence.frame = requestAnimationFrame(frame);
-  });
-
-  const runNavigationSequence = async (index, href) => {
-    if (navigationRef.current) {
-      navigationRef.current.cancelled = true;
-      navigationRef.current.timers.forEach((timer) => window.clearTimeout(timer));
-      if (navigationRef.current.frame) cancelAnimationFrame(navigationRef.current.frame);
-    }
-    const sequence = { cancelled: false, programmatic: false, timers: new Set(), frame: 0 };
-    navigationRef.current = sequence;
-    const reducedMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
-    const [path, hash] = href.split('#');
-
-    if (!reducedMotion) {
-      const completed = await waitForSequence(sequence, 520);
-      if (!completed) return;
-    }
-
-    if (sequence.cancelled) return;
-    if (hash) {
-      navigate({ pathname: path || '/', hash: `#${hash}` });
-      await waitForSequence(sequence, reducedMotion ? 0 : 40);
-      if (sequence.cancelled) return;
-      const targetElement = document.getElementById(hash);
-      if (targetElement) {
-        const headerOffset = 76;
-        const target = Math.max(0, targetElement.getBoundingClientRect().top + window.scrollY - headerOffset);
-        if (reducedMotion) {
-          window.scrollTo({ top: target, behavior: 'auto' });
-          setOpen(false);
-          if (navigationRef.current === sequence) navigationRef.current = null;
-          return;
-        }
-        const scrollPromise = animateDocumentScroll(sequence, target);
-        await waitForSequence(sequence, reducedMotion ? 0 : 300);
-        if (sequence.cancelled) return;
-        setOpen(false);
-        await scrollPromise;
-      } else {
-        setOpen(false);
-      }
-    } else {
-      navigate(href);
-      await waitForSequence(sequence, reducedMotion ? 0 : 40);
-      if (sequence.cancelled) return;
-      if (href === '/') {
-        if (reducedMotion) {
-          window.scrollTo(0, 0);
-        } else {
-          const scrollPromise = animateDocumentScroll(sequence, 0);
-          await waitForSequence(sequence, 300);
-          if (sequence.cancelled) return;
-          setOpen(false);
-          await scrollPromise;
-        }
-      } else {
-        if (!reducedMotion) await waitForSequence(sequence, 300);
-        if (!sequence.cancelled) setOpen(false);
-      }
-    }
-    if (navigationRef.current === sequence) navigationRef.current = null;
-  };
-
-  const handleLinkClick = (event, index, href) => {
-    event.preventDefault();
-    setClickedIndex(index);
-    setPointerIndex(index);
-    pointerIndexRef.current = index;
-    setClickPulse((value) => value + 1);
-    setPointerInside(false);
-    setIndicatorTarget(targetForIndex(index));
-    runNavigationSequence(index, href);
+  const cancelNavigation=()=>{const sequence=navigationRef.current;if(!sequence)return;sequence.cancelled=true;sequence.stop?.();sequence.timers.forEach(clearTimeout);navigationRef.current=null;};
+  useEffect(()=>{
+    const escape=event=>{if(event.key==='Escape'){cancelNavigation();setOpen(false);}};
+    const manual=()=>cancelNavigation();
+    document.addEventListener('keydown',escape);window.addEventListener('wheel',manual,{passive:true});window.addEventListener('touchstart',manual,{passive:true});
+    return()=>{cancelNavigation();physicsStop.current?.();document.removeEventListener('keydown',escape);window.removeEventListener('wheel',manual);window.removeEventListener('touchstart',manual);};
+  },[]);
+  useEffect(()=>{setClickedIndex(null);setPointerInside(false);setPointerIndex(null);pointerIndexRef.current=null;},[location.pathname,location.hash]);
+  const runNavigationSequence=(index,href)=>{cancelNavigation();setOpen(false);navigate(href);};
+  const handleLinkClick=(event,index,href)=>{
+    if(event.metaKey||event.ctrlKey||event.shiftKey||event.altKey)return;
+    event.preventDefault();setClickedIndex(index);setPointerIndex(index);pointerIndexRef.current=index;setClickPulse(value=>value+1);setPointerInside(false);setIndicatorTarget(targetForIndex(index));runNavigationSequence(index,href);
   };
 
   return createPortal(

@@ -1,4 +1,4 @@
-﻿-- Additive schema change: public is the default for every existing profile.
+-- Additive schema change: public is the default for every existing profile.
 ALTER TABLE `usuarios` ADD COLUMN `perfil_privado` BOOLEAN NOT NULL DEFAULT false;
 CREATE INDEX `amizades_solicitante_id_status_idx` ON `amizades` (`solicitante_id`, `status`);
 CREATE INDEX `mensagens_conversa_id_remetente_id_idx` ON `mensagens` (`conversa_id`, `remetente_id`);

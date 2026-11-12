@@ -44,7 +44,10 @@ const useFloatingField = (open, setOpen, panelSize = { width: 280, height: 360, 
       if (!ref.current?.contains(event.target) && !panelRef.current?.contains(event.target)) setOpen(false);
     };
     const escape = (event) => {
-      if (event.key === 'Escape') setOpen(false);
+      if (event.key === 'Escape' || event.key === 'Tab' && panelRef.current?.contains(event.target)) {
+        if (event.key === 'Tab') event.preventDefault();
+        setOpen(false); ref.current?.querySelector('button')?.focus();
+      }
     };
     document.addEventListener('pointerdown', close);
     document.addEventListener('keydown', escape);

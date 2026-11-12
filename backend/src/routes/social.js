@@ -1,11 +1,11 @@
 import { publicationImages } from '../services/publicationMedia.js';
-﻿import express from 'express';
+import express from 'express';
 import { prisma } from '../config/prisma.js';
 import { asyncHandler } from '../middlewares/errorHandler.js';
 import { optionalAuthMiddleware } from '../middlewares/auth.js';
 import { createNotification } from '../utils/notifications.js';
 import { createPeopleSearch } from '../services/peopleSearch.js';
-import { canViewProfile, createSocialGraph, publicUser, relationship, visibleProblemWhere } from '../services/socialGraph.js';
+import { canViewProfile, createSocialGraph, publicUser, relationship, visibleUserWhere, visibleProblemWhere } from '../services/socialGraph.js';
 
 const router = express.Router();
 const graph = createSocialGraph(prisma);
@@ -22,7 +22,7 @@ const serializeProblem = (problem, req) => ({
 const getProfile = async (req, res, where) => {
   const user = await prisma.usuario.findUnique({ where, select: { ...publicUser, bio: true, dataCriacao: true, _count: { select: { problemas: true } } } });
   if (!user) return res.status(404).json({ error: 'profileNotFound' });
-  const canViewPosts = await canViewProfile(prisma, user, req.userId, req.userRole === 'admin');
+  const canViewPosts = await canViewProfile(prisma, user, req.userId, req.isAdmin === true);
   const [followers, following, likes, publications, relation] = await Promise.all([
     prisma.seguimento.count({ where: { followingId: user.id, status: 'ACEITA' } }),
     prisma.seguimento.count({ where: { followerId: user.id, status: 'ACEITA' } }),
@@ -37,7 +37,7 @@ publicSocialRouter.get('/users/:id/profile', asyncHandler((req, res) => getProfi
 for (const direction of ['followers', 'following']) publicSocialRouter.get(`/users/:id/${direction}`, asyncHandler(async (req, res) => {
   const owner = await prisma.usuario.findUnique({ where: { id: req.params.id }, select: { id: true, perfilPrivado: true } });
   if (!owner) return res.status(404).json({ error: 'profileNotFound' });
-  if (!await canViewProfile(prisma, owner, req.userId, req.userRole === 'admin')) return res.status(403).json({ error: 'privateProfileNotice' });
+  if (!await canViewProfile(prisma, owner, req.userId, req.isAdmin === true)) return res.status(403).json({ error: 'privateProfileNotice' });
   const page = Math.min(10000, Math.max(1, Math.trunc(Number(req.query.page)) || 1));
   const limit = 30;
   const where = { [direction === 'followers' ? 'followingId' : 'followerId']: owner.id, status: 'ACEITA' };
@@ -47,6 +47,33 @@ for (const direction of ['followers', 'following']) publicSocialRouter.get(`/use
     prisma.seguimento.findMany({ where, include: { [side]: { select: publicUser } }, orderBy: [{ criadaEm: 'desc' }, { id: 'asc' }], skip: (page - 1) * limit, take: limit }),
   ]);
   res.json({ data: rows.map(row => row[side]), total, page, limit });
+}));
+
+// Intersection is evaluated by the database; no full follower lists leave the server.
+const commonPage = async (req, direction, limit) => {
+  const page = Math.min(10000, Math.max(1, Number.parseInt(req.query.page, 10) || 1));
+  const relation = direction === 'followers' ? 'seguindo' : 'seguidores';
+  const side = direction === 'followers' ? 'followingId' : 'followerId';
+  const where = { AND: [
+    { [relation]: { some: { [side]: req.userId, status: 'ACEITA' } } },
+    { [relation]: { some: { [side]: req.params.id, status: 'ACEITA' } } },
+    visibleUserWhere(req.userId, req.isAdmin === true),
+  ] };
+  const [total, data] = await Promise.all([
+    prisma.usuario.count({ where }),
+    prisma.usuario.findMany({ where, select: publicUser, orderBy: [{ username: 'asc' }, { id: 'asc' }], skip: (page - 1) * limit, take: limit }),
+  ]);
+  return { data, total, page, limit };
+};
+router.get('/users/:id/common-connections', asyncHandler(async (req, res) => {
+  res.set('Cache-Control', 'private, no-store');
+  const owner = await prisma.usuario.findUnique({ where: { id: req.params.id }, select: { id: true, perfilPrivado: true } });
+  if (!owner) return res.status(404).json({ error: 'profileNotFound' });
+  if (!await canViewProfile(prisma, owner, req.userId, req.isAdmin === true)) return res.status(403).json({ error: 'privateProfileNotice' });
+  if (req.query.direction && !['followers', 'following'].includes(req.query.direction)) return res.status(400).json({ error: 'invalidCommonDirection' });
+  if (req.query.direction) return res.json(await commonPage(req, req.query.direction, 30));
+  const [followers, following] = await Promise.all(['followers', 'following'].map(direction => commonPage(req, direction, 4)));
+  res.json({ followers, following });
 }));
 
 router.get('/users/:id/likes', asyncHandler(async (req, res) => {

@@ -1,4 +1,4 @@
-﻿import { lockUsers, relationship, socialError, publicUser } from './socialGraph.js';
+import { lockUsers, relationship, socialError, publicUser } from './socialGraph.js';
 
 export const NON_MUTUAL_MESSAGE_LIMIT = 3;
 export const messageAllowance = (mutual, sent) => ({
@@ -31,10 +31,25 @@ export const createMessaging = (db) => ({
       include: { usuarioA: { select: publicUser }, usuarioB: { select: publicUser }, mensagens: { orderBy: [{ criadaEm: 'desc' }, { id: 'desc' }], take: 1 } },
       orderBy: [{ atualizadaEm: 'desc' }, { id: 'asc' }],
     });
-    return Promise.all(rows.map(async ({ mensagens, ...conversation }) => ({
-      ...conversation, participant: conversation.usuarioAId === userId ? conversation.usuarioB : conversation.usuarioA,
-      ultimaMensagem: mensagens[0] || null, messaging: await allowance(db, conversation, userId),
-    })));
+    if (!rows.length) return [];
+    const others = rows.map(row => participantId(row, userId));
+    const [edges, totals] = await Promise.all([
+      db.seguimento.findMany({ where: { status: 'ACEITA', OR: [
+        { followerId: userId, followingId: { in: others } },
+        { followingId: userId, followerId: { in: others } },
+      ] }, select: { followerId: true, followingId: true } }),
+      db.mensagem.groupBy({ by: ['conversaId'], where: { remetenteId: userId, conversaId: { in: rows.map(row => row.id) } }, _count: { _all: true } }),
+    ]);
+    const follows = new Set(edges.map(edge => JSON.stringify([edge.followerId, edge.followingId])));
+    const sent = new Map(totals.map(total => [total.conversaId, total._count._all]));
+    return rows.map(({ mensagens, ...conversation }) => {
+      const otherId = participantId(conversation, userId);
+      return { ...conversation,
+        participant: conversation.usuarioAId === userId ? conversation.usuarioB : conversation.usuarioA,
+        ultimaMensagem: mensagens[0] || null,
+        messaging: messageAllowance(follows.has(JSON.stringify([userId, otherId])) && follows.has(JSON.stringify([otherId, userId])), sent.get(conversation.id) || 0),
+      };
+    });
   },
   async open(userId, otherId) {
     if (userId === otherId) throw socialError(400, 'chatSelfError');
@@ -50,15 +65,28 @@ export const createMessaging = (db) => ({
       return { ...conversation, participant: target, messaging: await allowance(tx, conversation, userId) };
     }, { isolationLevel: 'ReadCommitted' });
   },
-  async history(userId, conversationId) {
-    return db.$transaction(async tx => {
-      const conversation = await lockedConversation(tx, conversationId, userId);
-      const messages = await tx.mensagem.findMany({
-        where: { conversaId: conversation.id }, include: { remetente: { select: publicUser } },
-        orderBy: [{ criadaEm: 'asc' }, { id: 'asc' }],
-      });
-      return { messages, messaging: await allowance(tx, conversation, userId) };
-    }, { isolationLevel: 'ReadCommitted' });
+  async history(userId, conversationId, { before, after, limit = 50 } = {}) {
+    // Reads need no write locks: send() still checks the authoritative quota atomically.
+    const conversation = await db.conversa.findUnique({ where: { id: conversationId } });
+    participantId(conversation, userId);
+    const size = Math.min(100, Math.max(1, Number.parseInt(limit, 10) || 50));
+    const cursorId = after || before;
+    const cursor = cursorId ? await db.mensagem.findFirst({ where: { id: cursorId, conversaId: conversationId } }) : null;
+    if (cursorId && !cursor) throw socialError(404, 'conversationNotFound');
+    const direction = after ? 'asc' : 'desc';
+    const comparison = after ? 'gt' : 'lt';
+    const where = { conversaId: conversationId, ...(cursor ? { OR: [
+      { criadaEm: { [comparison]: cursor.criadaEm } },
+      { criadaEm: cursor.criadaEm, id: { [comparison]: cursor.id } },
+    ] } : {}) };
+    const [rows, messaging] = await Promise.all([
+      db.mensagem.findMany({ where, include: { remetente: { select: publicUser } }, orderBy: [{ criadaEm: direction }, { id: direction }], take: size + 1 }),
+      allowance(db, conversation, userId),
+    ]);
+    const hasMore = rows.length > size;
+    const messages = rows.slice(0, size);
+    if (!after) messages.reverse();
+    return { messages, messaging, pageInfo: { hasOlder: !after && hasMore, hasNewer: Boolean(after) && hasMore } };
   },
   async send(userId, conversationId, value) {
     if (typeof value !== 'string' || !value.trim() || value.trim().length > 2000) throw socialError(400, 'chatMessageLength');

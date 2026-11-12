@@ -15,10 +15,13 @@ const ImageCropper = ({ file, initialAspect = '1:1', onConfirm, onCancel }) => {
   const [zoom, setZoom] = useState(1);
   const [position, setPosition] = useState({ x: 0, y: 0 });
   const [drag, setDrag] = useState(null);
-  const source = useMemo(() => URL.createObjectURL(file), [file]);
+  const [source, setSource] = useState('');
   const selected = IMAGE_ASPECTS.find((item) => item.value === aspect) || IMAGE_ASPECTS[0];
 
-  useEffect(() => () => URL.revokeObjectURL(source), [source]);
+  useEffect(() => {
+    const url = URL.createObjectURL(file); setSource(url);
+    return () => URL.revokeObjectURL(url);
+  }, [file]);
 
   const confirm = () => {
     const image = new Image();

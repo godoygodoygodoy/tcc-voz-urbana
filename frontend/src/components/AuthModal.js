@@ -1,3 +1,4 @@
+import { shallow } from 'zustand/shallow';
 import { useI18n } from '../i18n';
 import React, { useState } from 'react';
 import { X } from 'lucide-react';
@@ -8,7 +9,7 @@ import { formatBrazilianPhone, normalizeDigits } from '../utils/formatters';
 
 const AuthModal = () => {
   const { t } = useI18n();
-  const { authModal, closeAuthModal, login, register } = useAuthStore();
+  const { authModal, closeAuthModal, login, register } = useAuthStore(state => ({ authModal: state.authModal, closeAuthModal: state.closeAuthModal, login: state.login, register: state.register }), shallow);
   const [mode, setMode] = useState(authModal || 'login');
   const [form, setForm] = useState({ identifier: '', password: '', name: '', email: '', username: '', phone: '', passwordConfirm: '' });
   const [loading, setLoading] = useState(false);

@@ -1,3 +1,4 @@
+import { shallow } from 'zustand/shallow';
 import { useI18n } from '../i18n';
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
@@ -17,7 +18,7 @@ const LoginPage = () => {
   });
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
-  const { login } = useAuthStore();
+  const { login } = useAuthStore(state => ({ login: state.login }), shallow);
   const navigate = useNavigate();
   const { t } = useI18n();
 

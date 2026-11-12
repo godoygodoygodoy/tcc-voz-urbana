@@ -1,3 +1,4 @@
+import { useObjectUrls } from '../utils/useObjectUrls';
 import { translateCategory, useI18n } from '../i18n';
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -27,7 +28,7 @@ const ReportProblemPage = () => {
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(false);
   const [images, setImages] = useState([]);
-  const [previews, setPreviews] = useState([]);
+  const previews = useObjectUrls(images);
   const [loadingCategories, setLoadingCategories] = useState(true);
   const navigate = useNavigate();
 
@@ -55,15 +56,13 @@ const ReportProblemPage = () => {
     const files = Array.from(e.target.files || []);
     setImages(files);
 
-    const nextPreviews = files.map((file) => URL.createObjectURL(file));
-    setPreviews(nextPreviews);
+
   };
 
   const removeImage = (index) => {
     const nextImages = images.filter((_, i) => i !== index);
     setImages(nextImages);
-    const nextPreviews = nextImages.map((f) => URL.createObjectURL(f));
-    setPreviews(nextPreviews);
+
   };
 
   const handleSubmit = async (e) => {

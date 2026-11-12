@@ -1,3 +1,4 @@
+import { ConfirmDialog } from '../components/SiteDialog';
 import { translateCategory, translateSystemText, getLanguage, useI18n } from '../i18n';
 import React, { useEffect, useMemo, useState } from 'react';
 import {
@@ -50,6 +51,8 @@ const AdminDashboard = () => {
 
   const { t } = useI18n();
   const [tab, setTab] = useState('overview');
+  const [deleteCandidate, setDeleteCandidate] = useState(null);
+  const [deleting, setDeleting] = useState(false);
   const [period, setPeriod] = useState('30d');
   const [stats, setStats] = useState(null);
   const [users, setUsers] = useState([]);
@@ -83,14 +86,18 @@ const AdminDashboard = () => {
     try { await loadTab(); } catch (error) { toast.error(error.response?.data?.error || t('adminError')); }
   };
 
-  const deleteProblem = async (problem) => {
-    if (!window.confirm(t('confirmDeletePublication'))) return;
+  const deleteProblem = problem => setDeleteCandidate(problem);
+  const performDeleteProblem = async (problem) => {
+    if (deleting) return;
+    setDeleting(true);
     try {
       await adminAPI.deleteProblem(problem.id);
       setProblems((current) => current.filter((item) => item.id !== problem.id));
       await loadStats();
+      setDeleteCandidate(null);
       toast.success(t('publicationDeleted'));
     } catch (error) { toast.error(error.response?.data?.error || t('deletePublicationError')); }
+    finally { setDeleting(false); }
   };
 
   const tabs = [
@@ -113,6 +120,7 @@ const AdminDashboard = () => {
   return (
     <div className="site-page min-h-screen py-8 text-white">
       <div className="container mx-auto max-w-7xl px-4">
+        {deleteCandidate && <ConfirmDialog title={t('confirmDeletePublication')} description={deleteCandidate.title} busy={deleting} onClose={() => setDeleteCandidate(null)} onConfirm={() => performDeleteProblem(deleteCandidate)}/>}
         <header className="mb-8 flex flex-wrap items-end justify-between gap-5">
           <div>
             <p className="feed-kicker">{t("CONTROLE DA PLATAFORMA")}</p>

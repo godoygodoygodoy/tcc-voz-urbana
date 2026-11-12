@@ -1,4 +1,4 @@
-﻿import express from 'express';
+import express from 'express';
 import jwt from 'jsonwebtoken';
 import { prisma } from '../config/prisma.js';
 import { asyncHandler } from '../middlewares/errorHandler.js';

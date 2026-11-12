@@ -1,4 +1,4 @@
-﻿export const publicUser = { id: true, nome: true, username: true, fotoPerfil: true, perfilPrivado: true };
+export const publicUser = { id: true, nome: true, username: true, fotoPerfil: true, perfilPrivado: true };
 export const socialError = (status, code) => Object.assign(new Error(code), { status, code });
 
 // A shared ordering serializes follows, privacy changes and message sends without deadlocks.
@@ -11,7 +11,7 @@ export const visibleUserWhere = (viewerId, isAdmin = false) => isAdmin ? {} : ({
     ...(viewerId ? [{ id: viewerId }, { seguidores: { some: { followerId: viewerId, status: 'ACEITA' } } }] : []),
   ],
 });
-export const visibleProblemWhere = (req) => ({ usuario: { is: visibleUserWhere(req.userId, req.userRole === 'admin') } });
+export const visibleProblemWhere = (req) => ({ usuario: { is: visibleUserWhere(req.userId, req.isAdmin === true) } });
 export const canViewProfile = async (db, owner, viewerId, isAdmin = false) => {
   if (!owner.perfilPrivado || owner.id === viewerId || isAdmin) return true;
   if (!viewerId) return false;

@@ -1,3 +1,4 @@
+import { shallow } from 'zustand/shallow';
 import { useI18n } from '../i18n';
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
@@ -22,7 +23,7 @@ const RegisterPage = () => {
   });
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
-  const { register } = useAuthStore();
+  const { register } = useAuthStore(state => ({ register: state.register }), shallow);
   const navigate = useNavigate();
   const { t } = useI18n();
 

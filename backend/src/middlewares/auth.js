@@ -10,6 +10,7 @@ export const authMiddleware = async (req, res, next) => {
     }
 
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    if (typeof decoded?.id !== "string" || !decoded.id) return res.status(401).json({ error: "Token inválido ou expirado" });
     const user = await prisma.usuario.findUnique({
       where: { id: decoded.id },
       select: { id: true, email: true, nivel: true, admin: { select: { nivel: true } } }
@@ -17,6 +18,7 @@ export const authMiddleware = async (req, res, next) => {
     if (!user) return res.status(401).json({ error: "Conta não encontrada" });
     // A verificacao de e-mail foi mantida no schema como legado e nao bloqueia acesso.
     req.userId = decoded.id;
+    req.isAdmin = Boolean(user.admin);
     req.userRole = user.admin ? "admin" : user.nivel.toLowerCase();
     req.adminLevel = user.admin?.nivel || null;
 
@@ -32,8 +34,9 @@ export const optionalAuthMiddleware = async (req, res, next) => {
   if (!token) return next();
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    if (typeof decoded?.id !== "string" || !decoded.id) return next();
     const user = await prisma.usuario.findUnique({ where: { id: decoded.id }, select: { id: true, admin: { select: { id: true } } } });
-    if (user) { req.userId = user.id; req.userRole = user.admin ? 'admin' : 'usuario'; }
+    if (user) { req.userId = user.id; req.isAdmin = Boolean(user.admin); req.userRole = user.admin ? 'admin' : 'usuario'; }
   } catch {
     // Public feed requests remain valid when an expired token is present.
   }

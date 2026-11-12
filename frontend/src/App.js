@@ -1,27 +1,31 @@
+import { shallow } from 'zustand/shallow';
+import RouteScroll from './components/RouteScroll';
+import RouteSkeleton from './components/RouteSkeleton';
+import { lazyModule } from './utils/lazyModule';
 import LocalizedValidation from './components/LocalizedValidation';
 import { ToastCloseButton } from './components/LocalizedToast';
-import React from 'react';
+import React, { Suspense } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
-import 'leaflet/dist/leaflet.css';
+
 
 // Store
 import { useAuthStore } from './store';
 
 // Pages
-import LandingPage from './pages/LandingPage';
-import HomePage from './pages/HomePage';
-import LoginPage from './pages/LoginPage';
-import ForgotPasswordPage from './pages/ForgotPasswordPage';
-import ResetPasswordPage from './pages/ResetPasswordPage';
-import RegisterPage from './pages/RegisterPage';
-import ProblemDetailPage from './pages/ProblemDetailPage';
-import AdminDashboard from './pages/AdminDashboard';
-import ProfilePage from './pages/ProfilePage';
+const LandingPage = lazyModule(() => import('./pages/LandingPage'));
+const HomePage = lazyModule(() => import('./pages/HomePage'));
+const LoginPage = lazyModule(() => import('./pages/LoginPage'));
+const ForgotPasswordPage = lazyModule(() => import('./pages/ForgotPasswordPage'));
+const ResetPasswordPage = lazyModule(() => import('./pages/ResetPasswordPage'));
+const RegisterPage = lazyModule(() => import('./pages/RegisterPage'));
+const ProblemDetailPage = lazyModule(() => import('./pages/ProblemDetailPage'));
+const AdminDashboard = lazyModule(() => import('./pages/AdminDashboard'));
+const ProfilePage = lazyModule(() => import('./pages/ProfilePage'));
 // import VerifyEmailPage from './pages/VerifyEmailPage';
-import FeedPage from './pages/FeedPage';
-import UserProfilePage from './pages/UserProfilePage';
+const FeedPage = lazyModule(() => import('./pages/FeedPage'));
+const UserProfilePage = lazyModule(() => import('./pages/UserProfilePage'));
 
 // Components
 import Header from './components/Header';
@@ -55,7 +59,7 @@ const VisitTracker = () => {
 };
 
 function App() {
-  const { user, token, setUser, logout } = useAuthStore();
+  const { user, token, setUser, logout } = useAuthStore(state => ({ user: state.user, token: state.token, setUser: state.setUser, logout: state.logout }), shallow);
 
   React.useEffect(() => {
     if (!token) return undefined;
@@ -82,12 +86,13 @@ function App() {
     <Router basename={import.meta.env.BASE_URL}>
       <div>
         <VisitTracker />
+        <RouteScroll />
         <LocalizedValidation />
         <ReactiveAtmosphere />
         <ChristmasEffects />
         <Routes>
           {/* Landing page - sem header customizado, ela tem seu próprio */}
-          <Route path="/" element={<LandingPage />} />
+          <Route path="/" element={<Suspense fallback={<RouteSkeleton />}><LandingPage /></Suspense>} />
           <Route path="/contato" element={<Navigate to="/#contato" replace />} />
 
           {/* Outras rotas com header */}
@@ -96,7 +101,7 @@ function App() {
             element={
               <div className="min-h-screen bg-[#1b1b20] text-white">
                 <Header />
-                <Routes>
+                <Suspense fallback={<RouteSkeleton />}><Routes>
                   <Route path="/map" element={<HomePage />} />
                   <Route path="/feed" element={<FeedPage />} />
                   <Route path="/login" element={user ? <Navigate to="/" /> : <LoginPage />} />
@@ -112,7 +117,7 @@ function App() {
                   <Route path="/profile/:id" element={<UserProfilePage />} />
                   <Route path="/:username" element={<UserProfilePage />} />
                   <Route path="/admin" element={<ProtectedRoute component={AdminDashboard} roles={['admin']} />} />
-                </Routes>
+                </Routes></Suspense>
                 <NativityFooter />
               </div>
             }

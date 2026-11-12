@@ -1,4 +1,4 @@
-import { translateCategory, useI18n } from '../i18n';
+import { translate as tr, translateCategory, useI18n } from '../i18n';
 import React, { useState, useEffect } from 'react';
 import { problemsAPI, categoriesAPI } from '../services/api';
 import { toast } from '../components/LocalizedToast';
@@ -27,36 +27,33 @@ const HomePage = () => {
   const [total, setTotal] = useState(0);
 
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        setLoading(true);
-        const [problemsRes, mapProblemsRes, categoriesRes] = await Promise.all([
-          problemsAPI.list({ status: selectedStatus, category: selectedCategory, from, to, sort, radius, page, limit: 9 }),
-          problemsAPI.list({ category: selectedCategory, from, to, sort, radius, limit: 100 }),
-          categoriesAPI.list(),
-        ]);
-        const fetchedProblems = problemsRes.data.data || [];
-        const fetchedMapProblems = mapProblemsRes.data.data || [];
-        const fetchedCategories = categoriesRes.data || [];
-        setTotal(problemsRes.data.total || 0);
+    let active = true;
+    categoriesAPI.list().then(response => { if (active) setCategories(response.data || []); }).catch(() => { if (active) toast.error(tr('apiUnavailable')); });
+    return () => { active = false; };
+  }, []);
 
-        setProblems(fetchedProblems);
-        setMapProblems(fetchedMapProblems);
-        setSelectedProblem((currentSelected) => currentSelected || fetchedProblems[0] || null);
-        setCategories(fetchedCategories);
-      } catch (error) {
-        setProblems([]);
-        setMapProblems([]);
-        setSelectedProblem(null);
-        setCategories([]);
-        toast.error(t('apiUnavailable'));
-      } finally {
-        setLoading(false);
-      }
-    };
+  useEffect(() => {
+    const controller = new AbortController();
+    setLoading(true);
+    problemsAPI.list({ status: selectedStatus, category: selectedCategory, from, to, sort, radius, page, limit: 9 }, { signal: controller.signal })
+      .then(({ data }) => {
+        if (controller.signal.aborted) return;
+        const rows = data?.data || [];
+        setProblems(rows); setTotal(data?.total || 0);
+        setSelectedProblem(current => current || rows[0] || null);
+      }).catch(() => { if (!controller.signal.aborted) toast.error(tr('apiUnavailable')); })
+      .finally(() => { if (!controller.signal.aborted) setLoading(false); });
+    return () => controller.abort();
+  }, [selectedStatus, selectedCategory, from, to, sort, radius, page]);
 
-    fetchData();
-  }, [selectedStatus, selectedCategory, from, to, sort, radius, page, t]);
+  // Changing the list page does not download the same 100 map markers again.
+  useEffect(() => {
+    const controller = new AbortController();
+    problemsAPI.list({ category: selectedCategory, from, to, sort, radius, limit: 100 }, { signal: controller.signal })
+      .then(({ data }) => { if (!controller.signal.aborted) setMapProblems(data?.data || []); })
+      .catch(() => { if (!controller.signal.aborted) toast.error(tr('apiUnavailable')); });
+    return () => controller.abort();
+  }, [selectedCategory, from, to, sort, radius]);
 
   const handleAreaComplete = (points) => {
     setSelectedArea(points);
@@ -166,7 +163,7 @@ const HomePage = () => {
         </div>
 
         {/* Grid de Problemas */}
-        {loading ? (
+        {loading && problems.length === 0 ? (
           <div className="text-center py-12">
             <p className="text-white/70">{t('loadingProblems')}</p>
           </div>

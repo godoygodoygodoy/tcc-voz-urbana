@@ -28,7 +28,7 @@ const PigeonLogo = ({ className }) => {
     }, SEQUENCE_TIMEOUT);
   };
 
-  return <span className="pigeon-logo"><img src={`${import.meta.env.BASE_URL}branding/mascote-voz-urbana.png`} alt="Voz Urbana" className={className} onClick={handleClick} role="button" tabIndex={0} aria-label={t("Interagir com o pombo")} onKeyDown={(event) => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); handleClick(); } }} /><span className="pigeon-santa-hat" aria-hidden="true" /></span>;
+  return <span className="pigeon-logo"><img src={`${import.meta.env.BASE_URL}branding/mascote-voz-urbana.webp`} alt="Voz Urbana" className={className} onClick={handleClick} role="button" tabIndex={0} aria-label={t("Interagir com o pombo")} onKeyDown={(event) => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); handleClick(); } }} /><span className="pigeon-santa-hat" aria-hidden="true" /></span>;
 };
 
 export default PigeonLogo;

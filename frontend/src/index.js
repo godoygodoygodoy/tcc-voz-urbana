@@ -1,47 +1,31 @@
-import { I18nProvider } from './i18n';
+﻿import { I18nProvider } from './i18n';
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import Lenis from 'lenis';
 import './index.css';
 import App from './App';
 import { syncSiteTheme } from './utils/christmasTheme';
+import { subscribeAnimation, useMotionBudget } from './utils/motion';
 syncSiteTheme();
 
-
 function AppShell() {
+  const { hidden, reduced } = useMotionBudget();
   React.useEffect(() => {
-    if (typeof window === 'undefined') {
-      return undefined;
-    }
-
-    const lenis = new Lenis({
-      duration: 1.1,
-      easing: (t) => Math.min(1, 1.001 - 2 ** (-10 * t)),
-      smoothWheel: true,
-      smoothTouch: false,
-    });
-
-    let animationFrameId;
-
-    const raf = (time) => {
-      lenis.raf(time);
-      animationFrameId = window.requestAnimationFrame(raf);
+    if (hidden || reduced) return undefined;
+    const lenis = new Lenis({ duration: 1.1, easing: t => Math.min(1, 1.001 - 2 ** (-10 * t)), smoothWheel: true, smoothTouch: false });
+    let stop;
+    const wake = () => {
+      if (stop) return;
+      stop = subscribeAnimation(time => {
+        lenis.raf(time);
+        if (lenis.isScrolling !== 'smooth') { stop = null;return false; }
+        return true;
+      });
     };
-
-    animationFrameId = window.requestAnimationFrame(raf);
-
-    return () => {
-      window.cancelAnimationFrame(animationFrameId);
-      lenis.destroy();
-    };
-  }, []);
-
+    const offWheel = lenis.on('virtual-scroll', wake);
+    const offScroll = lenis.on('scroll', wake);
+    return () => { stop?.();offWheel();offScroll();lenis.destroy(); };
+  }, [hidden, reduced]);
   return <I18nProvider><App /></I18nProvider>;
 }
-
-const root = ReactDOM.createRoot(document.getElementById('root'));
-root.render(
-  <React.StrictMode>
-    <AppShell />
-  </React.StrictMode>
-);
+ReactDOM.createRoot(document.getElementById('root')).render(<React.StrictMode><AppShell /></React.StrictMode>);

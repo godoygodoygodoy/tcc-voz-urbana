@@ -1,53 +1,31 @@
-import React, { useEffect } from 'react';
+﻿import React, { useEffect, useRef } from 'react';
+import { subscribeAnimation, useMotionBudget } from '../utils/motion';
 
-const ReactiveAtmosphere = () => {
+const ReactiveAtmosphere = React.memo(() => {
+  const ref = useRef(null);
+  const { reduced, lowPower } = useMotionBudget();
   useEffect(() => {
-    const root = document.documentElement;
-    const reducedMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
-    if (reducedMotion) return undefined;
-
-    let frame = 0;
-    const updatePointer = (event) => {
-      cancelAnimationFrame(frame);
-      frame = requestAnimationFrame(() => {
-        root.style.setProperty('--cursor-x', `${(event.clientX / window.innerWidth) * 100}%`);
-        root.style.setProperty('--cursor-y', `${(event.clientY / window.innerHeight) * 100}%`);
-        root.style.setProperty('--snow-drift', `${((event.clientX / window.innerWidth) - 0.5) * 20}px`);
-      });
+    if (reduced) return undefined;
+    const blobs = [...ref.current.querySelectorAll('.reactive-atmosphere__blob')];
+    let cancel;
+    let pointer;
+    const updatePointer = event => {
+      pointer = { x: (event.clientX / innerWidth - .5) * 100, y: (event.clientY / innerHeight - .5) * 100 };
+      if (cancel) return;
+      cancel = subscribeAnimation(() => {
+        for (const [index, blob] of blobs.entries()) {
+          const sign = index === 1 ? -1 : 1;
+          blob.style.translate = `${(pointer.x * sign).toFixed(1)}% ${(pointer.y * sign).toFixed(1)}%`;
+        }
+        cancel = null;
+        return false;
+      }, lowPower ? 30 : 60);
     };
-    const updateScroll = () => {
-      root.style.setProperty('--scroll-progress', `${window.scrollY}px`);
-    };
-    const updateVisibility = () => root.classList.toggle('is-page-hidden', document.hidden);
-
     window.addEventListener('pointermove', updatePointer, { passive: true });
-    window.addEventListener('scroll', updateScroll, { passive: true });
-    document.addEventListener('visibilitychange', updateVisibility);
-    updateScroll();
-    updateVisibility();
-
-    return () => {
-      cancelAnimationFrame(frame);
-      window.removeEventListener('pointermove', updatePointer);
-      window.removeEventListener('scroll', updateScroll);
-      document.removeEventListener('visibilitychange', updateVisibility);
-      root.classList.remove('is-page-hidden');
-    };
-  }, []);
-
-  return (
-    <div className="reactive-atmosphere" aria-hidden="true">
-      <span className="reactive-atmosphere__blob reactive-atmosphere__blob--one" />
-      <span className="reactive-atmosphere__blob reactive-atmosphere__blob--two" />
-      <span className="reactive-atmosphere__blob reactive-atmosphere__blob--three" />
-      <span className="reactive-atmosphere__blob reactive-atmosphere__blob--four" />
-      <span className="reactive-atmosphere__blob reactive-atmosphere__blob--five" />
-      <span className="reactive-atmosphere__blob reactive-atmosphere__blob--six" />
-      <span className="reactive-atmosphere__blob reactive-atmosphere__blob--seven" />
-      <span className="reactive-atmosphere__blob reactive-atmosphere__blob--eight" />
-      <span className="reactive-atmosphere__blob reactive-atmosphere__blob--nine" />
-    </div>
-  );
-};
-
+    return () => { cancel?.();window.removeEventListener('pointermove', updatePointer); };
+  }, [reduced, lowPower]);
+  return <div ref={ref} className="reactive-atmosphere" aria-hidden="true">
+    {['one','two','three','four','five','six','seven','eight','nine'].map(name => <span key={name} className={`reactive-atmosphere__blob reactive-atmosphere__blob--${name}`} />)}
+  </div>;
+});
 export default ReactiveAtmosphere;

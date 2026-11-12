@@ -33,7 +33,12 @@
     "preview": "vite preview",
     "test:christmas": "node --test tests/christmas.test.cjs",
     "test:i18n": "node tests/i18n-audit.cjs && node --test tests/i18n-engine.cjs",
-    "test:i18n:browser": "node tests/i18n-system.cjs"
+    "test:i18n:browser": "node tests/i18n-system.cjs",
+    "test:followers:browser": "node --experimental-vm-modules tests/followers-browser.cjs",
+    "test:performance": "node --test tests/performance-runtime.cjs",
+    "test:performance:browser": "node --experimental-vm-modules tests/performance-browser.cjs",
+    "measure:performance": "node --experimental-vm-modules tests/performance.cjs --dist dist --out performance-artifacts/result.json",
+    "test:profile-connections:browser": "node --experimental-vm-modules tests/profile-connections-browser.cjs"
   },
   "browserslist": {
     "production": [

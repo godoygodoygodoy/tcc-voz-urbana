@@ -30,6 +30,9 @@ model Usuario {
   problemas              Problema[]
   votos                  Voto[]
   publicacoesSalvas      PublicacaoSalva[]
+  colecoes               Colecao[]
+  stories                Story[]
+  storiesVistos          StoryVisualizacao[]
   visitas                Visita[]
   seguindo               Seguimento[]          @relation("seguimentoOrigem")
   seguidores             Seguimento[]          @relation("seguimentoDestino")
@@ -81,6 +84,8 @@ model Problema {
   @@index([categoriaId])
   @@index([usuarioId], map: "problemas_usuario_id_fkey")
   @@index([estado, cidade])
+  @@index([dataCriacao], map: "problemas_data_idx")
+  @@index([usuarioId, dataCriacao], map: "problemas_usuario_data_idx")
   @@map("problemas")
 }
 
@@ -91,6 +96,8 @@ model PublicacaoSalva {
   criadaEm    DateTime @default(now()) @map("criada_em")
   usuario     Usuario  @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
   problema    Problema @relation(fields: [problemaId], references: [id], onDelete: Cascade)
+
+  colecoes    ItemColecao[]
 
   @@unique([usuarioId, problemaId])
   @@index([usuarioId, criadaEm])
@@ -276,4 +283,55 @@ enum TipoVoto {
 enum TipoImagem {
   ANTES
   DEPOIS
+}
+
+model Colecao {
+  id        String @id @default(uuid()) @db.Char(36)
+  usuarioId String @map("usuario_id") @db.Char(36)
+  nome      String @db.VarChar(80)
+  privada   Boolean @default(true)
+  criadaEm  DateTime @default(now()) @map("criada_em")
+  usuario   Usuario @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+  itens     ItemColecao[]
+  @@index([usuarioId, criadaEm])
+  @@map("colecoes")
+}
+model ItemColecao {
+  id          String @id @default(uuid()) @db.Char(36)
+  colecaoId   String @map("colecao_id") @db.Char(36)
+  salvoId     String @map("salvo_id") @db.Char(36)
+  criadaEm    DateTime @default(now()) @map("criada_em")
+  colecao     Colecao @relation(fields: [colecaoId], references: [id], onDelete: Cascade)
+  salvo       PublicacaoSalva @relation(fields: [salvoId], references: [id], onDelete: Cascade)
+  @@unique([colecaoId, salvoId])
+  @@index([salvoId])
+  @@map("itens_colecoes")
+}
+
+model Story {
+ id String @id @default(uuid()) @db.Char(36)
+ usuarioId String @map("usuario_id") @db.Char(36)
+ url String @db.VarChar(500)
+ posterUrl String? @map("poster_url") @db.VarChar(500)
+ mime String @db.VarChar(50)
+ audiencia String @default("SEGUIDORES") @db.VarChar(20)
+ criadaEm DateTime @default(now()) @map("criada_em")
+ expiraEm DateTime @map("expira_em")
+ excluidoEm DateTime? @map("excluido_em")
+ usuario Usuario @relation(fields:[usuarioId],references:[id],onDelete:Cascade)
+ visualizacoes StoryVisualizacao[]
+ @@index([expiraEm, excluidoEm])
+ @@index([usuarioId, criadaEm])
+ @@map("stories")
+}
+model StoryVisualizacao {
+ id String @id @default(uuid()) @db.Char(36)
+ storyId String @map("story_id") @db.Char(36)
+ usuarioId String @map("usuario_id") @db.Char(36)
+ criadaEm DateTime @default(now()) @map("criada_em")
+ story Story @relation(fields:[storyId],references:[id],onDelete:Cascade)
+ usuario Usuario @relation(fields:[usuarioId],references:[id],onDelete:Cascade)
+ @@unique([storyId, usuarioId])
+ @@index([usuarioId])
+ @@map("stories_visualizacoes")
 }

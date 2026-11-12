@@ -27,3 +27,16 @@ test('all administration endpoints remain behind server authentication and datab
  const server=await readFile(new URL('../src/server.js',import.meta.url),'utf8');
  assert.match(server,/app\.use\("\/api\/admin",\s*authMiddleware,\s*adminMiddleware,\s*adminRoutes\)/);
 });
+
+test('an image-only JWT cannot be reused as an account authentication token',async()=>{
+ const context=vm.createContext({process:{env:{JWT_SECRET:'fixture'}}});
+ const module=new vm.SourceTextModule(source,{context});
+ let databaseRead=false;
+ await module.link(async specifier=>specifier==='jsonwebtoken'
+  ?new vm.SyntheticModule(['default'],function(){this.setExport('default',{verify:()=>({imageId:'image-1',viewerId:'user-1',aud:'publication-image'})});},{context})
+  :new vm.SyntheticModule(['prisma'],function(){this.setExport('prisma',{usuario:{findUnique:async()=>{databaseRead=true;throw Error('image tickets must be rejected before account lookup');}}});},{context}));
+ await module.evaluate();let status=200,nextCalled=false;
+ const res={status(value){status=value;return this;},json(){return this;}};
+ await module.namespace.authMiddleware({headers:{authorization:'Bearer image-ticket'}},res,()=>{nextCalled=true;});
+ assert.equal(status,401);assert.equal(nextCalled,false);assert.equal(databaseRead,false);
+});

@@ -39,3 +39,4 @@ backups/
 *.sql.zst
 *.db
 *.sqlite*
+/frontend/performance-artifacts/

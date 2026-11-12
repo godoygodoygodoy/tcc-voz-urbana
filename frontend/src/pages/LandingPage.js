@@ -1,9 +1,9 @@
+import { shallow } from 'zustand/shallow';
 import { translateCategory, useI18n } from '../i18n';
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { Suspense, useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { toast } from '../components/LocalizedToast';
 import { motion } from 'framer-motion';
-import gsap from 'gsap';
 import {
   Camera,
   MapPin,
@@ -22,10 +22,11 @@ import {
 } from 'lucide-react';
 import { Card, CardContent } from '../components/ui/card';
 import { Button } from '../components/ui/button';
-import Map from '../components/Map';
+import ViewportLoad from '../components/ViewportLoad';
+import { lazyModule } from '../utils/lazyModule';
+const Map = lazyModule(() => import('../components/Map'));
 import ProblemCard from '../components/ProblemCard';
 import { categoriesAPI, problemsAPI } from '../services/api';
-import ThreeCityBackdrop from '../components/ThreeCityBackdrop';
 import { getPurpleTone } from '../utils/theme';
 import { useAuthStore } from '../store';
 import Header from '../components/Header';
@@ -56,68 +57,13 @@ const stagger = {
 
 export default function LandingPage() {
 
-  const { user } = useAuthStore();
+  const { user } = useAuthStore(state => ({ user: state.user }), shallow);
   const { t } = useI18n();
   const [recentProblems, setRecentProblems] = useState([]);
   const [categories, setCategories] = useState([]);
   const [loadingFeed, setLoadingFeed] = useState(true);
   const [selectedProblem, setSelectedProblem] = useState(null);
-  const heroRef = useRef(null);
 
-  useEffect(() => {
-    const prefersReducedMotion = typeof window !== 'undefined'
-      && window.matchMedia
-      && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-
-    if (prefersReducedMotion || !heroRef.current) {
-      return undefined;
-    }
-
-    const ctx = gsap.context(() => {
-      gsap.from('[data-hero-badge]', {
-        y: 24,
-        opacity: 0,
-        duration: 0.9,
-        ease: 'power3.out',
-      });
-
-      gsap.from('[data-hero-line]', {
-        y: 42,
-        opacity: 0,
-        duration: 1,
-        stagger: 0.12,
-        delay: 0.1,
-        ease: 'power4.out',
-      });
-
-      gsap.from('[data-hero-copy]', {
-        y: 20,
-        opacity: 0,
-        duration: 0.8,
-        delay: 0.35,
-        ease: 'power2.out',
-      });
-
-      gsap.from('[data-hero-actions]', {
-        y: 16,
-        opacity: 0,
-        duration: 0.85,
-        delay: 0.55,
-        ease: 'power2.out',
-      });
-
-      gsap.to('[data-hero-orb]', {
-        y: 18,
-        duration: 4.5,
-        repeat: -1,
-        yoyo: true,
-        ease: 'sine.inOut',
-        stagger: 0.35,
-      });
-    }, heroRef);
-
-    return () => ctx.revert();
-  }, []);
 
   useEffect(() => {
     const fetchLandingData = async () => {
@@ -202,165 +148,7 @@ export default function LandingPage() {
         recentProblems={recentProblems}
       />
 
-      <section id="legacy-inicio" ref={heroRef} className="legacy-hero hero-grid relative overflow-hidden">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(124,58,237,0.28),transparent_30%),radial-gradient(circle_at_80%_10%,rgba(168,85,247,0.18),transparent_24%),linear-gradient(180deg,rgba(6,7,11,0.72),rgba(6,7,11,0.92))]" />
-        <div className="absolute inset-0 opacity-25" style={{ backgroundImage: 'linear-gradient(rgba(255,255,255,0.035) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.035) 1px, transparent 1px)', backgroundSize: '72px 72px' }} />
 
-        <div data-hero-orb className="absolute left-8 top-16 h-24 w-24 rounded-full bg-violet-500/25 blur-3xl" />
-        <div data-hero-orb className="absolute right-10 top-36 h-28 w-28 rounded-full bg-violet-400/20 blur-3xl" />
-        <div data-hero-orb className="absolute bottom-12 left-1/3 h-32 w-32 rounded-full bg-fuchsia-500/20 blur-3xl" />
-
-        <div className="relative mx-auto grid min-h-[calc(100vh-74px)] max-w-7xl items-center gap-12 px-4 py-14 sm:px-6 lg:grid-cols-[1.1fr_0.9fr] lg:px-8 lg:py-20">
-          <motion.div
-            variants={stagger}
-            initial="hidden"
-            animate="visible"
-            className="max-w-3xl"
-          >
-            <motion.div
-              data-hero-badge
-              variants={fadeUp}
-              className="inline-flex items-center gap-2 rounded-full border border-white/12 bg-white/8 px-4 py-2 text-xs font-semibold uppercase tracking-[0.28em] text-white/70 backdrop-blur-xl"
-            >
-              <Sparkles className="h-4 w-4 text-violet-300" />
-              {t('liveMap')}
-            </motion.div>
-
-            <motion.h1
-              className="mt-8 text-[clamp(3.8rem,11vw,8.6rem)] font-black uppercase leading-[0.86] tracking-[-0.06em] text-white"
-              style={{ textShadow: '0 18px 50px rgba(0, 0, 0, 0.55)' }}
-            >
-              <span data-hero-line className="block">{t('citySpeaks')}</span>
-              <span data-hero-line className="block text-transparent bg-clip-text bg-[linear-gradient(90deg,#ffffff_0%,#c4b5fd_45%,#a855f7_100%)]">{t('speaks')}</span>
-              <span data-hero-line className="mt-4 block text-[clamp(1.3rem,4.4vw,3.25rem)] font-semibold uppercase tracking-[0.42em] text-white/82">
-                {t('amplify')}
-              </span>
-            </motion.h1>
-
-            <motion.p
-              data-hero-copy
-              className="mt-8 max-w-2xl text-lg leading-8 text-white/72 sm:text-xl"
-            >
-              {t('heroCopy')}
-            </motion.p>
-
-            <motion.div data-hero-actions className="mt-10 flex flex-wrap items-center gap-4">
-              {user ? (
-                <Link to="/map">
-                  <Button className="rounded-full bg-white px-8 py-4 text-base font-black text-zinc-950 hover:bg-violet-50">
-                    {t('openMap')}
-                  </Button>
-                </Link>
-              ) : (
-                <Link to="/login">
-                  <Button className="rounded-full bg-white px-8 py-4 text-base font-black text-zinc-950 hover:bg-violet-50">
-                    {t('login')}
-                  </Button>
-                </Link>
-              )}
-              <Link to="/map">
-                <Button variant="outline" className="rounded-full border-white/18 bg-white/6 px-8 py-4 text-base font-bold text-white hover:bg-white/12">
-                  {t('exploreMap')}
-                </Button>
-              </Link>
-            </motion.div>
-
-            <motion.div
-              data-hero-copy
-              className="mt-12 grid gap-4 sm:grid-cols-3"
-            >
-              {heroMetrics.map((metric) => (
-                <div key={metric.label} className="glass-panel rounded-3xl p-4">
-                  <div className="text-3xl font-black text-white">{metric.value}</div>
-                  <div className="mt-1 text-xs uppercase tracking-[0.22em] text-white/55">{metric.label}</div>
-                </div>
-              ))}
-            </motion.div>
-          </motion.div>
-
-          <motion.div data-hero-panel className="hero-live-panel relative" initial={{ y: 18, rotateY: -3, rotateX: 1 }} animate={{ y: [0, -7, 0], rotateY: [-2, 2, -2], rotateX: [1, 0, 1] }} transition={{ duration: 8, repeat: Infinity, ease: 'easeInOut' }} style={{ perspective: 1400, transformStyle: 'preserve-3d' }}>
-            <div className="absolute -inset-4 rounded-[2.25rem] bg-[radial-gradient(circle_at_top,rgba(124,58,237,0.24),transparent_48%),radial-gradient(circle_at_bottom_right,rgba(168,85,247,0.14),transparent_35%)] blur-2xl" />
-
-            <Card className="live-panel relative z-10 isolate min-h-[620px] overflow-hidden rounded-[2rem] border border-white/10 bg-[#202326] text-white shadow-[0_26px_80px_rgba(0,0,0,0.45)]">
-              <CardContent className="live-panel-content p-0">
-                <div className="pointer-events-none absolute inset-0 z-0 h-full w-full opacity-20" aria-hidden="true">
-                  <ThreeCityBackdrop />
-                </div>
-                <div className="relative z-20 flex items-center justify-between border-b border-white/8 bg-[#202326]/95 px-5 py-4">
-                  <div className="flex items-center gap-2 text-xs uppercase tracking-[0.24em] text-white/50">
-                    <Shield className="h-4 w-4 text-violet-300" />
-                    {t('livePanel')}
-                  </div>
-                  <div className="rounded-full border border-violet-400/25 bg-violet-400/12 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.22em] text-violet-200">
-                    {t('online')}
-                  </div>
-                </div>
-
-                <div className="relative z-20 space-y-5 p-5 sm:p-6">
-                  <div className="rounded-[1.6rem] border border-white/10 bg-[linear-gradient(135deg,rgba(255,255,255,0.12),rgba(255,255,255,0.03))] p-5">
-                    <div className="flex items-center justify-between gap-3">
-                      <div>
-                        <p className="text-xs uppercase tracking-[0.24em] text-white/45">{t('cityFocus')}</p>
-                        <h2 className="mt-2 text-2xl font-black">{t('recentCases')}</h2>
-                      </div>
-                      <div className="rounded-full border border-white/10 bg-white/6 px-3 py-2 text-xs font-semibold text-white/80">
-                        {t('live')}
-                      </div>
-                    </div>
-
-                    <div className="mt-5 grid gap-3">
-                      {quickActions.map(({ title, description, icon: Icon }) => (
-                        <div key={title} className="flex items-start gap-3 rounded-2xl border border-white/8 bg-black/20 p-4 backdrop-blur-sm">
-                          <div className="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-white/10 text-violet-300">
-                            <Icon className="h-4 w-4" />
-                          </div>
-                          <div>
-                            <div className="font-bold text-white">{title}</div>
-                            <div className="mt-1 text-sm leading-6 text-white/62">{description}</div>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-
-                  <div className="grid gap-3 sm:grid-cols-2">
-                    {stats.slice(0, 2).map((item, index) => (
-                      <div
-                        key={item.label}
-                        className={`rounded-[1.5rem] border border-white/8 p-4 ${index === 0 ? 'bg-violet-400/12' : 'bg-violet-500/12'}`}
-                      >
-                        <div className="text-3xl font-black">{item.value}</div>
-                        <div className="mt-1 text-xs uppercase tracking-[0.24em] text-white/50">{item.label}</div>
-                      </div>
-                    ))}
-                  </div>
-
-                  <div className="rounded-[1.6rem] border border-dashed border-white/12 bg-black/20 p-4">
-                    <div className="flex items-center gap-2 text-xs uppercase tracking-[0.24em] text-white/45">
-                      <Waves className="h-4 w-4 text-violet-300" />
-                      {t('cityFlow')}
-                    </div>
-                    <div className="mt-4 grid gap-3 text-sm text-white/72">
-                      <div className="flex items-start gap-3">
-                        <span className="mt-0.5 flex h-6 w-6 items-center justify-center rounded-full bg-white text-[11px] font-black text-zinc-950">1</span>
-                        <p>{t('flowOne')}</p>
-                      </div>
-                      <div className="flex items-start gap-3">
-                        <span className="mt-0.5 flex h-6 w-6 items-center justify-center rounded-full bg-white text-[11px] font-black text-zinc-950">2</span>
-                        <p>{t('flowTwo')}</p>
-                      </div>
-                      <div className="flex items-start gap-3">
-                        <span className="mt-0.5 flex h-6 w-6 items-center justify-center rounded-full bg-white text-[11px] font-black text-zinc-950">3</span>
-                        <p>{t('flowThree')}</p>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </motion.div>
-        </div>
-      </section>
 
       <motion.section
         id="como"
@@ -541,7 +329,7 @@ export default function LandingPage() {
 
           <Card className="overflow-hidden rounded-[2rem] border border-white/10 bg-[#120b20] shadow-[0_24px_70px_rgba(0,0,0,0.4)]">
             <CardContent className="p-4">
-              <Map problems={recentProblems} onMarkerClick={setSelectedProblem} height="520px" />
+              <ViewportLoad minHeight={520}><Suspense fallback={<div className="deferred-surface" style={{height:520}} />}><Map problems={recentProblems} onMarkerClick={setSelectedProblem} height="520px" /></Suspense></ViewportLoad>
             </CardContent>
           </Card>
         </div>

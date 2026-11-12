@@ -1,10 +1,12 @@
 
-import React from 'react';
+import React, { Suspense } from 'react';
 import { ArrowDownRight, ArrowUpRight, MapPinned, Megaphone, Radio, ShieldCheck } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Card, CardContent } from './ui/card';
-import ThreeCityBackdrop from './ThreeCityBackdrop';
+import { lazyModule } from '../utils/lazyModule';
+const ThreeCityBackdrop = lazyModule(() => import('./ThreeCityBackdrop'));
+const ScenePlaceholder = () => <div className="city-scene-placeholder" aria-hidden="true" />;
 
 const LandingHero = ({
   user,
@@ -99,7 +101,7 @@ const LandingHero = ({
           <Card className="urban-hero__panel">
             <CardContent className="p-0">
               <div className="urban-hero__panel-scene" aria-hidden="true">
-                <ThreeCityBackdrop />
+                <Suspense fallback={<ScenePlaceholder />}><ThreeCityBackdrop /></Suspense>
                 <div className="urban-hero__panel-crosshair" />
               </div>
               <div className="urban-hero__panel-head">

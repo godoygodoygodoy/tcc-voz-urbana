@@ -1,3 +1,4 @@
+import { shallow } from 'zustand/shallow';
 import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../store';
@@ -7,7 +8,7 @@ import PigeonLogo from './PigeonLogo';
 import SiteMenu from './SiteMenu';
 
 const Header = () => {
-  const { user, logout, openAuthModal } = useAuthStore();
+  const { user, logout, openAuthModal } = useAuthStore(state => ({ user: state.user, logout: state.logout, openAuthModal: state.openAuthModal }), shallow);
   const navigate = useNavigate();
   const [compact, setCompact] = React.useState(false);
   const handleLogout = () => {
@@ -30,7 +31,7 @@ const Header = () => {
         <div className="site-header-content">
           <Link to="/" className="site-header-brand">
             <PigeonLogo className="site-header-mascot" />
-            <img src={`${import.meta.env.BASE_URL}branding/voz-urbana-texto.png`} alt="Voz Urbana" className="site-header-wordmark" />
+            <img src={`${import.meta.env.BASE_URL}branding/voz-urbana-texto.webp`} alt="Voz Urbana" className="site-header-wordmark" />
           </Link>
 
           <div className="site-header-actions flex items-center gap-3">

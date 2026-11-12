@@ -17,7 +17,11 @@
     "prisma:deploy": "node scripts/deploy-database.js",
     "backup:create": "node scripts/backup.js create",
     "backup:verify": "node scripts/backup.js verify",
-    "test:safety": "node --test tests/data-safety.node.js tests/people-search.node.js"
+    "test:safety": "node --test tests/data-safety.node.js tests/people-search.node.js",
+    "test:followers": "node --experimental-vm-modules --test tests/followers.node.js tests/followers-api.node.js",
+    "test:followers:db": "node --test tests/followers-mysql.node.js",
+    "test:performance": "node --experimental-vm-modules --test tests/performance.node.js",
+    "test:profile-connections": "node --experimental-vm-modules --test tests/profile-connections.node.js"
   },
   "prisma": {
     "seed": "node prisma/seed.js"

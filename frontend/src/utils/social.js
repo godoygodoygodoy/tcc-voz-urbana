@@ -1,4 +1,4 @@
-﻿export const SOCIAL_CHANGE_EVENT = 'voz-urbana:social-changed';
+export const SOCIAL_CHANGE_EVENT = 'voz-urbana:social-changed';
 export const notifySocialChange = () => {
   window.dispatchEvent(new Event(SOCIAL_CHANGE_EVENT));
   try { localStorage.setItem(SOCIAL_CHANGE_EVENT, `${Date.now()}-${Math.random()}`); } catch { /* Storage is optional. */ }

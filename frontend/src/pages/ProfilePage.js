@@ -1,7 +1,8 @@
+import { createVisibilityPoller, retainEqual } from '../utils/polling';
 import { notifySocialChange, subscribeSocialChanges } from '../utils/social';
 import { Link } from 'react-router-dom';
 import { profilePath } from '../utils/profileLinks';
-import { useI18n } from '../i18n';
+import { translate as tr, useI18n } from '../i18n';
 import React, { useState, useEffect } from 'react';
 import { socialAPI, usersAPI, mediaUrl } from '../services/api';
 import { toast } from '../components/LocalizedToast';
@@ -49,7 +50,7 @@ const ProfilePage = () => {
           avatar: res.data.avatar || res.data.fotoPerfil || '',
         });
       } catch (error) {
-        toast.error(t('profileError'));
+        toast.error(tr('profileError'));
       } finally {
         setLoading(false);
       }
@@ -57,9 +58,9 @@ const ProfilePage = () => {
 
     fetchProfile();
     Promise.all([socialAPI.requests(), socialAPI.sentRequests()])
-      .then(([received, sent]) => { setFollowRequests(received.data || []); setSentRequests(sent.data || []); })
+      .then(([received, sent]) => { setFollowRequests(current => retainEqual(current, received.data || [])); setSentRequests(current => retainEqual(current, sent.data || [])); })
       .catch(() => {});
-  }, [t]);
+  }, []);
 
   useEffect(() => {
     let active = true;
@@ -67,12 +68,12 @@ const ProfilePage = () => {
       if (document.hidden) return;
       try {
         const [received, sent] = await Promise.all([socialAPI.requests(), socialAPI.sentRequests()]);
-        if (active) { setFollowRequests(received.data || []); setSentRequests(sent.data || []); }
+        if (active) { setFollowRequests(current => retainEqual(current, received.data || [])); setSentRequests(current => retainEqual(current, sent.data || [])); }
       } catch { /* A failed refresh must not discard pending requests. */ }
     };
-    const unsubscribe = subscribeSocialChanges(refresh);
-    const timer = window.setInterval(refresh, 5000);
-    return () => { active = false; unsubscribe(); window.clearInterval(timer); };
+    const poller = createVisibilityPoller(refresh, 5000);
+    const unsubscribe = subscribeSocialChanges(poller.refresh);
+    return () => { active = false; unsubscribe(); poller.dispose(); };
   }, []);
 
   const handleChange = (e) => {
@@ -89,6 +90,10 @@ const ProfilePage = () => {
     setCropFile(file);
   };
 
+  useEffect(() => {
+    const url = formData.avatar;
+    return () => { if (url?.startsWith('blob:')) URL.revokeObjectURL(url); };
+  }, [formData.avatar]);
   const confirmAvatarCrop = (file) => {
     setFormData((current) => ({ ...current, avatarFile: file, avatar: URL.createObjectURL(file) }));
     setCropFile(null);
@@ -277,8 +282,10 @@ const ProfilePage = () => {
           <section className="mt-10 border-t border-white/10 pt-6">
             <h2 className="mb-4 text-xl font-bold">{t('followRequestsTitle')}</h2>
             {followRequests.length === 0 && sentRequests.length === 0 && <p className="text-sm text-white/55">{t("Nenhuma solicitação pendente.")}</p>}
-            <div className="space-y-3">{followRequests.map((request) => <div key={request.id} className="flex items-center justify-between gap-3 rounded-xl bg-white/5 p-3"><span><Link to={profilePath(request.follower)}><strong>{request.follower.nome}</strong></Link><small className="ml-2 text-white/50">{request.follower.username ? `@${request.follower.username}` : ''}</small></span><span className="flex gap-2"><button type="button" onClick={() => updateRequest(request, 'accept')} className="rounded-lg bg-violet-600 px-3 py-1 text-xs font-bold">{t("Aceitar")}</button><button type="button" onClick={() => updateRequest(request, 'reject')} className="rounded-lg border border-white/10 px-3 py-1 text-xs">{t("Recusar")}</button></span></div>)}</div>
-            <div className="mt-3 space-y-3">{sentRequests.map((request) => <div key={request.id} className="flex items-center justify-between rounded-xl bg-white/5 p-3 text-sm"><span>{t("Para")} <Link to={profilePath(request.following)}><strong>{request.following.nome}</strong></Link></span><button type="button" onClick={() => updateRequest(request, 'cancel')} className="rounded-lg border border-white/10 px-3 py-1 text-xs">{t("Cancelar")}</button></div>)}</div>
+            {followRequests.length > 0 && <h3 className="mb-3 text-sm font-semibold">{t('followReceivedRequests')}</h3>}
+            <div className="space-y-3">{followRequests.map((request) => <div key={request.id} className="follow-request-row flex items-center justify-between gap-3 rounded-xl bg-white/5 p-3"><span><Link to={profilePath(request.follower)}><strong>{request.follower.nome}</strong></Link><small className="ml-2 text-white/50">{request.follower.username ? `@${request.follower.username}` : ''}</small></span><span className="flex gap-2"><button type="button" onClick={() => updateRequest(request, 'accept')} className="rounded-lg bg-violet-600 px-3 py-1 text-xs font-bold">{t("Aceitar")}</button><button type="button" onClick={() => updateRequest(request, 'reject')} className="rounded-lg border border-white/10 px-3 py-1 text-xs">{t("Recusar")}</button></span></div>)}</div>
+            {sentRequests.length > 0 && <h3 className="mb-3 mt-5 text-sm font-semibold">{t('followSentRequests')}</h3>}
+            <div className="mt-3 space-y-3">{sentRequests.map((request) => <div key={request.id} className="follow-request-row flex items-center justify-between rounded-xl bg-white/5 p-3 text-sm"><span>{t("Para")} <Link to={profilePath(request.following)}><strong>{request.following.nome}</strong></Link></span><button type="button" onClick={() => updateRequest(request, 'cancel')} className="rounded-lg border border-white/10 px-3 py-1 text-xs">{t("Cancelar")}</button></div>)}</div>
           </section>
         </div>
       </div>

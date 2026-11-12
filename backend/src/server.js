@@ -1,3 +1,7 @@
+import storyRoutes from './routes/stories.js';
+import { startStoryCleanup } from './services/stories.js';
+import { removeStoredFiles } from './config/storage.js';
+import collectionRoutes from './routes/collections.js';
 import publicationMediaRoutes from './routes/media.js';
 import { securePublicationStorage } from './config/storage.js';
 import "./config/environment.js";
@@ -97,6 +101,8 @@ app.use("/api/notifications", notificationRoutes);
 app.use("/api/social", authMiddleware, socialRoutes);
 app.use("/api/conversations", authMiddleware, conversationRoutes);
 app.use("/api/saved", savedRoutes);
+app.use("/api/collections", collectionRoutes);
+app.use("/api/stories", storyRoutes);
 
 // 404 handler
 app.use((req, res) => {
@@ -109,14 +115,17 @@ app.use(errorHandler);
 const PORT = process.env.PORT || 5000;
 let server;
 let stopBackups = () => {};
+let stopStories = () => {};
 
 // Conectar ao banco e iniciar servidor
 (async () => {
   try {
     checkPersistenceIdentity();
     await prisma.$connect();
+    await prisma.usuario.findFirst({ select: { perfilPrivado: true } });
     await securePublicationStorage();
     stopBackups = startAutomaticBackup();
+    stopStories = startStoryCleanup(prisma, removeStoredFiles);
     console.log("✅ Conectado ao banco de dados MySQL via Prisma");
 
     server = app.listen(PORT, "0.0.0.0", () => {
@@ -133,6 +142,7 @@ let stopBackups = () => {};
 // Graceful shutdown
 const shutdown = async () => {
   stopBackups();
+  stopStories();
   const timeout = setTimeout(() => process.exit(1), 10000);
   timeout.unref();
   if (server) await new Promise((resolve) => server.close(resolve));

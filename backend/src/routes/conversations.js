@@ -1,4 +1,4 @@
-﻿import express from 'express';
+import express from 'express';
 import { prisma } from '../config/prisma.js';
 import { asyncHandler } from '../middlewares/errorHandler.js';
 import { createMessaging } from '../services/messaging.js';
@@ -6,6 +6,6 @@ const router = express.Router();
 const messaging = createMessaging(prisma);
 router.get('/', asyncHandler(async (req, res) => res.json(await messaging.list(req.userId))));
 router.post('/:userId', asyncHandler(async (req, res) => res.status(201).json(await messaging.open(req.userId, req.params.userId))));
-router.get('/:id/messages', asyncHandler(async (req, res) => { res.set('Cache-Control', 'private, no-store'); res.json(await messaging.history(req.userId, req.params.id)); }));
+router.get('/:id/messages', asyncHandler(async (req, res) => { res.set('Cache-Control', 'private, no-store'); res.json(await messaging.history(req.userId, req.params.id, req.query)); }));
 router.post('/:id/messages', asyncHandler(async (req, res) => res.status(201).json(await messaging.send(req.userId, req.params.id, req.body.texto))));
 export default router;

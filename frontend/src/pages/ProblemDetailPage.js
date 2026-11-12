@@ -1,4 +1,5 @@
-import { translateSystemText, translateStatus, translateCategory, getLanguage, useI18n } from '../i18n';
+import { shallow } from 'zustand/shallow';
+import { translate as tr, translateSystemText, translateStatus, translateCategory, getLanguage, useI18n } from '../i18n';
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { problemsAPI, votesAPI, commentsAPI, mediaUrl } from '../services/api';
@@ -18,30 +19,52 @@ const ProblemDetailPage = () => {
   const [loading, setLoading] = useState(true);
   const [votingLoading, setVotingLoading] = useState(false);
   const [comments, setComments] = useState([]);
+  const [commentPage, setCommentPage] = useState(1);
+  const [commentTotal, setCommentTotal] = useState(0);
+  const [moreComments, setMoreComments] = useState(false);
+  const commentOwner = React.useRef(id);
+  commentOwner.current = id;
   const [commentText, setCommentText] = useState('');
   const [commentLoading, setCommentLoading] = useState(false);
-  const { user, openAuthModal } = useAuthStore();
+  const { user, openAuthModal } = useAuthStore(state => ({ user: state.user, openAuthModal: state.openAuthModal }), shallow);
   const navigate = useNavigate();
   const { t } = useI18n();
 
   useEffect(() => {
+    setComments([]); setCommentPage(1); setCommentTotal(0); setMoreComments(false);
+    const controller = new AbortController();
+    let active = true;
     const fetchProblem = async () => {
       try {
         setLoading(true);
-        const res = await problemsAPI.get(id);
-        setProblem(res.data);
-        const commentsRes = await commentsAPI.list(id);
-        setComments(commentsRes.data || []);
+        const commentsRequest = commentsAPI.list(id, { signal: controller.signal, params: { paginated: true, page: 1 } }).then(response => { if (active) { setComments(response.data?.data || response.data || []); setMoreComments(Boolean(response.data?.hasMore)); setCommentTotal(response.data?.total ?? response.data?.length ?? 0); } }).catch(() => {});
+        const res = await problemsAPI.get(id, { signal: controller.signal });
+        if (active) setProblem(res.data);
+        // Comments load concurrently and do not delay the main publication.
+        void commentsRequest;
       } catch (error) {
-        toast.error(t('problemNotFound'));
+        if (active) toast.error(tr('problemNotFound'));
       } finally {
-        setLoading(false);
+        if (active) setLoading(false);
       }
     };
 
     fetchProblem();
-  }, [id, t]);
+    return () => { active = false; controller.abort(); };
+  }, [id]);
 
+  const loadMoreComments = async () => {
+    if (commentLoading) return;
+    setCommentLoading(true);
+    try {
+      const response = await commentsAPI.list(id, { params: { paginated: true, page: commentPage + 1 } });
+      if (commentOwner.current !== id) return;
+      const rows = response.data?.data || [];
+      setComments(current => { const ids = new Set(current.map(item => item.id)); return [...current, ...rows.filter(item => !ids.has(item.id))]; });
+      setCommentPage(current => current + 1); setMoreComments(Boolean(response.data?.hasMore)); setCommentTotal(response.data?.total ?? 0);
+    } catch { toast.error(tr('apiUnavailable')); }
+    finally { if (commentOwner.current === id) setCommentLoading(false); }
+  };
   const handleVote = async (type) => {
     if (!user) {
       openAuthModal('login');
@@ -71,6 +94,7 @@ const ProblemDetailPage = () => {
       setCommentLoading(true);
       const response = await commentsAPI.create(id, { texto: commentText });
       setComments((current) => [...current, response.data]);
+      setCommentTotal(current => current + 1);
       setCommentText('');
       toast.success(t('commentPublished'));
     } catch (error) {
@@ -191,7 +215,7 @@ const ProblemDetailPage = () => {
             </div>
 
             <section id="comments" className="mt-8 border-t border-white/10 pt-6">
-              <h2 className="text-xl font-bold mb-4">{t('comments')} ({comments.length})</h2>
+              <h2 className="text-xl font-bold mb-4">{t('comments')} ({commentTotal})</h2>
               <form onSubmit={handleComment} className="flex flex-col gap-3 sm:flex-row">
                 <input value={commentText} onChange={(event) => setCommentText(event.target.value)} placeholder={t('writeComment')} className="site-form-input flex-1 rounded-lg border p-3" maxLength="1000" />
                 <button disabled={commentLoading} className="rounded-lg bg-violet-600 px-5 py-3 font-semibold text-white disabled:opacity-50">{t('comment')}</button>
@@ -204,6 +228,7 @@ const ProblemDetailPage = () => {
                   </article>
                 ))}
               </div>
+              {moreComments && <button type="button" disabled={commentLoading} onClick={loadMoreComments} className="mt-4 rounded-lg border border-white/15 px-4 py-2">{t(commentLoading ? 'loading' : 'loadMore')}</button>}
             </section>
 
             {problem.updates?.length > 0 && <section className="mt-8 border-t border-white/10 pt-6">

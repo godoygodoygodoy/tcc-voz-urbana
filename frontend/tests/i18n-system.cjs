@@ -14,6 +14,7 @@ const base = process.env.I18N_TEST_URL || 'http://127.0.0.1:4173/tecti/2026/gpec
   const post={id:1,title:'Texto do morador preservado',description:'Descrição do morador preservada',status:'ABERTO',category:{id:1,name:'Iluminação'},author:{id:1,name:'Fixture Person',username:'fixture'},createdAt:'2026-11-10T12:00:00Z',images:[],updates:[],votes:1,latitude:-23.5,longitude:-46.6};
   await page.route('**/api/**',r=>{const p=new URL(r.request().url()).pathname;let data=[];
    if(p.endsWith('/users/me'))data=user();
+   else if(p.endsWith('/common-connections'))data={followers:{data:[],total:0,page:1,limit:4},following:{data:[],total:0,page:1,limit:4}};
    else if(p.endsWith('/categories'))data=[{id:1,name:'Iluminação'}];
    else if(p.endsWith('/admin/stats'))data={totalUsers:1,totalProblems:1,openProblems:1,byCategory:[{category:'Iluminação',total:1}],usersByDay:[{date:'2026-11-10',total:1}]};
    else if(p.endsWith('/admin/logs'))data={items:[{id:1,acao:'Publicação 5 excluída no painel administrativo',data:'2026-11-10'}]};

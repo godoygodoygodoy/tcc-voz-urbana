@@ -41,6 +41,16 @@ api.interceptors.response.use(
   }
 );
 
+const inFlight = new Map();
+let categoriesCache;
+const sharedGet = (url) => {
+  const key = JSON.stringify([localStorage.getItem('token'), url]);
+  if (!inFlight.has(key)) {
+    const request = api.get(url).finally(() => inFlight.delete(key));
+    inFlight.set(key, request);
+  }
+  return inFlight.get(key);
+};
 // Auth
 export const authAPI = {
   register: (data) => api.post('/auth/register', data),
@@ -57,15 +67,31 @@ export const visitsAPI = {
 
 // Problems
 export const problemsAPI = {
-  list: (params) => api.get('/problems', { params }),
+  list: (params, options) => api.get('/problems', { params, ...options }),
   create: (data) => {
     return api.post('/problems', data);
   },
-  get: (id) => api.get(`/problems/${id}`),
+  get: (id, options) => api.get(`/problems/${id}`, options),
   update: (id, data) => api.put(`/problems/${id}`, data),
   remove: (id) => api.delete(`/problems/${id}`),
 };
 
+export const storiesAPI = {
+  list:(params,options)=>api.get('/stories',{params,...options}),
+  publish:data=>api.post('/stories',data),
+  view:id=>api.post('/stories/'+id+'/view'),
+  remove:id=>api.delete('/stories/'+id),
+};
+export const collectionsAPI = {
+  list: (params, options) => api.get('/collections', { params, ...options }),
+  publicList: (ownerId, params, options) => api.get('/collections/public/'+ownerId, { params, ...options }),
+  get: (id, params, options) => api.get('/collections/'+id, { params, ...options }),
+  create: data => api.post('/collections', data),
+  update: (id,data) => api.patch('/collections/'+id, data),
+  remove: id => api.delete('/collections/'+id),
+  add: (id,problemId) => api.put('/collections/'+id+'/items/'+problemId),
+  removeItem: (id,problemId) => api.delete('/collections/'+id+'/items/'+problemId),
+};
 export const savedAPI = {
   list: () => api.get('/saved'),
   save: (problemId) => api.post(`/saved/${problemId}`),
@@ -74,7 +100,9 @@ export const savedAPI = {
 
 // Categories
 export const categoriesAPI = {
-  list: () => api.get('/categories').then((response) => ({
+  list: () => {
+    if (categoriesCache && Date.now() - categoriesCache.time < 300000) return Promise.resolve(categoriesCache.response);
+    return sharedGet('/categories').then((response) => ({
     ...response,
     data: [...(response.data || [])].sort((a, b) => {
       const aIsOther = a.name?.toLocaleLowerCase() === 'outros';
@@ -83,7 +111,8 @@ export const categoriesAPI = {
       if (aIsOther !== bIsOther) return aIsOther ? 1 : -1;
       return (a.name || '').localeCompare(b.name || '', 'pt-BR');
     }),
-  })),
+  })).then(response => { categoriesCache = { time: Date.now(), response }; return response; });
+  },
 };
 
 // Votes
@@ -92,18 +121,21 @@ export const votesAPI = {
 };
 
 export const commentsAPI = {
-  list: (problemId) => api.get(`/comments/${problemId}`),
+  list: (problemId, options) => api.get(`/comments/${problemId}`, options),
   create: (problemId, data) => api.post(`/comments/${problemId}`, data),
 };
 
 export const notificationsAPI = {
-  list: () => api.get('/notifications'),
+  list: () => sharedGet('/notifications'),
   markRead: (id) => api.patch(`/notifications/${id}/read`),
   markAllRead: () => api.patch('/notifications/read-all'),
 };
 
 export const socialAPI = {
-  searchUsers: (params) => api.get('/social/users/search', { params }),
+  searchUsers: (params, options) => api.get('/social/users/search', { params, ...options }),
+  commonConnections: (id, options) => api.get('/social/users/'+id+'/common-connections', options),
+  commonFollowers: (id, params) => api.get('/social/users/'+id+'/common-connections', { params: { ...params, direction: 'followers' } }),
+  commonFollowing: (id, params) => api.get('/social/users/'+id+'/common-connections', { params: { ...params, direction: 'following' } }),
   relationship: (id) => api.get('/social/users/'+id+'/relationship'),
   follow: (id) => api.post('/social/users/'+id+'/follow'),
   unfollow: (id) => api.delete('/social/users/'+id+'/follow'),
@@ -120,13 +152,13 @@ export const socialAPI = {
 export const conversationsAPI = {
   list: () => api.get('/conversations'),
   create: (userId) => api.post(`/conversations/${userId}`),
-  messages: (id) => api.get(`/conversations/${id}/messages`),
+  messages: (id, params) => api.get(`/conversations/${id}/messages`, { params }),
   send: (id, data) => api.post(`/conversations/${id}/messages`, data),
 };
 
 // Users
 export const usersAPI = {
-  getMe: () => api.get('/users/me'),
+  getMe: () => sharedGet('/users/me'),
   updateMe: (data) => data instanceof FormData
     ? api.put('/users/me', data)
     : api.put('/users/me', data),
@@ -137,7 +169,7 @@ export const adminAPI = {
   getStats: () => api.get('/admin/stats'),
   getStatsByPeriod: (period) => api.get('/admin/stats', { params: { period } }),
   updateProblem: (id, data) => api.put(`/admin/problems/${id}`, data),
-  createCategory: (data) => api.post('/admin/categories', data),
+  createCategory: (data) => api.post('/admin/categories', data).then(response => { categoriesCache = null; return response; }),
   listUsers: (params) => api.get('/admin/users', { params }),
   listProblems: (params) => api.get('/admin/problems', { params }),
   deleteProblem: (id) => api.delete(`/admin/problems/${id}`),

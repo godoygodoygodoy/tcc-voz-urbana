@@ -4,6 +4,7 @@ export const errorHandler = (err, req, res, next) => {
 
   if (err.code === 'MESSAGE_LIMIT_REACHED') return res.status(403).json({ error: 'chatLimitReached', code: err.code, messaging: err.messaging });
 
+  if (['P2021', 'P2022'].includes(err.code)) return res.status(503).json({ error: 'featureUnavailable' });
   if (err.code === 'P2002') return res.status(409).json({ error: 'Este registro já existe.' });
   if (err.code === 'P2025') return res.status(404).json({ error: 'Registro não encontrado.' });
   if (['P1001', 'P1002', 'P1008', 'P1017', 'P2024'].includes(err.code)) return res.status(503).json({ error: 'Banco de dados temporariamente indisponível. Tente novamente.' });

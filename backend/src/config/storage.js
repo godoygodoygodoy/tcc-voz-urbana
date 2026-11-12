@@ -1,3 +1,6 @@
+import { createReadStream } from 'node:fs';
+import { Readable } from 'node:stream';
+import { validateMedia } from '../utils/mediaValidation.js';
 import "dotenv/config";
 import crypto from "node:crypto";
 import fs from "node:fs/promises";
@@ -34,19 +37,19 @@ const ensureBucket = async (bucket) => {
   if (!supabase || bucketReady.has(bucket)) return;
   const { error } = await supabase.storage.createBucket(bucket, {
     public: bucket === "avatars" && process.env.SUPABASE_STORAGE_PUBLIC !== "false",
-    fileSizeLimit: `${Number(process.env.MAX_FILE_SIZE || 5 * 1024 * 1024)}`
+    fileSizeLimit: bucket === 'posts' ? 20 * 1024 * 1024 : Number(process.env.MAX_FILE_SIZE || 5 * 1024 * 1024)
   });
   if (error && !/already exists|duplicate/i.test(error.message || "")) {
     throw new Error(`Não foi possível preparar o bucket ${bucket}: ${error.message}`);
   }
   if (bucket !== 'avatars') {
-    const { error: privacyError } = await supabase.storage.updateBucket(bucket, { public: false });
+    const { error: privacyError } = await supabase.storage.updateBucket(bucket, { public: false, ...(bucket === 'posts' ? { fileSizeLimit: 20 * 1024 * 1024 } : {}) });
     if (privacyError) throw Object.assign(new Error('Publication storage must be private.'), { code: 'STORAGE_PRIVACY_REQUIRED' });
   }
   bucketReady.add(bucket);
 };
 
-const getExtension = (file) => MIME_EXTENSIONS[file.mimetype];
+const getExtension = file => MIME_EXTENSIONS[file.mimetype] || ({ 'video/mp4': '.mp4', 'video/webm': '.webm' })[file.mimetype];
 
 const parseSupabaseObjectUrl = (url) => {
   if (!supabase || !url?.startsWith(supabaseUrl)) return null;
@@ -56,6 +59,7 @@ const parseSupabaseObjectUrl = (url) => {
 };
 
 export const validateImageFile = (file) => {
+  validateMedia(file);
   if (!file || !MIME_EXTENSIONS[file.mimetype]) {
     throw Object.assign(new Error("Formato de imagem não suportado. Use JPG, PNG, WEBP ou GIF."), { status: 400 });
   }
@@ -64,8 +68,7 @@ export const validateImageFile = (file) => {
   }
 };
 
-export const storeFile = async (file, bucket, ownerId) => {
-  validateImageFile(file);
+const persistFile = async (file, bucket, ownerId) => {
   const safeBucket = getBucket(bucket);
   const extension = getExtension(file);
   const filename = `${Date.now()}-${crypto.randomUUID()}${extension}`;
@@ -89,6 +92,13 @@ export const storeFile = async (file, bucket, ownerId) => {
   return { url: `/uploads/${safeBucket}/${ownerId}/${filename}`, bucket: safeBucket, path: objectPath };
 };
 
+export const storeFile = async (file, bucket, ownerId) => {
+  validateImageFile(file); return persistFile(file, bucket, ownerId);
+};
+export const storeStoryFile = async (file, ownerId) => {
+  validateMedia(file, { video: true, maxSize: file.mimetype?.startsWith('video/') ? 20 * 1024 * 1024 : 5 * 1024 * 1024 });
+  return persistFile(file, 'posts', ownerId);
+};
 export const storeFiles = async (files, bucket, ownerId) => {
   const stored = [];
   try {
@@ -167,4 +177,30 @@ export const readStoredPublication = async (url) => {
   if (!contentType) throw Object.assign(new Error('Image unavailable'), { status: 404 });
   try { return { buffer: await fs.readFile(target), contentType }; }
   catch { throw Object.assign(new Error('Image unavailable'), { status: 404 }); }
+};
+
+// Authorized callers stream media instead of buffering entire videos for each range.
+export const streamStoredMedia = async (url, range) => {
+  const object = parseSupabaseObjectUrl(url);
+  if (object && supabase && object.bucket === 'posts') {
+    const safePath = object.path.split('/').map(encodeURIComponent).join('/');
+    const response = await fetch(supabaseUrl + '/storage/v1/object/authenticated/posts/' + safePath, { headers: { apikey: supabaseServiceRoleKey, Authorization: 'Bearer ' + supabaseServiceRoleKey, ...(range ? { Range: range } : {}) } });
+    if (![200,206].includes(response.status) || !response.body) { await response.body?.cancel();throw Object.assign(new Error('mediaInvalid'),{status:response.status===416?416:404}); }
+    const headers = Object.fromEntries(['content-length','content-range','accept-ranges','content-type'].map(key=>[key,response.headers.get(key)]).filter(([,value])=>value));
+    return { stream: Readable.fromWeb(response.body), status: response.status, headers };
+  }
+  if (typeof url !== 'string' || !url.startsWith('/uploads/posts/')) throw Object.assign(new Error('mediaInvalid'),{status:404});
+  const target = path.resolve(uploadsRoot, url.slice('/uploads/'.length)), root = path.resolve(uploadsRoot,'posts');
+  if (!target.startsWith(root + path.sep)) throw Object.assign(new Error('mediaInvalid'),{status:404});
+  let stat;try { stat = await fs.stat(target); }catch{throw Object.assign(new Error('mediaInvalid'),{status:404});}
+  let start = 0, end = stat.size - 1;
+  if (range) {
+    const match = /^bytes=(\d*)-(\d*)$/.exec(range);
+    if (!match || !match[1] && !match[2]) throw Object.assign(new Error('mediaInvalid'),{status:416});
+    if (!match[1]) start = Math.max(0,stat.size-Number(match[2]));
+    else { start=Number(match[1]);if(match[2])end=Math.min(end,Number(match[2])); }
+    if (!Number.isSafeInteger(start)||!Number.isSafeInteger(end)||start>end||start>=stat.size)throw Object.assign(new Error('mediaInvalid'),{status:416});
+  }
+  const headers = { 'Accept-Ranges':'bytes','Content-Length':String(end-start+1), ...(range ? { 'Content-Range':'bytes '+start+'-'+end+'/'+stat.size } : {}) };
+  return { stream:createReadStream(target,{start,end}),status:range?206:200,headers };
 };

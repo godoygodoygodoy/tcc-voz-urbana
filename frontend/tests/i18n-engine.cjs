@@ -32,3 +32,14 @@ test('Portuguese navigation instructions do not retain English copy',()=>{
  assert.equal(engine('pt-BR').translate('SCROLL'),'DESLIZE');
  assert.equal(engine('pt-BR').translate('SCROLL / EXPLORE'),'DESLIZE / EXPLORE');
 });
+
+test('follow relationship labels and backend notification keys use the shared catalogs',async()=>{
+ const {followButtonKey}=await import('../src/utils/social.js');
+ for(const lang of ['pt-BR','en','es']){
+  const i18n=engine(lang);
+  for(const relation of [null,{pending:true},{following:true},{followedBy:true},{following:true,followedBy:true,mutual:true}]){
+   const key=followButtonKey(relation);assert.notEqual(i18n.translate(key),key);
+  }
+  for(const key of ['followRequestTitle','followAcceptedTitle','newFollowerTitle','chatLimitReached'])assert.equal(i18n.translateSystemText(key),catalog[lang][key]);
+ }
+});
