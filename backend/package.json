@@ -21,7 +21,8 @@
     "test:followers": "node --experimental-vm-modules --test tests/followers.node.js tests/followers-api.node.js",
     "test:followers:db": "node --test tests/followers-mysql.node.js",
     "test:performance": "node --experimental-vm-modules --test tests/performance.node.js",
-    "test:profile-connections": "node --experimental-vm-modules --test tests/profile-connections.node.js"
+    "test:profile-connections": "node --experimental-vm-modules --test tests/profile-connections.node.js",
+    "test:expansion": "node --experimental-vm-modules --test tests/collections.node.js tests/stories.node.js tests/stories-api.node.js tests/story-media.node.js tests/story-ranges.node.js tests/media-validation.node.js tests/polls.node.js tests/notifications.node.js tests/comments-replies.node.js tests/participation.node.js tests/storage-ownership.node.js tests/problem-status.node.js tests/geography.node.js"
   },
   "prisma": {
     "seed": "node prisma/seed.js"

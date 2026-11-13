@@ -1,9 +1,11 @@
 import { translateStatus, translateCategory, useI18n } from '../i18n';
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { CircleMarker, MapContainer, Marker, Popup, Polygon, Polyline, TileLayer, ZoomControl, useMap, useMapEvents } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { getPurpleTone } from '../utils/theme';
+import HeatmapLayer from './HeatmapLayer';
+import { safeMapColor } from '../utils/mapColor';
 
 
 // Corrigir ícone do Leaflet
@@ -19,7 +21,7 @@ const createMarkerIcon = (color = '#7C3AED') => L.divIcon({
   html: `
     <span
       class="urban-marker__dot"
-      style="--marker-color:${color};"
+      style="--marker-color:${safeMapColor(color)};"
     ></span>
   `,
   iconSize: [28, 28],
@@ -263,10 +265,12 @@ const Map = ({
   onAreaDrawingToggle,
   location,
   onLocationChange,
+  heatFilters = null,
+  onHeatState,
 }) => {
 
   const { t, language } = useI18n();
-  const validProblems = problems.filter((problem) => toPoint(problem));
+  const validProblems = useMemo(() => problems.filter((problem) => toPoint(problem)), [problems]);
 
   return (
     <div className={`relative ${className}`.trim()}>
@@ -283,6 +287,7 @@ const Map = ({
           attribution='&copy; OpenStreetMap contributors'
         />
         <FitBounds problems={validProblems} />
+        {heatFilters && <HeatmapLayer filters={heatFilters} onState={onHeatState}/>}
         <AreaDrawingLayer
           active={areaDrawingActive}
           selectedArea={selectedArea}
@@ -294,7 +299,7 @@ const Map = ({
         )}
         {validProblems.map((problem) => {
           const point = toPoint(problem);
-          const markerColor = problem.category?.color || getPurpleTone(problem.category?.name || problem.category?.id || problem.id);
+          const markerColor = safeMapColor(problem.category?.color, getPurpleTone(problem.category?.name || problem.category?.id || problem.id));
 
           return (
             <Marker
@@ -330,7 +335,7 @@ const Map = ({
         })}
       </MapContainer>
 
-      {validProblems.length === 0 && !onLocationChange && (
+      {validProblems.length === 0 && !onLocationChange && !heatFilters && (
         <div className="absolute inset-0 flex items-center justify-center bg-zinc-950/70 backdrop-blur-sm rounded-3xl">
           <div className="text-center px-6 py-4">
             <p className="font-semibold text-white">{t('noMapPoints')}</p>

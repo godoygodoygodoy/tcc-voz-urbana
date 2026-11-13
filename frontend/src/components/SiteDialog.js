@@ -14,7 +14,7 @@ export default function SiteDialog({ title, children, onClose, busy = false }) {
   }, []);
   return createPortal(<div className="context-modal social-network-backdrop" onClick={event => { if (event.target === event.currentTarget && !busy) close.current(); }}>
     <section ref={element} role="dialog" aria-modal="true" aria-labelledby={label} className="site-panel social-network-dialog" onKeyDown={event => {
-      if (event.target.closest('.floating-portal')) return;
+      if (event.target.closest('.floating-portal') || event.key === 'Escape' && element.current?.querySelector('.floating-trigger[aria-expanded="true"]')) return;
       if (event.key === 'Escape' && !busy) { event.stopPropagation(); close.current(); }
       if (event.key !== 'Tab') return;
       const controls = [...event.currentTarget.querySelectorAll('button:not(:disabled),input:not(:disabled),textarea:not(:disabled),a[href],[tabindex="0"]')];

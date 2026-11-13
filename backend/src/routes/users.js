@@ -1,10 +1,11 @@
+import { queueAchievementCheck } from '../services/achievementQueue.js';
 import { lockUsers } from '../services/socialGraph.js';
 import express from "express";
 import { prisma } from "../config/prisma.js";
 import { authMiddleware } from "../middlewares/auth.js";
 import { asyncHandler } from "../middlewares/errorHandler.js";
 import { memoryImageUpload } from "../middleware/memoryUpload.js";
-import { removeStoredFile, storeFile } from "../config/storage.js";
+import { removeStoredFile, removeOwnedStoredFile, storeFile } from "../config/storage.js";
 
 const router = express.Router();
 const normalizePhone = (value) => String(value || "").replace(/\D/g, "");
@@ -31,6 +32,7 @@ router.get(
         dataCriacao: true
       }
     });
+    queueAchievementCheck(req.userId);
     res.json({ ...user, isPrivate: user.perfilPrivado, name: user.nome, phone: user.telefone, avatar: user.fotoPerfil, role: user.admin ? "admin" : user.nivel.toLowerCase() });
   })
 );
@@ -99,7 +101,7 @@ router.put(
 
       const nextAvatar = uploadedAvatar?.url || (avatar !== undefined ? avatar || null : current?.fotoPerfil);
       if (current?.fotoPerfil && current.fotoPerfil !== nextAvatar) {
-        await removeStoredFile(current.fotoPerfil).catch((error) => {
+        await removeOwnedStoredFile(current.fotoPerfil, "avatars", req.userId).catch((error) => {
           console.error("Falha ao remover avatar anterior:", error.message);
         });
       }

@@ -1,3 +1,5 @@
+import { problemFilters } from '../services/geography.js';
+import { queueAchievementCheck } from '../services/achievementQueue.js';
 import { publicationImages } from '../services/publicationMedia.js';
 import { visibleProblemWhere } from '../services/socialGraph.js';
 import express from "express";
@@ -153,6 +155,7 @@ const serializeProblem = (problem, req) => ({
   cep: problem.cep,
   state: problem.estado,
   city: problem.cidade,
+  neighborhood: problem.bairro,
   createdAt: problem.dataCriacao,
   occurredAt: problem.dataOcorrencia,
   editedAt: problem.editadaEm,
@@ -197,42 +200,10 @@ router.get(
       sort = "recent"
     } = req.query;
 
-    const pageNumber = Math.max(1, Number(page));
-    const pageSize = Math.min(100, Math.max(1, Number(limit)));
+    const pageNumber = Math.min(10000, Math.max(1, Number.parseInt(page, 10) || 1));
+    const pageSize = Math.min(100, Math.max(1, Number.parseInt(limit, 10) || 20));
     const skip = (pageNumber - 1) * pageSize;
-    const where = { ...visibleProblemWhere(req) };
-
-    if (status) where.status = status;
-
-    // Filtro por categoria
-    if (category) {
-      where.categoriaId = category;
-    }
-    if (city) where.cidade = { contains: String(city) };
-    if (state) where.estado = { contains: String(state) };
-
-    if (from || to) {
-      where.dataCriacao = {};
-      if (from) where.dataCriacao.gte = new Date(from);
-      if (to) where.dataCriacao.lte = new Date(`${to}T23:59:59.999`);
-    }
-
-    // Filtro geográfico (aproximado)
-    if (lat && lng) {
-      const latNum = parseFloat(lat);
-      const lngNum = parseFloat(lng);
-      const latOffset = radius / 111; // 1 degree ~= 111 km
-      const lngOffset = radius / (111 * Math.cos((latNum * Math.PI) / 180));
-
-      where.latitude = {
-        gte: latNum - latOffset,
-        lte: latNum + latOffset
-      };
-      where.longitude = {
-        gte: lngNum - lngOffset,
-        lte: lngNum + lngOffset
-      };
-    }
+    const where = problemFilters(req, req.query);
 
     const orderBy = sort === "votes" ? { votos: { _count: "desc" } } : { dataCriacao: "desc" };
 
@@ -291,6 +262,7 @@ router.post(
     }
     const occurrenceDateTime = parseOccurrenceDateTime(occurrenceDate, occurrenceTime);
     let resolvedLocation;
+    if (neighborhood !== undefined && (typeof neighborhood !== "string" || neighborhood.length > 120)) return res.status(400).json({error:"geoFilterInvalid"});
     const rawAddress = normalizeAddressParts([street, number, neighborhood, address, complemento]).join(", ");
     if (!rawAddress && hasValidCoordinates(latitude, longitude)) {
       resolvedLocation = { latitude: Number(latitude), longitude: Number(longitude), address: rawAddress || null };
@@ -314,6 +286,7 @@ router.post(
             endereco: resolvedLocation.address,
             complemento: String(complemento || "").trim() || null,
             cep: String(cep || "").replace(/\D/g, "") || null,
+            bairro: String(neighborhood || "").trim() || null,
             cidade: String(city || "").trim() || null,
             estado: String(state || "").trim() || null,
             ...(occurrenceDate || occurrenceTime ? { dataOcorrencia: occurrenceDateTime } : {}),
@@ -344,6 +317,7 @@ router.post(
       where: { id: problem.id },
       include: { categoria: true,       usuario: { select: { id: true, nome: true, username: true, fotoPerfil: true } }, imagens: true, atualizacoes: { orderBy: { dataCriacao: "desc" } } }
     });
+    queueAchievementCheck(req.userId);
     res.status(201).json(serializeProblem(createdProblem, req));
   })
 );
@@ -362,6 +336,7 @@ router.put(
     if (current.usuarioId !== req.userId && !isAdmin) return res.status(403).json({ error: "Somente o autor ou um administrador pode editar esta publicação." });
 
     const { title, description, categoryId, address, street, number, neighborhood, complemento, cep, occurrenceDate, occurrenceTime, city, state } = req.body;
+    if (neighborhood !== undefined && (typeof neighborhood !== "string" || neighborhood.length > 120)) return res.status(400).json({error:"geoFilterInvalid"});
     if (!title?.trim() || !description?.trim() || !categoryId) {
       return res.status(400).json({ error: "Título, descrição e categoria são obrigatórios." });
     }
@@ -399,6 +374,7 @@ router.put(
           endereco: location.address,
           complemento: String(complemento || "").trim() || null,
           cep: String(cep || "").replace(/\D/g, "") || null,
+          ...(neighborhood !== undefined ? { bairro: neighborhood.trim() || null } : {}),
           cidade: String(city || "").trim() || null,
           estado: String(state || "").trim() || null,
           ...(occurrenceDate || occurrenceTime ? { dataOcorrencia: occurrenceDateTime } : {}),

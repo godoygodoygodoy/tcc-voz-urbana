@@ -1,3 +1,9 @@
+import geographyRoutes from './routes/geography.js';
+import { createProblemStatus, startStatusDelivery } from './services/problemStatus.js';
+import { announceNotification } from './utils/notifications.js';
+import participationRoutes from './routes/participation.js';
+import { stopAchievementChecks } from './services/achievementQueue.js';
+import pollRoutes from './routes/polls.js';
 import storyRoutes from './routes/stories.js';
 import { startStoryCleanup } from './services/stories.js';
 import { removeStoredFiles } from './config/storage.js';
@@ -69,7 +75,10 @@ app.use(
 );
 app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ limit: "10mb", extended: true }));
-app.use("/api/", rateLimit({ windowMs: 15 * 60 * 1000, max: 300, standardHeaders: true, legacyHeaders: false, message: { error: "Muitas requisições. Tente novamente em alguns minutos." } }));
+// Read polling and media ranges have a separate budget from state-changing requests.
+app.use('/api/', rateLimit({ windowMs:15*60*1000,limit:900,skip:req=>!['GET','HEAD'].includes(req.method),standardHeaders:true,legacyHeaders:false,message:{error:'requestRateLimited'} }));
+app.use('/api/', rateLimit({ windowMs:15*60*1000,limit:300,skip:req=>['GET','HEAD'].includes(req.method),standardHeaders:true,legacyHeaders:false,message:{error:'requestRateLimited'} }));
+app.use('/api/auth/', rateLimit({ windowMs:15*60*1000,limit:20,skipSuccessfulRequests:true,standardHeaders:true,legacyHeaders:false,message:{error:'requestRateLimited'} }));
 
 // Servir arquivos estáticos
 app.use("/uploads", uploadedMedia);
@@ -103,6 +112,9 @@ app.use("/api/conversations", authMiddleware, conversationRoutes);
 app.use("/api/saved", savedRoutes);
 app.use("/api/collections", collectionRoutes);
 app.use("/api/stories", storyRoutes);
+app.use("/api/polls", pollRoutes);
+app.use("/api/participation", participationRoutes);
+app.use("/api/geography", geographyRoutes);
 
 // 404 handler
 app.use((req, res) => {
@@ -116,6 +128,7 @@ const PORT = process.env.PORT || 5000;
 let server;
 let stopBackups = () => {};
 let stopStories = () => {};
+let stopStatus = () => {};
 
 // Conectar ao banco e iniciar servidor
 (async () => {
@@ -126,6 +139,7 @@ let stopStories = () => {};
     await securePublicationStorage();
     stopBackups = startAutomaticBackup();
     stopStories = startStoryCleanup(prisma, removeStoredFiles);
+    stopStatus = startStatusDelivery(createProblemStatus(prisma), announceNotification);
     console.log("✅ Conectado ao banco de dados MySQL via Prisma");
 
     server = app.listen(PORT, "0.0.0.0", () => {
@@ -143,6 +157,8 @@ let stopStories = () => {};
 const shutdown = async () => {
   stopBackups();
   stopStories();
+  stopStatus();
+  stopAchievementChecks();
   const timeout = setTimeout(() => process.exit(1), 10000);
   timeout.unref();
   if (server) await new Promise((resolve) => server.close(resolve));

@@ -46,7 +46,7 @@ let categoriesCache;
 const sharedGet = (url) => {
   const key = JSON.stringify([localStorage.getItem('token'), url]);
   if (!inFlight.has(key)) {
-    const request = api.get(url).finally(() => inFlight.delete(key));
+    const request = api.get(url).finally(() => { if (inFlight.get(key) === request) inFlight.delete(key); });
     inFlight.set(key, request);
   }
   return inFlight.get(key);
@@ -76,8 +76,20 @@ export const problemsAPI = {
   remove: (id) => api.delete(`/problems/${id}`),
 };
 
+export const participationAPI = {
+  achievements:(id,options)=>api.get('/participation/users/'+id+'/achievements',options),
+  watching:(id,options)=>api.get('/participation/problems/'+id+'/watch',options),
+  watch:(id,enabled)=>enabled?api.put('/participation/problems/'+id+'/watch'):api.delete('/participation/problems/'+id+'/watch'),
+};
+export const pollsAPI = {
+  get:(id,options)=>api.get('/polls/'+id,options),
+  create:(id,data)=>api.post('/polls/'+id,data),
+  vote:(id,optionId)=>api.put('/polls/'+id+'/vote',{optionId}),
+};
 export const storiesAPI = {
   list:(params,options)=>api.get('/stories',{params,...options}),
+  get:(id,options)=>api.get('/stories/'+id,options),
+  react:(id,enabled)=>enabled?api.put('/stories/'+id+'/reaction'):api.delete('/stories/'+id+'/reaction'),
   publish:data=>api.post('/stories',data),
   view:id=>api.post('/stories/'+id+'/view'),
   remove:id=>api.delete('/stories/'+id),
@@ -121,14 +133,19 @@ export const votesAPI = {
 };
 
 export const commentsAPI = {
+  replies: (problemId,commentId,page,options)=>api.get('/comments/'+problemId+'/'+commentId+'/replies',{params:{page},...options}),
   list: (problemId, options) => api.get(`/comments/${problemId}`, options),
   create: (problemId, data) => api.post(`/comments/${problemId}`, data),
 };
 
+const invalidateNotifications = () => { for (const key of inFlight.keys()) if (key.includes('/notifications')) inFlight.delete(key); };
 export const notificationsAPI = {
-  list: () => sharedGet('/notifications'),
-  markRead: (id) => api.patch(`/notifications/${id}/read`),
-  markAllRead: () => api.patch('/notifications/read-all'),
+  invalidate: invalidateNotifications,
+  list: (params) => params ? sharedGet('/notifications?' + new URLSearchParams(params).toString()) : sharedGet('/notifications'),
+  preferences: () => api.get('/notifications/preferences'),
+  updatePreferences: preferences => api.put('/notifications/preferences', { preferences }),
+  markRead: (id) => api.patch(`/notifications/${id}/read`).then(response=>{invalidateNotifications();return response;}),
+  markAllRead: () => api.patch('/notifications/read-all').then(response=>{invalidateNotifications();return response;}),
 };
 
 export const socialAPI = {
@@ -180,3 +197,8 @@ export const adminAPI = {
 };
 
 export default api;
+
+export const geographyAPI = {
+  heatmap: (params, config = {}) => api.get('/geography/heatmap', { ...config, params }),
+  summary: (params, config = {}) => api.get('/geography/summary', { ...config, params }),
+};

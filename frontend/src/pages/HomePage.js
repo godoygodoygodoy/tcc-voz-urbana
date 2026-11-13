@@ -1,5 +1,7 @@
+import { useAuthStore } from '../store';
+const GeographyInsights = React.lazy(() => import('../components/GeographyInsights'));
 import { translate as tr, translateCategory, useI18n } from '../i18n';
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { problemsAPI, categoriesAPI } from '../services/api';
 import { toast } from '../components/LocalizedToast';
 import Map from '../components/Map';
@@ -10,6 +12,11 @@ import { FloatingDatePicker, FloatingSelect } from '../components/FloatingFields
 
 const HomePage = () => {
   const { t } = useI18n();
+  const userId = useAuthStore(state => state.user?.id);
+  const [regionDraft, setRegionDraft] = useState({ city: '', state: '', neighborhood: '' });
+  const [region, setRegion] = useState(regionDraft), [engagement, setEngagement] = useState('all');
+  const [heat, setHeat] = useState(false), [heatState, setHeatState] = useState({}), [insights, setInsights] = useState(false);
+  useEffect(() => { const timer = setTimeout(() => { setRegion(regionDraft); setPage(1); }, 300); return () => clearTimeout(timer); }, [regionDraft]);
   const [problems, setProblems] = useState([]);
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -23,6 +30,14 @@ const HomePage = () => {
   const [to, setTo] = useState('');
   const [sort, setSort] = useState('recent');
   const [radius, setRadius] = useState('5');
+  const [center, setCenter] = useState(null), [locating, setLocating] = useState(false);
+  const active = useRef(true);
+  useEffect(() => { active.current = true; return () => { active.current = false; }; }, []);
+  const locate = () => {
+    if (!navigator.geolocation) { toast.error(tr('geoLocationError')); return; }
+    setLocating(true);
+    navigator.geolocation.getCurrentPosition(position => { if (active.current) { setCenter({ lat: position.coords.latitude, lng: position.coords.longitude }); setPage(1); setLocating(false); } }, () => { if (active.current) { setLocating(false); toast.error(tr('geoLocationError')); } }, { timeout: 10000, maximumAge: 60000 });
+  };
   const [page, setPage] = useState(1);
   const [total, setTotal] = useState(0);
 
@@ -32,28 +47,22 @@ const HomePage = () => {
     return () => { active = false; };
   }, []);
 
+  const filters = useMemo(() => ({ status: selectedStatus || undefined, category: selectedCategory || undefined, from, to, sort, radius, ...region, engagement, ...center }), [selectedStatus, selectedCategory, from, to, sort, radius, region, engagement, center]);
+  useEffect(() => {
+    const controller = new AbortController(); setLoading(true);
+    problemsAPI.list({ ...filters, page, limit: 9 }, { signal: controller.signal }).then(({ data }) => {
+      if (controller.signal.aborted) return;
+      const rows = data?.data || []; setProblems(rows); setTotal(data?.total || 0);
+      setSelectedProblem(current => rows.find(row => row.id === current?.id) || rows[0] || null);
+    }).catch(() => { if (!controller.signal.aborted) toast.error(tr('apiUnavailable')); }).finally(() => { if (!controller.signal.aborted) setLoading(false); });
+    return () => controller.abort();
+  }, [filters, page, userId]);
+  // Pagination never downloads the same map markers again.
   useEffect(() => {
     const controller = new AbortController();
-    setLoading(true);
-    problemsAPI.list({ status: selectedStatus, category: selectedCategory, from, to, sort, radius, page, limit: 9 }, { signal: controller.signal })
-      .then(({ data }) => {
-        if (controller.signal.aborted) return;
-        const rows = data?.data || [];
-        setProblems(rows); setTotal(data?.total || 0);
-        setSelectedProblem(current => current || rows[0] || null);
-      }).catch(() => { if (!controller.signal.aborted) toast.error(tr('apiUnavailable')); })
-      .finally(() => { if (!controller.signal.aborted) setLoading(false); });
+    problemsAPI.list({ ...filters, limit: 100 }, { signal: controller.signal }).then(({ data }) => { if (!controller.signal.aborted) setMapProblems(data?.data || []); }).catch(() => { if (!controller.signal.aborted) toast.error(tr('apiUnavailable')); });
     return () => controller.abort();
-  }, [selectedStatus, selectedCategory, from, to, sort, radius, page]);
-
-  // Changing the list page does not download the same 100 map markers again.
-  useEffect(() => {
-    const controller = new AbortController();
-    problemsAPI.list({ category: selectedCategory, from, to, sort, radius, limit: 100 }, { signal: controller.signal })
-      .then(({ data }) => { if (!controller.signal.aborted) setMapProblems(data?.data || []); })
-      .catch(() => { if (!controller.signal.aborted) toast.error(tr('apiUnavailable')); });
-    return () => controller.abort();
-  }, [selectedCategory, from, to, sort, radius]);
+  }, [filters, userId]);
 
   const handleAreaComplete = (points) => {
     setSelectedArea(points);
@@ -61,6 +70,8 @@ const HomePage = () => {
   };
 
   const statusOptions = [
+    { value: '', label: t('geoAllStatuses') },
+    { value: 'REJEITADO', label: t('rejectedStatus') },
     { value: 'ABERTO', label: t('openStatus') },
     { value: 'EM_ANDAMENTO', label: t('progressStatus') },
     { value: 'RESOLVIDO', label: t('resolvedStatus') },
@@ -84,6 +95,8 @@ const HomePage = () => {
         <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
           <h2 className="text-2xl font-bold text-white">{t('mapProblems')}</h2>
           <div className="flex flex-wrap gap-3">
+            <button type="button" aria-pressed={heat} onClick={() => { setHeat(value => !value); setHeatState({}); }} className="profile-action">{t('geoHeatmap')}</button>
+            <button type="button" aria-expanded={insights} onClick={() => setInsights(value => !value)} className="profile-action">{t('geoInsightsTitle')}</button>
             <button
               type="button"
               onClick={() => setDrawingMode((current) => !current)}
@@ -104,12 +117,16 @@ const HomePage = () => {
         </div>
         <Map
           problems={mapProblems}
+          heatFilters={heat ? filters : null}
+          onHeatState={setHeatState}
           onMarkerClick={setSelectedProblem}
           selectedArea={selectedArea}
           onAreaComplete={handleAreaComplete}
           areaDrawingActive={drawingMode}
           onAreaDrawingToggle={setDrawingMode}
         />
+        <p className="site-muted mt-3 text-xs">{t('geoMarkerLimit')}</p>
+        {heat && <div role="status" className="site-muted mt-3 text-sm">{heatState.error ? t('geoHeatError') : heatState.loading ? t('loading') : t('geoHeatLegend', { count: heatState.total || 0 })}{heatState.truncated && <p>{t('geoHeatTruncated', { count: heatState.represented })}</p>}</div>}
         {selectedArea && (
           <div className="mt-4 rounded-2xl border border-white/10 bg-white/6 p-4 text-sm text-white/70">
             {t('selectedArea')} {selectedArea.length} {t('points') || 'pontos'}.
@@ -125,14 +142,16 @@ const HomePage = () => {
           </h2>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {['state', 'city', 'neighborhood'].map(key => <label key={key} className="block text-sm font-semibold text-white/70">{t({state:'Estado',city:'Cidade',neighborhood:'Bairro'}[key])}<input className="site-form-input mt-2 w-full rounded-xl p-3" value={regionDraft[key]} maxLength={key === 'state' ? 80 : 120} onChange={event => setRegionDraft(current => ({ ...current, [key]: event.target.value }))}/></label>)}
+            <div><label className="mb-2 block text-sm font-semibold text-white/70">{t('geoEngagement')}</label><FloatingSelect value={engagement} onChange={value => { setEngagement(value); setPage(1); }} options={['all','supported','unsupported','discussed'].map(value => ({ value, label: t('geoEngagement'+value) }))}/></div>
             <div>
               <label className="mb-2 block text-sm font-semibold text-white/70">{t('status')}</label>
-              <FloatingSelect value={selectedStatus} onChange={setSelectedStatus} options={statusOptions} />
+              <FloatingSelect value={selectedStatus} onChange={value => { setSelectedStatus(value); setPage(1); }} options={statusOptions} />
             </div>
 
             <div>
               <label className="mb-2 block text-sm font-semibold text-white/70">{t('category')}</label>
-              <FloatingSelect value={selectedCategory || ''} onChange={(value) => setSelectedCategory(value || null)} options={[{ value: '', label: t('allCategories') }, ...categories.map((cat) => ({ value: cat.id, label: translateCategory(cat.name) }))]} />
+              <FloatingSelect value={selectedCategory || ''} onChange={(value) => { setSelectedCategory(value || null); setPage(1); }} options={[{ value: '', label: t('allCategories') }, ...categories.map((cat) => ({ value: cat.id, label: translateCategory(cat.name) }))]} />
             </div>
             <div>
               <label className="mb-2 block text-sm font-semibold text-white/70">{t('sort')}</label>
@@ -148,11 +167,15 @@ const HomePage = () => {
             </div>
             <div>
               <label className="mb-2 block text-sm font-semibold text-white/70">{t('radius')}</label>
-              <FloatingSelect value={radius} onChange={setRadius} options={[{ value: '1', label: '1 km' }, { value: '5', label: '5 km' }, { value: '10', label: '10 km' }, { value: '25', label: '25 km' }]} />
+              <FloatingSelect value={radius} onChange={value => { setRadius(value); setPage(1); }} options={[{ value: '1', label: '1 km' }, { value: '5', label: '5 km' }, { value: '10', label: '10 km' }, { value: '25', label: '25 km' }]} />
+              <button type="button" disabled={locating} onClick={locate} className="profile-action mt-3">{t(locating ? 'loading' : 'geoUseLocation')}</button>
+              {center && <button type="button" onClick={() => { setCenter(null); setPage(1); }} className="profile-action mt-2">{t('geoClearLocation')}</button>}
+              <p className="site-muted mt-2 text-xs">{t(center ? 'geoRadiusActive' : 'geoRadiusHint')}</p>
             </div>
           </div>
         </div>
 
+        {insights && <React.Suspense fallback={<p role="status">{t('loading')}</p>}><GeographyInsights filters={filters} categories={categories}/></React.Suspense>}
         <div className="mt-6 flex items-center justify-between text-sm text-white/60">
           <span>{total} {t('occurrences')}</span>
           <div className="flex items-center gap-2">

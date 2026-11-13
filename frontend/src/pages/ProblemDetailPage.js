@@ -1,6 +1,9 @@
+const WatchControl = React.lazy(() => import('../components/WatchControl'));
+import CommentThread from '../components/CommentThread';
+const PollPanel = React.lazy(() => import('../components/PollPanel'));
 import { shallow } from 'zustand/shallow';
 import { translate as tr, translateSystemText, translateStatus, translateCategory, getLanguage, useI18n } from '../i18n';
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { problemsAPI, votesAPI, commentsAPI, mediaUrl } from '../services/api';
 import Avatar from '../components/Avatar';
@@ -37,7 +40,7 @@ const ProblemDetailPage = () => {
     const fetchProblem = async () => {
       try {
         setLoading(true);
-        const commentsRequest = commentsAPI.list(id, { signal: controller.signal, params: { paginated: true, page: 1 } }).then(response => { if (active) { setComments(response.data?.data || response.data || []); setMoreComments(Boolean(response.data?.hasMore)); setCommentTotal(response.data?.total ?? response.data?.length ?? 0); } }).catch(() => {});
+        const commentsRequest = commentsAPI.list(id, { signal: controller.signal, params: { paginated: true, page: 1 } }).then(response => { if (active) { setComments(response.data?.data || response.data || []); setMoreComments(Boolean(response.data?.hasMore)); setCommentTotal(response.data?.commentTotal ?? response.data?.total ?? response.data?.length ?? 0); } }).catch(() => {});
         const res = await problemsAPI.get(id, { signal: controller.signal });
         if (active) setProblem(res.data);
         // Comments load concurrently and do not delay the main publication.
@@ -61,10 +64,13 @@ const ProblemDetailPage = () => {
       if (commentOwner.current !== id) return;
       const rows = response.data?.data || [];
       setComments(current => { const ids = new Set(current.map(item => item.id)); return [...current, ...rows.filter(item => !ids.has(item.id))]; });
-      setCommentPage(current => current + 1); setMoreComments(Boolean(response.data?.hasMore)); setCommentTotal(response.data?.total ?? 0);
+      setCommentPage(current => current + 1); setMoreComments(Boolean(response.data?.hasMore)); setCommentTotal(response.data?.commentTotal ?? response.data?.total ?? 0);
     } catch { toast.error(tr('apiUnavailable')); }
     finally { if (commentOwner.current === id) setCommentLoading(false); }
   };
+  const handleReplyCreated = useCallback((id,total) => {
+    setComments(current=>current.map(comment=>comment.id===id?{...comment,replyCount:total}:comment));setCommentTotal(current=>current+1);
+  },[]);
   const handleVote = async (type) => {
     if (!user) {
       openAuthModal('login');
@@ -214,18 +220,17 @@ const ProblemDetailPage = () => {
               </div>
             </div>
 
+            <React.Suspense fallback={null}><WatchControl problemId={id}/></React.Suspense>
+            <React.Suspense fallback={null}><PollPanel problem={problem}/></React.Suspense>
             <section id="comments" className="mt-8 border-t border-white/10 pt-6">
               <h2 className="text-xl font-bold mb-4">{t('comments')} ({commentTotal})</h2>
               <form onSubmit={handleComment} className="flex flex-col gap-3 sm:flex-row">
-                <input value={commentText} onChange={(event) => setCommentText(event.target.value)} placeholder={t('writeComment')} className="site-form-input flex-1 rounded-lg border p-3" maxLength="1000" />
+                <input aria-label={t('writeComment')} value={commentText} onChange={(event) => setCommentText(event.target.value)} placeholder={t('writeComment')} className="site-form-input flex-1 rounded-lg border p-3" maxLength="1000" />
                 <button disabled={commentLoading} className="rounded-lg bg-violet-600 px-5 py-3 font-semibold text-white disabled:opacity-50">{t('comment')}</button>
               </form>
               <div className="mt-5 space-y-4">
                 {comments.length === 0 ? <p className="site-muted">{t('noComments')}</p> : comments.map((comment) => (
-                  <article key={comment.id} className="site-comment rounded-lg p-4">
-                    <div className="flex items-center justify-between gap-3"><Link to={profilePath(comment.usuario)} className="flex items-center gap-2"><Avatar user={comment.usuario} className="h-8 w-8" /><strong>{comment.usuario?.username ? `@${comment.usuario.username}` : comment.usuario?.nome}</strong></Link><span className="site-muted text-xs">{formatDistanceToNow(new Date(comment.dataCriacao), { locale: ({ 'pt-BR': ptBR, en: enUS, es })[getLanguage()], addSuffix: true })}</span></div>
-                    <p className="mt-2 text-white/70">{comment.texto}</p>
-                  </article>
+                  <CommentThread key={comment.id} comment={comment} problemId={id} onReplyCreated={handleReplyCreated}/>
                 ))}
               </div>
               {moreComments && <button type="button" disabled={commentLoading} onClick={loadMoreComments} className="mt-4 rounded-lg border border-white/15 px-4 py-2">{t(commentLoading ? 'loading' : 'loadMore')}</button>}

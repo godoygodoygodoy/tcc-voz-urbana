@@ -38,7 +38,14 @@
     "test:performance": "node --test tests/performance-runtime.cjs",
     "test:performance:browser": "node --experimental-vm-modules tests/performance-browser.cjs",
     "measure:performance": "node --experimental-vm-modules tests/performance.cjs --dist dist --out performance-artifacts/result.json",
-    "test:profile-connections:browser": "node --experimental-vm-modules tests/profile-connections-browser.cjs"
+    "test:profile-connections:browser": "node --experimental-vm-modules tests/profile-connections-browser.cjs",
+    "test:collections:browser": "node --experimental-vm-modules tests/collections-browser.cjs",
+    "test:stories:browser": "node --experimental-vm-modules tests/stories-browser.cjs",
+    "test:polls:browser": "node --experimental-vm-modules tests/polls-browser.cjs",
+    "test:activity:browser": "node --experimental-vm-modules tests/activity-browser.cjs",
+    "test:discussion:browser": "node --experimental-vm-modules tests/discussion-browser.cjs",
+    "test:geography:browser": "node --experimental-vm-modules tests/geography-browser.cjs",
+    "test:map": "node --test tests/map-color.test.cjs"
   },
   "browserslist": {
     "production": [

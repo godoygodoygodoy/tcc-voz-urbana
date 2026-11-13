@@ -1,6 +1,6 @@
 ﻿import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { Link } from 'react-router-dom';
-import { Plus, ChevronLeft, ChevronRight, Trash2 } from 'lucide-react';
+import { Link, useLocation } from 'react-router-dom';
+import { Plus, ChevronLeft, ChevronRight, Trash2, Heart } from 'lucide-react';
 import { storiesAPI, mediaUrl } from '../services/api';
 import { translate as tr, useI18n } from '../i18n';
 import { useAuthStore } from '../store';
@@ -11,6 +11,7 @@ import SiteDialog, { ConfirmDialog } from './SiteDialog';
 import { UploadField, FloatingSelect } from './FloatingFields';
 import { toast } from './LocalizedToast';
 export default function StoriesRail({ ownerId }) {
+ const location=useLocation();
  const { t }=useI18n(),user=useAuthStore(state=>state.user);
  const [result,setResult]=useState({data:[],total:0,page:1,limit:30}),[page,setPage]=useState(1),[error,setError]=useState(false);
  const [loading,setLoading]=useState(true),[creating,setCreating]=useState(false),[files,setFiles]=useState([]),[audience,setAudience]=useState('SEGUIDORES');
@@ -24,7 +25,7 @@ export default function StoriesRail({ ownerId }) {
  },[ownerId,user?.id,page,version]);
  useEffect(()=>{
   if(!selected)return undefined;let active=true;setMediaError(false);
-  storiesAPI.view(selected.id).then(({data})=>{if(!active)return;setSelected(current=>current?.id===data.id?data:current);setResult(current=>({...current,data:current.data.map(item=>item.id===data.id?data:item)}));}).catch(error=>{if(active){setMediaError(true);toast.error(error.response?.data?.error||tr('storyUnavailable'));}});
+  storiesAPI.view(selected.id).then(({data})=>{if(!active)return;setSelected(current=>current?.id===data.id?{...data,mediaUrl:current.mediaUrl,posterUrl:current.posterUrl}:current);setResult(current=>({...current,data:current.data.map(item=>item.id===data.id?data:item)}));}).catch(error=>{if(active){setMediaError(true);toast.error(error.response?.data?.error||tr('storyUnavailable'));}});
   return()=>{active=false;};
  },[selected?.id]);
  useEffect(()=>{
@@ -32,6 +33,13 @@ export default function StoriesRail({ ownerId }) {
   const timer=setTimeout(()=>{setMediaError(true);setResult(current=>({...current,data:current.data.filter(story=>story.id!==selected.id)}));},Math.max(0,new Date(selected.expiresAt).getTime()-Date.now()));
   return()=>clearTimeout(timer);
  },[selected?.id,selected?.expiresAt]);
+ useEffect(()=>{
+  const storyId=new URLSearchParams(location.search).get('story');
+  if(ownerId||!storyId||!user)return undefined;
+  const controller=new AbortController();
+  storiesAPI.get(storyId,{signal:controller.signal}).then(({data})=>{if(!controller.signal.aborted){setSelected(data);setResult(current=>current.data.some(story=>story.id===data.id)?current:{...current,data:[...current.data,data]});}}).catch(error=>{if(!controller.signal.aborted)toast.error(error.response?.data?.error||tr('storyUnavailable'));});
+  return()=>controller.abort();
+ },[location.search,ownerId,user?.id]);
  const groups=useMemo(()=>{const authors=new Map();for(const story of result.data){const group=authors.get(story.author.id)||{author:story.author,stories:[]};group.stories.push(story);authors.set(story.author.id,group);}return[...authors.values()];},[result.data]);
  const action=async operation=>{if(working.current)return;working.current=true;setBusy(true);const key=context.current;try{await operation(key);}catch(error){toast.error(error.response?.data?.error||tr('storySaveError'));}finally{working.current=false;setBusy(false);}};
  const publish=event=>{event.preventDefault();if(!files[0])return;action(async key=>{const body=new FormData();body.append('file',files[0]);body.append('audience',audience);await storiesAPI.publish(body);if(context.current===key){setFiles([]);setCreating(false);setPage(1);setVersion(value=>value+1);toast.success(tr('storyPublished'));}});};
@@ -48,7 +56,8 @@ export default function StoriesRail({ ownerId }) {
   {selected&&<SiteDialog title={t('storiesTitle')} onClose={()=>{setSelected(null);setDeleting(false);}} busy={busy}>
    <div className="my-4 flex items-center gap-3"><Avatar user={selected.author} className="h-9 w-9"/><Link to={profilePath(selected.author)}>{selected.author.username?'@'+selected.author.username:selected.author.nome}</Link>{selected.author.id===user.id&&<button type="button" className="profile-action ml-auto" aria-label={t('storyDelete')} onClick={()=>setDeleting(true)}><Trash2 size={16}/></button>}</div>
    {mediaError?<p role="status" className="feed-empty">{t('storyUnavailable')}</p>:selected.mime.startsWith('video/')?<video key={selected.id} className="story-media" controls playsInline preload="metadata" poster={mediaUrl(selected.posterUrl)||undefined} src={mediaUrl(selected.mediaUrl)} onError={()=>setMediaError(true)}/>:<img key={selected.id} className="story-media" src={mediaUrl(selected.mediaUrl)} alt={t('storyMediaAlt')} onError={()=>setMediaError(true)}/>}
-   <div className="mt-4 flex items-center justify-between gap-3"><button type="button" className="profile-action" disabled={position<=0||busy} aria-label={t('previous')} onClick={()=>setSelected(result.data[position-1])}><ChevronLeft size={18}/></button><span className="text-sm">{position+1} / {result.data.length}{selected.viewCount!==undefined&&<small className="block">{t('storyViews',{count:selected.viewCount})}</small>}</span><button type="button" className="profile-action" disabled={position<0||position>=result.data.length-1||busy} aria-label={t('next')} onClick={()=>setSelected(result.data[position+1])}><ChevronRight size={18}/></button></div>
+   {selected.author.id!==user.id&&<button type="button" className="profile-action mt-3" aria-pressed={selected.reaction==='heart'} disabled={busy||mediaError} onClick={()=>action(async key=>{const {data}=await storiesAPI.react(selected.id,selected.reaction!=='heart');if(context.current===key)setSelected(data);})}><Heart size={17} fill={selected.reaction==='heart'?'currentColor':'none'}/>{t('storyReact')}</button>}
+   <div className="mt-4 flex items-center justify-between gap-3"><button type="button" className="profile-action" disabled={position<=0||busy} aria-label={t('previous')} onClick={()=>setSelected(result.data[position-1])}><ChevronLeft size={18}/></button><span className="text-sm">{Math.max(1,position+1)} / {Math.max(1,result.data.length)}{selected.viewCount!==undefined&&<small className="block">{t('storyViews',{count:selected.viewCount})}</small>}</span><button type="button" className="profile-action" disabled={position<0||position>=result.data.length-1||busy} aria-label={t('next')} onClick={()=>setSelected(result.data[position+1])}><ChevronRight size={18}/></button></div>
   </SiteDialog>}
   {deleting&&selected&&<ConfirmDialog title={t('storyDelete')} description={t('storyDeleteHint')} busy={busy} onClose={()=>setDeleting(false)} onConfirm={()=>action(async key=>{await storiesAPI.remove(selected.id);if(context.current===key){setDeleting(false);setSelected(null);setVersion(value=>value+1);}})}/>}
  </section>;

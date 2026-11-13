@@ -1,3 +1,4 @@
+import { subscribeActivityChanges, notifyActivityChange } from '../utils/activity';
 const StoriesRail = React.lazy(() => import('../components/StoriesRail'));
 import { ConfirmDialog } from '../components/SiteDialog';
 const CollectionsPanel = React.lazy(() => import('../components/CollectionsPanel'));
@@ -167,6 +168,11 @@ const FeedPage = () => {
   const [votingPost, setVotingPost] = useState(null);
   const votesInFlight = useRef(new Set());
   const [notifications, setNotifications] = useState([]);
+  const [notificationFilter,setNotificationFilter] = useState('all');
+  const [notificationPage,setNotificationPage] = useState(1);
+  const [notificationMeta,setNotificationMeta] = useState({total:0,unread:0,limit:30});
+  const [notificationError,setNotificationError] = useState(false);
+  const notificationRequest = useRef(0);
   const [loadingNotifications, setLoadingNotifications] = useState(false);
   const [userResults, setUserResults] = useState([]);
   const [peopleSearchError, setPeopleSearchError] = useState(false);
@@ -286,7 +292,7 @@ const FeedPage = () => {
         const { data } = await conversationsAPI.list();
         if (!active || sequence !== requestSequence) return;
         setConversations(current => retainEqual(current, data || []));
-        const requested = chooseRequested && data.find(item => item.id === location.state?.conversationId);
+        const requested = chooseRequested && data.find(item => item.id === (location.state?.conversationId || new URLSearchParams(location.search).get('conversation')));
         chooseRequested = false;
         setSelectedConversation(current => retainEqual(current, requested || (current ? { ...current, participant: data.find(item => item.id === current.id)?.participant || current.participant } : data[0] || null)));
       } catch { /* Keep existing conversations visible when a refresh fails. */ }
@@ -295,7 +301,7 @@ const FeedPage = () => {
     const poller = createVisibilityPoller(refresh, 5000);
     const unsubscribe = subscribeSocialChanges(poller.refresh);
     return () => { active = false; ++requestSequence; unsubscribe(); poller.dispose(); };
-  }, [activeTab, user?.id, location.state?.conversationId]);
+  }, [activeTab, user?.id, location.state?.conversationId, location.search]);
 
   useEffect(() => {
     if (dmMessages.current && dmAtBottom.current) dmMessages.current.scrollTop = dmMessages.current.scrollHeight;
@@ -393,20 +399,21 @@ const FeedPage = () => {
   }, [createForm.cep]);
 
   useEffect(() => {
-    if (activeTab !== 'notifications') return;
-    const loadNotifications = async () => {
-      try {
-        setLoadingNotifications(true);
-        const response = await notificationsAPI.list();
-        setNotifications(response.data || []);
-      } catch (error) {
-        setNotifications([]);
-      } finally {
-        setLoadingNotifications(false);
-      }
+    if (activeTab !== 'notifications' || !user) return undefined;
+    let active=true;
+    const loadNotifications=async()=>{
+      const sequence=++notificationRequest.current;
+      setLoadingNotifications(true);
+      try{
+        const {data}=await notificationsAPI.list({paginated:'true',page:notificationPage,...(notificationFilter==='all'?{}:{read:String(notificationFilter==='read')})});
+        if(active&&sequence===notificationRequest.current){const rows=Array.isArray(data)?data:data.data||[];setNotifications(current=>retainEqual(current,rows));setNotificationMeta(Array.isArray(data)?{total:rows.length,unread:rows.filter(row=>!row.lida).length,limit:30}:data);setNotificationError(false);}
+      }catch{if(active&&sequence===notificationRequest.current)setNotificationError(true);}
+      finally{if(active&&sequence===notificationRequest.current)setLoadingNotifications(false);}
     };
-    loadNotifications();
-  }, [activeTab]);
+    const poller=createVisibilityPoller(loadNotifications,30000,{immediate:true});
+    const unsubscribe=subscribeActivityChanges(poller.refresh);
+    return()=>{active=false;++notificationRequest.current;poller.dispose();unsubscribe();};
+  },[activeTab,user?.id,notificationFilter,notificationPage]);
 
   const validateImages = (files, existingCount = 0) => {
     const selected = Array.from(files || []);
@@ -704,8 +711,13 @@ const FeedPage = () => {
     }
   };
   const markNotificationsRead = async () => {
-    try { await notificationsAPI.markAllRead(); } catch { /* Keep local read state. */ }
-    setNotifications(current => current.map(item => ({ ...item, lida: true })));
+    const sequence=++notificationRequest.current;
+    try { const {data}=await notificationsAPI.markAllRead();if(sequence===notificationRequest.current){setNotifications(current=>notificationFilter==='unread'?[]:current.map(item=>({...item,lida:true})));setNotificationMeta(current=>({...current,unread:data.unread??0,total:notificationFilter==='unread'?0:current.total}));}notifyActivityChange(); }
+    catch(error){toast.error(error.response?.data?.error||t('notificationReadError'));}
+  };
+  const openNotification = async item => {
+    if(!item.lida){const sequence=++notificationRequest.current;try{const {data}=await notificationsAPI.markRead(item.id);setNotifications(current=>current.map(row=>row.id===item.id?{...row,lida:true}:row));if(sequence===notificationRequest.current)setNotificationMeta(current=>({...current,unread:data.unread??0}));}catch(error){toast.error(error.response?.data?.error||t('notificationReadError'));}}
+    if(item.link?.startsWith('/')&&!item.link.startsWith('//'))navigate(item.link);
   };
   const loadRelationship = async (userId) => {
     if (!user) return;
@@ -813,11 +825,13 @@ const FeedPage = () => {
   </>;
 
   const renderNotifications = () => <>
-    <FeedHeader title={t('notifications')} description={t("Acompanhe respostas, apoios e novidades sobre os seus relatos.")}><button type="button" onClick={markNotificationsRead} className="feed-secondary-button">{t("Marcar tudo como lido")}</button></FeedHeader>
-    <div className="feed-notification-balloon">
-      <div className="feed-notification-head"><span><Bell size={17} /> {t("Sua atividade")}</span><strong>{notifications.filter((item) => !item.lida).length} {t("novas")}</strong></div>
-      {loadingNotifications ? <div className="feed-empty">{t("Carregando notificações...")}</div> : notifications.length === 0 ? <div className="feed-notification-empty"><Bell size={30} /><strong>{t("Nenhuma notificação por enquanto")}</strong><span>{t("Quando a comunidade interagir com seus relatos, elas aparecerão aqui.")}</span></div> : notifications.map((item) => <div key={item.id} className={`feed-notification ${item.lida ? '' : 'is-unread'}`}><span className="feed-notification-icon"><Bell size={15} /></span><div><strong>{translateSystemText(item.titulo)}</strong><p>{translateSystemText(item.mensagem)}</p><small>{item.dataCriacao ? formatDistanceToNow(new Date(item.dataCriacao), { locale: ({ 'pt-BR': ptBR, en: enUS, es })[getLanguage()], addSuffix: true }) : t("agora")}</small></div></div>)}
+    <FeedHeader title={t('notifications')} description={t('activityDescription')}><button type="button" onClick={markNotificationsRead} className="feed-secondary-button">{t('markAllRead')}</button></FeedHeader>
+    <div className="mb-4 flex flex-wrap gap-2">{['all','unread','read'].map(value=><button type="button" className="profile-action" key={value} aria-pressed={notificationFilter===value} onClick={()=>{setNotificationFilter(value);setNotificationPage(1);}}>{t('activityFilter'+value)}</button>)}</div>
+    {notificationError&&<p role="status" className="site-muted mb-4">{t('activityLoadError')}</p>}
+    <div className="feed-notification-balloon"><div className="feed-notification-head"><span><Bell size={17}/>{t('notifications')}</span><strong>{notificationMeta.unread} {t('activityUnread')}</strong></div>
+      {loadingNotifications&&notifications.length===0?<div className="feed-empty" role="status">{t('loading')}</div>:notifications.length===0?<p className="feed-empty">{t('noNotifications')}</p>:notifications.map(item=><button type="button" key={item.id} onClick={()=>openNotification(item)} className={'feed-notification w-full text-left '+(item.lida?'':'is-unread')}><span className="feed-notification-icon"><Bell size={15}/></span><span><strong>{translateSystemText(item.titulo)}</strong><p>{translateSystemText(item.mensagem)}</p><small>{item.dataCriacao?formatDistanceToNow(new Date(item.dataCriacao),{locale:({'pt-BR':ptBR,en:enUS,es})[getLanguage()],addSuffix:true}):t('now')}</small></span></button>)}
     </div>
+    {notificationMeta.total>notificationMeta.limit&&<div className="mt-4 flex justify-between"><button type="button" disabled={notificationPage<=1||loadingNotifications} onClick={()=>setNotificationPage(value=>value-1)}>{t('previous')}</button><span>{notificationPage}</span><button type="button" disabled={notificationPage*notificationMeta.limit>=notificationMeta.total||loadingNotifications} onClick={()=>setNotificationPage(value=>value+1)}>{t('next')}</button></div>}
   </>;
 
   const renderSaved = () => <>

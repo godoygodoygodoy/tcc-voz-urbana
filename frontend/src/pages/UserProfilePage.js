@@ -1,3 +1,4 @@
+const AchievementsPanel = React.lazy(() => import('../components/AchievementsPanel'));
 const StoriesRail = React.lazy(() => import('../components/StoriesRail'));
 const CollectionsPanel = React.lazy(() => import('../components/CollectionsPanel'));
 import { createVisibilityPoller, retainEqual } from '../utils/polling';
@@ -199,6 +200,7 @@ const UserProfilePage = () => {
           </div>;
         })}</div>}
       </section>}
+      {profile.canViewPosts !== false && <React.Suspense fallback={null}><AchievementsPanel ownerId={profile.id}/></React.Suspense>}
       <React.Suspense fallback={null}><StoriesRail ownerId={profile.id}/></React.Suspense>
       <section className="profile-content">
         <nav className="profile-tabs" aria-label={t('Conteúdo do perfil')}>{tabs.map(({ key, label, icon: Icon }) => <button key={key} type="button" className={tab === key ? 'is-active' : ''} onClick={() => setTab(key)}><Icon size={16} />{label}</button>)}</nav>

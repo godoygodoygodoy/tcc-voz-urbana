@@ -1,3 +1,5 @@
+import { writeNotification } from '../services/notifications.js';
+import { announceNotification } from '../utils/notifications.js';
 ﻿import express from 'express';
 import multer from 'multer';
 import jwt from 'jsonwebtoken';
@@ -7,9 +9,9 @@ import { authMiddleware, optionalAuthMiddleware } from '../middlewares/auth.js';
 import { asyncHandler } from '../middlewares/errorHandler.js';
 import { storeStoryFile, removeStoredFiles, streamStoredMedia } from '../config/storage.js';
 import { prepareStoryMedia } from '../services/storyMedia.js';
-import { createStories, cleanExpiredStories, STORY_AUDIENCES } from '../services/stories.js';
+import { createStories, cleanExpiredStories, serializeStory, STORY_AUDIENCES } from '../services/stories.js';
 import { socialError } from '../services/socialGraph.js';
-const router=express.Router(),stories=createStories(prisma);
+const router=express.Router(),stories=createStories(prisma,{notify:writeNotification});
 const upload=multer({storage:multer.memoryStorage(),limits:{files:1,fileSize:20*1024*1024,fields:2},fileFilter:(req,file,callback)=>callback(null,['image/jpeg','image/png','image/webp','image/gif','video/mp4','video/webm'].includes(file.mimetype))});
 const uploadLimit=rateLimit({windowMs:60000,limit:6,keyGenerator:req=>req.userId,standardHeaders:true,legacyHeaders:false,message:{error:'storyLimitReached'}});
 let processing=0;const activeUsers=new Set();
@@ -50,6 +52,8 @@ router.post('/',uploadLimit,capacity,upload.single('file'),asyncHandler(async(re
  }catch(error){try{await removeStoredFiles(stored.map(file=>file.url));}catch(cleanup){console.error(JSON.stringify({event:'story_upload_cleanup_failed',code:cleanup.code||cleanup.name,paths:stored.map(file=>file.path)}));}throw error;}
  }finally{req.storyProcessing=false;req.releaseStoryCapacity?.();}
 }));
+router.get('/:id',asyncHandler(async(req,res)=>res.json(urls(serializeStory(await stories.get(req.userId,req.params.id),req.userId),req.userId))));
+for(const method of ['put','delete'])router[method]('/:id/reaction',asyncHandler(async(req,res)=>{const {story,notification}=await stories.react(req.userId,req.params.id,method==='put');if(notification)void announceNotification(notification).catch(()=>{});res.json(urls(story,req.userId));}));
 router.post('/:id/view',asyncHandler(async(req,res)=>res.json(urls(await stories.view(req.userId,req.params.id),req.userId))));
 router.delete('/:id',asyncHandler(async(req,res)=>{await stories.remove(req.userId,req.params.id);res.sendStatus(204);void cleanExpiredStories(prisma,removeStoredFiles).catch(error=>console.error(JSON.stringify({event:'story_cleanup_unavailable',code:error.code||error.name}))); }));
 export default router;

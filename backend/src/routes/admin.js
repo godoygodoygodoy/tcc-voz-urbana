@@ -1,8 +1,10 @@
+import { queueAchievementCheck } from '../services/achievementQueue.js';
 import express from "express";
 import { adminMiddleware } from "../middlewares/auth.js";
 import { prisma } from "../config/prisma.js";
 import { asyncHandler } from "../middlewares/errorHandler.js";
-import { createNotification } from "../utils/notifications.js";
+import { announceNotification } from "../utils/notifications.js";
+import { createProblemStatus } from "../services/problemStatus.js";
 
 const router = express.Router();
 const DAY = 24 * 60 * 60 * 1000;
@@ -46,33 +48,10 @@ router.post(
 router.put(
   "/problems/:id",
   asyncHandler(async (req, res) => {
-    const { status } = req.body;
-
-    const problem = await prisma.problema.findUnique({
-      where: { id: req.params.id }
-    });
-
-    if (!problem) {
-      return res.status(404).json({ error: "Problema não encontrado" });
-    }
-
-    const updateData = {};
-    if (status) updateData.status = status;
-
-    const updatedProblem = await prisma.problema.update({
-      where: { id: req.params.id },
-      data: updateData
-    });
-
-    await prisma.atualizacaoProblema.create({
-      data: { texto: `Status alterado para ${status}`, status, usuarioId: req.userId, problemaId: req.params.id }
-    });
-    await logAdminAction(req.userId, `Problema ${problem.id} atualizado para ${status}`);
-    if (problem.usuarioId !== req.userId) {
-      await createNotification({ usuarioId: problem.usuarioId, tipo: "STATUS", titulo: "Problema atualizado", mensagem: `O status foi alterado para ${status}`, link: `/problem/${problem.id}` });
-    }
-
-    res.json(updatedProblem);
+    const result = await createProblemStatus(prisma).update(req.userId, req.params.id, req.body);
+    for (const notification of result.notifications) void announceNotification(notification).catch(() => {});
+    if (result.changed) queueAchievementCheck(result.problem.usuarioId);
+    res.json(result.problem);
   })
 );
 

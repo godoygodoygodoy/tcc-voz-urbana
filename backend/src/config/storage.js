@@ -1,3 +1,4 @@
+import { storedObjectLocation, isOwnedObject } from '../utils/storagePaths.js';
 import { createReadStream } from 'node:fs';
 import { Readable } from 'node:stream';
 import { validateMedia } from '../utils/mediaValidation.js';
@@ -51,11 +52,10 @@ const ensureBucket = async (bucket) => {
 
 const getExtension = file => MIME_EXTENSIONS[file.mimetype] || ({ 'video/mp4': '.mp4', 'video/webm': '.webm' })[file.mimetype];
 
-const parseSupabaseObjectUrl = (url) => {
-  if (!supabase || !url?.startsWith(supabaseUrl)) return null;
-  const match = url.match(/\/storage\/v1\/object\/(?:public|sign)\/([^/]+)\/(.+)$/);
-  if (!match) return null;
-  return { bucket: getBucket(match[1]), path: decodeURIComponent(match[2]) };
+const parseSupabaseObjectUrl = url => {
+  if(!supabase)return null;
+  const object=storedObjectLocation(url,supabaseUrl);
+  return object&&!url.startsWith('/uploads/')&&bucketNames.has(object.bucket)?object:null;
 };
 
 export const validateImageFile = (file) => {
@@ -112,6 +112,10 @@ export const storeFiles = async (files, bucket, ownerId) => {
   }
 };
 
+export const removeOwnedStoredFile = async (url,bucket,ownerId) => {
+  if(!isOwnedObject(url,bucket,String(ownerId),supabaseUrl))return false;
+  await removeStoredFile(url);return true;
+};
 export const removeStoredFile = async (url) => {
   if (!url) return;
   const object = parseSupabaseObjectUrl(url);
@@ -181,6 +185,7 @@ export const readStoredPublication = async (url) => {
 
 // Authorized callers stream media instead of buffering entire videos for each range.
 export const streamStoredMedia = async (url, range) => {
+  if(range){const match=typeof range==='string'&&range.length<=100?/^bytes=(\d*)-(\d*)$/.exec(range):null;if(!match||!match[1]&&!match[2])throw Object.assign(new Error('mediaInvalid'),{status:416});}
   const object = parseSupabaseObjectUrl(url);
   if (object && supabase && object.bucket === 'posts') {
     const safePath = object.path.split('/').map(encodeURIComponent).join('/');

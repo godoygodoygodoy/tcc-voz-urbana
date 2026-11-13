@@ -1,0 +1,11 @@
+import express from 'express';
+import { prisma } from '../config/prisma.js';
+import { optionalAuthMiddleware } from '../middlewares/auth.js';
+import { asyncHandler } from '../middlewares/errorHandler.js';
+import { createGeography } from '../services/geography.js';
+const router = express.Router();
+const service = createGeography(prisma);
+router.use(optionalAuthMiddleware);
+router.get('/heatmap', asyncHandler(async (req, res) => res.json(await service.heatmap(req, req.query))));
+router.get('/summary', asyncHandler(async (req, res) => res.json(await service.summary(req, req.query))));
+export default router;

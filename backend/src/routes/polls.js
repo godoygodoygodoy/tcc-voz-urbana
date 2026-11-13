@@ -1,0 +1,10 @@
+﻿import express from 'express';
+import { prisma } from '../config/prisma.js';
+import { authMiddleware, optionalAuthMiddleware } from '../middlewares/auth.js';
+import { asyncHandler } from '../middlewares/errorHandler.js';
+import { createPolls } from '../services/polls.js';
+const router = express.Router(), polls = createPolls(prisma);
+router.get('/:problemId', optionalAuthMiddleware, asyncHandler(async(req,res)=>res.json({poll:await polls.get(req,req.params.problemId)})));
+router.post('/:problemId',authMiddleware,asyncHandler(async(req,res)=>res.status(201).json({poll:await polls.create(req,req.params.problemId,req.body)})));
+router.put('/:problemId/vote',authMiddleware,asyncHandler(async(req,res)=>res.json({poll:await polls.vote(req,req.params.problemId,req.body.optionId)})));
+export default router;

@@ -1,3 +1,4 @@
+import ActivityConnection from './components/ActivityConnection';
 import { shallow } from 'zustand/shallow';
 import RouteScroll from './components/RouteScroll';
 import RouteSkeleton from './components/RouteSkeleton';
@@ -86,6 +87,7 @@ function App() {
     <Router basename={import.meta.env.BASE_URL}>
       <div>
         <VisitTracker />
+        <ActivityConnection />
         <RouteScroll />
         <LocalizedValidation />
         <ReactiveAtmosphere />

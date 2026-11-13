@@ -21,7 +21,7 @@ export async function prepareStoryMedia(file,{run=runMediaProcess}={}) {
   const information=JSON.parse(await run(process.env.FFPROBE_PATH||'ffprobe',['-v','error','-show_streams','-show_format','-of','json',source]));
   const video=information.streams?.find(stream=>stream.codec_type==='video');
   const duration=Number(video?.duration||information.format?.duration);
-  if(!video||!Number.isFinite(duration)||duration<=0||duration>60||video.width*video.height>3840*2160||!['h264','vp8','vp9','av1'].includes(video.codec_name))throw socialError(400,'storyVideoInvalid');
+  if(!video||!Number.isFinite(duration)||duration<=0||duration>60||!Number.isInteger(video.width)||!Number.isInteger(video.height)||video.width<1||video.height<1||video.width>3840||video.height>3840||video.width*video.height>3840*2160||!['h264','vp8','vp9','av1'].includes(video.codec_name))throw socialError(400,'storyVideoInvalid');
   // Preserve the validated video; only the small preview needs decoding/encoding.
   const poster=path.join(directory,'poster.jpg');
   await run(process.env.FFMPEG_PATH||'ffmpeg',['-nostdin','-v','error','-threads','1','-i',source,'-frames:v','1','-vf','scale=480:480:force_original_aspect_ratio=decrease','-q:v','3',poster]);

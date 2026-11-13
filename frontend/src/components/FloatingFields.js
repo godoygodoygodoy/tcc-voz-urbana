@@ -32,7 +32,9 @@ const useFloatingField = (open, setOpen, panelSize = { width: 280, height: 360, 
       Math.max(viewportPadding, rect.left),
       Math.max(viewportPadding, window.innerWidth - panelWidth - viewportPadding),
     );
-    setPosition({ left, top, width: panelWidth, maxHeight });
+    const modal = ref.current.closest('.context-modal');
+    const zIndex = modal ? Math.max(1200, (Number.parseInt(getComputedStyle(modal).zIndex, 10) || 0) + 1) : 1200;
+    setPosition({ left, top, width: panelWidth, maxHeight, zIndex });
   }, [panelSize.height, panelSize.matchTriggerWidth, panelSize.minWidth, panelSize.width]);
 
   useEffect(() => {
@@ -91,7 +93,7 @@ const FloatingPortal = ({ panelRef, position, className, children, ...props }) =
   }, [panelRef, position]);
 
   if (!position) return null;
-  return createPortal(<div ref={panelRef} className={`floating-portal context-scroll ${className}`} style={{ left: position.left, top: position.top, width: position.width, maxHeight: position.maxHeight }} {...props}>{children}</div>, document.body);
+  return createPortal(<div ref={panelRef} className={`floating-portal context-scroll ${className}`} style={{ left: position.left, top: position.top, width: position.width, maxHeight: position.maxHeight, zIndex: position.zIndex }} {...props}>{children}</div>, document.body);
 };
 
 export const FloatingSelect = ({ value, onChange, options, placeholder = tr("Selecione uma opção"), className = '' }) => {

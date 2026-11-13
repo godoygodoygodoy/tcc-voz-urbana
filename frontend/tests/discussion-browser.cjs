@@ -1,0 +1,75 @@
+const { chromium } = require('playwright');
+const assert = require('node:assert/strict');
+const base = process.env.DISCUSSION_TEST_URL || 'http://127.0.0.1:4173/tecti/2026/gpec03';
+(async () => {
+  const { createSocialFixture } = await import('../../backend/tests/helpers/socialFixture.js');
+  const fixture = await createSocialFixture();
+  const server = fixture.app.listen(0, '127.0.0.1');
+  await new Promise(resolve => server.once('listening', resolve));
+  const browser = await chromium.launch({ executablePath: 'C:/Program Files/Google/Chrome/Application/chrome.exe', headless: true });
+  const errors = [];
+  let checks = 0;
+  try {
+    const page = await browser.newPage({ viewport: { width: 390, height: 844 }, reducedMotion: 'reduce' });
+    page.setDefaultTimeout(15000);
+    page.on('pageerror', error => errors.push(error.message));
+    await page.addInitScript(() => {
+      localStorage.setItem('token', 'test-c');
+      localStorage.setItem('language', 'en');
+      localStorage.setItem('user', JSON.stringify({ id: 'c', name: 'Person c', username: 'person.c', role: 'usuario' }));
+    });
+    await page.route('**/*', route => new URL(route.request().url()).origin === new URL(base).origin ? route.continue() : route.abort());
+    await page.route('**/api/**', async route => {
+      const url = new URL(route.request().url());
+      const response = await route.fetch({ url: 'http://127.0.0.1:' + server.address().port + url.pathname + url.search, headers: { ...route.request().headers(), authorization: 'Bearer test-c' } });
+      await route.fulfill({ response });
+    });
+    await page.goto(base + '/problem/public-post');
+    const watch = page.getByRole('button', { name: 'Follow issue', exact: true });
+    await watch.click();
+    await page.getByRole('button', { name: 'Stop following issue', exact: true }).waitFor();
+    assert.equal(fixture.state.saved.find(row => row.usuarioId === 'c' && row.problemaId === 'public-post').acompanhando, true);
+    checks++;
+    const commentInput = page.locator('#comments input');
+    await commentInput.fill('A community discussion for @person.b');
+    await page.locator('#comments form').first().locator('button').click();
+    await page.locator('.comment-thread').getByText('A community discussion for @person.b', { exact: true }).waitFor();
+    assert.ok(fixture.state.notifications.some(row => row.usuarioId === 'b' && row.tipo === 'MENCAO'));
+    checks++;
+    await page.getByRole('button', { name: 'Reply', exact: true }).click();
+    await page.locator('.comment-thread textarea').fill('A persistent reply');
+    await page.locator('.comment-thread form button[type=submit]').click();
+    await page.locator('.comment-thread').getByText('A persistent reply', { exact: true }).waitFor();
+    assert.equal(fixture.state.comments.filter(row => row.parentId).length, 1);
+    checks++;
+    await page.reload();
+    await page.getByRole('button', { name: /View [0-9]+ replies/ }).click();
+    await page.locator('.comment-thread').getByText('A persistent reply', { exact: true }).waitFor();
+    checks++;
+    await page.getByRole('button', { name: 'Stop following issue', exact: true }).click();
+    await page.getByRole('button', { name: 'Follow issue', exact: true }).waitFor();
+    assert.equal(fixture.state.saved.find(row => row.usuarioId === 'c' && row.problemaId === 'public-post').acompanhando, false);
+    checks++;
+    console.log('Public achievement profile'); await page.goto(base + '/person.a');
+    await page.getByRole('heading', { name: 'First report', exact: true }).waitFor();
+    assert.equal(await page.locator('#profile-achievements-title').count(), 1);
+    assert.equal(await page.getByRole('heading', { name: 'Active voice', exact: true }).count(), 0);
+    checks++;
+    console.log('Own locked achievements'); await page.goto(base + '/person.c');
+    await page.getByRole('heading', { name: 'Active voice', exact: true }).waitFor();
+    assert.equal(await page.locator('section[aria-labelledby=profile-achievements-title] article').count(), 6);
+    checks++;
+    console.log('Private profile'); await page.goto(base + '/person.b');
+    await page.getByText('This profile is private. Follow and wait for approval to view posts.', { exact: true }).waitFor();
+    assert.equal(await page.locator('#profile-achievements-title').count(), 0);
+    checks++;
+    assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true);
+    assert.deepEqual(errors, []);
+    checks++;
+    console.log(JSON.stringify({ checks, browserErrors: errors, database: 'isolated memory' }));
+  } finally {
+    await browser.close();
+    server.closeAllConnections(); await new Promise(resolve => server.close(resolve));
+    await fixture.close();
+  }
+})().catch(error => { console.error(error); process.exitCode = 1; });

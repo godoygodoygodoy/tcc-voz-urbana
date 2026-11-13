@@ -24,7 +24,7 @@ const lockedConversation = async (tx, id, userId) => {
   await tx.$queryRaw`SELECT id FROM conversas WHERE id = ${id} FOR UPDATE`;
   return conversation;
 };
-export const createMessaging = (db) => ({
+export const createMessaging = (db, { notify = async () => null } = {}) => ({
   async list(userId) {
     const rows = await db.conversa.findMany({
       where: { OR: [{ usuarioAId: userId }, { usuarioBId: userId }] },
@@ -96,7 +96,10 @@ export const createMessaging = (db) => ({
       if (!current.canSend) throw Object.assign(socialError(403, 'chatLimitReached'), { code: 'MESSAGE_LIMIT_REACHED', messaging: current });
       const message = await tx.mensagem.create({ data: { texto: value.trim(), conversaId: conversation.id, remetenteId: userId }, include: { remetente: { select: publicUser } } });
       await tx.conversa.update({ where: { id: conversation.id }, data: { atualizadaEm: new Date() } });
-      return { message, messaging: messageAllowance(current.mutual, current.sent + 1) };
+      const sender = await tx.usuario.findUnique({where:{id:userId},select:{nome:true,username:true}});
+      const senderName = sender?.username?'@'+sender.username:sender?.nome;
+      const notification = await notify(tx, { usuarioId: participantId(conversation, userId), tipo:'MENSAGEM',titulo:'notificationMessageTitle',mensagem:senderName?senderName+' enviou uma mensagem.':'notificationMessageBody',link:'/feed?conversation='+encodeURIComponent(conversation.id)+'#conversations' });
+      return { message, messaging: messageAllowance(current.mutual, current.sent + 1), ...(notification ? { notification } : {}) };
     }, { isolationLevel: 'ReadCommitted' });
   },
 });

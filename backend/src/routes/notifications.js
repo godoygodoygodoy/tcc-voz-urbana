@@ -1,34 +1,32 @@
-import express from "express";
-import { prisma } from "../config/prisma.js";
-import { authMiddleware } from "../middlewares/auth.js";
-import { asyncHandler } from "../middlewares/errorHandler.js";
-
-const router = express.Router();
-router.use(authMiddleware);
-
-router.get("/", asyncHandler(async (req, res) => {
-  const notifications = await prisma.notificacao.findMany({
-    where: { usuarioId: req.userId },
-    orderBy: { dataCriacao: "desc" },
-    take: 50
-  });
-  res.json(notifications);
+﻿import express from 'express';
+import jwt from 'jsonwebtoken';
+import { prisma } from '../config/prisma.js';
+import { authMiddleware } from '../middlewares/auth.js';
+import { asyncHandler } from '../middlewares/errorHandler.js';
+import { notificationFields, markNotificationsRead, getNotificationPreferences, saveNotificationPreferences } from '../services/notifications.js';
+import { activityListeners, subscribeActivity, publishActivity } from '../services/activityEvents.js';
+const router=express.Router();router.use(authMiddleware);
+router.get('/stream',(req,res)=>{
+  if(activityListeners(req.userId)>=3)return res.status(429).json({error:'activityConnectionsLimit'});
+  res.set({'Content-Type':'text/event-stream','Cache-Control':'private, no-store','Connection':'keep-alive','X-Accel-Buffering':'no'});res.flushHeaders();
+  res.write('event: ready\ndata: {}\n\n');
+  const stop=subscribeActivity(req.userId,event=>{if(!res.write('event: activity\ndata: '+JSON.stringify(event)+'\n\n'))res.end();});
+  const heartbeat=setInterval(()=>res.write(': heartbeat\n\n'),25000);heartbeat.unref?.();
+  const token=jwt.decode(req.headers.authorization?.split(' ')[1]||'');
+  const remaining=token?.exp?token.exp*1000-Date.now():1200000;
+  const expiry=setTimeout(()=>res.end(),Math.max(0,Math.min(1200000,remaining)));expiry.unref?.();
+  res.once('close',()=>{clearInterval(heartbeat);clearTimeout(expiry);stop();});
+});
+router.get('/preferences',asyncHandler(async(req,res)=>res.json({preferences:await getNotificationPreferences(prisma,req.userId)})));
+router.put('/preferences',asyncHandler(async(req,res)=>{await saveNotificationPreferences(prisma,req.userId,req.body?.preferences);res.json({preferences:await getNotificationPreferences(prisma,req.userId)});}));
+router.get('/',asyncHandler(async(req,res)=>{
+  const page=Math.min(10000,Math.max(1,Number.parseInt(req.query.page,10)||1)),limit=30;
+  const read=req.query.read==='true'?true:req.query.read==='false'?false:undefined;
+  const where={usuarioId:req.userId,...(read!==undefined?{lida:read}:{})};
+  if(req.query.paginated!=='true')return res.json(await prisma.notificacao.findMany({where,orderBy:[{dataCriacao:'desc'},{id:'asc'}],take:50,select:notificationFields}));
+  const[data,total,unread]=await Promise.all([prisma.notificacao.findMany({where,orderBy:[{dataCriacao:'desc'},{id:'asc'}],skip:(page-1)*limit,take:limit,select:notificationFields}),prisma.notificacao.count({where}),prisma.notificacao.count({where:{usuarioId:req.userId,lida:false}})]);
+  res.json({data,total,unread,page,limit});
 }));
-
-router.patch("/:id/read", asyncHandler(async (req, res) => {
-  const notification = await prisma.notificacao.updateMany({
-    where: { id: req.params.id, usuarioId: req.userId },
-    data: { lida: true }
-  });
-  res.json({ updated: notification.count > 0 });
-}));
-
-router.patch("/read-all", asyncHandler(async (req, res) => {
-  const result = await prisma.notificacao.updateMany({
-    where: { usuarioId: req.userId, lida: false },
-    data: { lida: true }
-  });
-  res.json({ updated: result.count });
-}));
-
+router.patch('/:id/read',asyncHandler(async(req,res)=>{const count=await markNotificationsRead(prisma,req.userId,req.params.id);const unread=await prisma.notificacao.count({where:{usuarioId:req.userId,lida:false}});publishActivity(req.userId,'READ');res.json({updated:count>0,unread});}));
+router.patch('/read-all',asyncHandler(async(req,res)=>{const count=await markNotificationsRead(prisma,req.userId);const unread=await prisma.notificacao.count({where:{usuarioId:req.userId,lida:false}});publishActivity(req.userId,'READ');res.json({updated:count,unread});}));
 export default router;

@@ -2,6 +2,7 @@ export const errorHandler = (err, req, res, next) => {
   // Driver messages can contain SQL values and credentials. Log metadata only.
   console.error(JSON.stringify({ event: 'request_failed', time: new Date().toISOString(), method: req.method, route: req.route?.path || 'unmatched', code: err.code || err.name, databaseCode: err.cause?.originalCode, status: err.status || 500 }));
 
+  if (res.headersSent) { res.destroy(); return; }
   if (err.code === 'MESSAGE_LIMIT_REACHED') return res.status(403).json({ error: 'chatLimitReached', code: err.code, messaging: err.messaging });
 
   if (['P2021', 'P2022'].includes(err.code)) return res.status(503).json({ error: 'featureUnavailable' });

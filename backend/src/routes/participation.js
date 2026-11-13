@@ -1,0 +1,12 @@
+﻿import express from 'express';
+import { prisma } from '../config/prisma.js';
+import { authMiddleware,optionalAuthMiddleware } from '../middlewares/auth.js';
+import { asyncHandler } from '../middlewares/errorHandler.js';
+import { achievementService,queueAchievementCheck } from '../services/achievementQueue.js';
+import { createWatching } from '../services/watching.js';
+import { announceNotification } from '../utils/notifications.js';
+const router=express.Router(),watching=createWatching(prisma);
+router.get('/users/:id/achievements',optionalAuthMiddleware,asyncHandler(async(req,res)=>{const {data,notifications}=await achievementService.list(req,req.params.id);for(const notification of notifications)void announceNotification(notification).catch(()=>{});res.json({data});}));
+router.get('/problems/:id/watch',optionalAuthMiddleware,asyncHandler(async(req,res)=>res.json(await watching.get(req,req.params.id))));
+for(const method of ['put','delete'])router[method]('/problems/:id/watch',authMiddleware,asyncHandler(async(req,res)=>{const result=await watching.set(req,req.params.id,method==='put');queueAchievementCheck(req.userId);res.json(result);}));
+export default router;

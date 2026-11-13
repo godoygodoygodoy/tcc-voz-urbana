@@ -33,6 +33,9 @@ model Usuario {
   colecoes               Colecao[]
   stories                Story[]
   storiesVistos          StoryVisualizacao[]
+  votosEnquetes          VotoEnquete[]
+  preferenciasNotificacao PreferenciaNotificacao[]
+  conquistas ConquistaUsuario[]
   visitas                Visita[]
   seguindo               Seguimento[]          @relation("seguimentoOrigem")
   seguidores             Seguimento[]          @relation("seguimentoDestino")
@@ -65,6 +68,7 @@ model Problema {
   cep            String?               @db.VarChar(8)
   estado         String?               @db.VarChar(80)
   cidade         String?               @db.VarChar(120)
+  bairro         String?               @db.VarChar(120)
   status         StatusProblema        @default(ABERTO)
   dataCriacao    DateTime              @default(now()) @map("data_criacao")
   dataOcorrencia DateTime?             @map("data_ocorrencia")
@@ -78,18 +82,21 @@ model Problema {
   usuario        Usuario               @relation(fields: [usuarioId], references: [id])
   votos          Voto[]
   salvos         PublicacaoSalva[]
+  enquete        Enquete?
 
   @@index([latitude, longitude])
   @@index([status])
   @@index([categoriaId])
   @@index([usuarioId], map: "problemas_usuario_id_fkey")
   @@index([estado, cidade])
+  @@index([estado,cidade,bairro,dataCriacao], map:"problemas_regiao_data_idx")
   @@index([dataCriacao], map: "problemas_data_idx")
   @@index([usuarioId, dataCriacao], map: "problemas_usuario_data_idx")
   @@map("problemas")
 }
 
 model PublicacaoSalva {
+  acompanhando Boolean @default(false)
   id          String   @id @default(uuid()) @db.Char(36)
   usuarioId   String   @map("usuario_id") @db.Char(36)
   problemaId  String   @map("problema_id") @db.Char(36)
@@ -101,6 +108,8 @@ model PublicacaoSalva {
 
   @@unique([usuarioId, problemaId])
   @@index([usuarioId, criadaEm])
+  @@index([usuarioId,acompanhando],map:"salvos_usuario_acompanhando_idx")
+  @@index([problemaId,acompanhando],map:"salvos_problema_acompanhando_idx")
   @@map("publicacoes_salvas")
 }
 
@@ -117,6 +126,9 @@ model Imagem {
 }
 
 model Comentario {
+  parentId String? @map("resposta_a_id") @db.Char(36)
+  parent Comentario? @relation("respostasComentarios",fields:[parentId],references:[id],onDelete:SetNull,onUpdate:Restrict)
+  respostas Comentario[] @relation("respostasComentarios")
   id          String   @id @default(uuid()) @db.Char(36)
   texto       String   @db.Text
   dataCriacao DateTime @default(now()) @map("data_criacao")
@@ -127,10 +139,13 @@ model Comentario {
 
   @@index([problemaId, dataCriacao], map: "comentarios_problema_data_idx")
   @@index([usuarioId], map: "comentarios_usuario_fk")
+  @@index([problemaId,parentId,dataCriacao], map:"comentarios_problema_resposta_data_idx")
+  @@index([parentId,dataCriacao], map:"comentarios_resposta_data_idx")
   @@map("comentarios")
 }
 
 model Notificacao {
+  chaveEvento String? @unique @map("chave_evento") @db.VarChar(191)
   id          String   @id @default(uuid()) @db.Char(36)
   tipo        String   @db.VarChar(50)
   titulo      String   @db.VarChar(150)
@@ -146,6 +161,7 @@ model Notificacao {
 }
 
 model AtualizacaoProblema {
+  entrega     EntregaAtualizacao?
   id          String          @id @default(uuid()) @db.Char(36)
   texto       String          @db.Text
   status      StatusProblema?
@@ -158,6 +174,16 @@ model AtualizacaoProblema {
   @@index([problemaId, dataCriacao], map: "atualizacoes_problemas_data_idx")
   @@index([usuarioId], map: "atualizacoes_usuario_fk")
   @@map("atualizacoes_problemas")
+}
+
+model EntregaAtualizacao {
+  historicoId String @id @map("historico_id") @db.Char(36)
+  cursorUsuarioId String? @map("cursor_usuario_id") @db.Char(36)
+  criadaEm DateTime @default(now()) @map("criada_em")
+  historico AtualizacaoProblema @relation(fields:[historicoId], references:[id], onDelete:Cascade, onUpdate:Restrict)
+
+  @@index([criadaEm,historicoId], map:"entregas_atualizacao_data_idx")
+  @@map("entregas_atualizacao")
 }
 
 model Voto {
@@ -326,6 +352,7 @@ model Story {
 }
 model StoryVisualizacao {
  id String @id @default(uuid()) @db.Char(36)
+ reacao String? @db.VarChar(10)
  storyId String @map("story_id") @db.Char(36)
  usuarioId String @map("usuario_id") @db.Char(36)
  criadaEm DateTime @default(now()) @map("criada_em")
@@ -334,4 +361,60 @@ model StoryVisualizacao {
  @@unique([storyId, usuarioId])
  @@index([usuarioId])
  @@map("stories_visualizacoes")
+}
+
+model Enquete {
+ id String @id @default(uuid()) @db.Char(36)
+ problemaId String @unique @map("problema_id") @db.Char(36)
+ pergunta String @db.VarChar(200)
+ encerraEm DateTime? @map("encerra_em")
+ criadaEm DateTime @default(now()) @map("criada_em")
+ problema Problema @relation(fields:[problemaId],references:[id],onDelete:Cascade)
+ opcoes EnqueteOpcao[]
+ votos VotoEnquete[]
+ @@map("enquetes")
+}
+model EnqueteOpcao {
+ id String @id @default(uuid()) @db.Char(36)
+ enqueteId String @map("enquete_id") @db.Char(36)
+ texto String @db.VarChar(100)
+ ordem Int
+ enquete Enquete @relation(fields:[enqueteId],references:[id],onDelete:Cascade)
+ votos VotoEnquete[]
+ @@unique([enqueteId,id])
+ @@unique([enqueteId,ordem])
+ @@map("enquetes_opcoes")
+}
+model VotoEnquete {
+ id String @id @default(uuid()) @db.Char(36)
+ usuarioId String @map("usuario_id") @db.Char(36)
+ enqueteId String @map("enquete_id") @db.Char(36)
+ opcaoId String @map("opcao_id") @db.Char(36)
+ criadaEm DateTime @default(now()) @map("criada_em")
+ usuario Usuario @relation(fields:[usuarioId],references:[id],onDelete:Cascade)
+ enquete Enquete @relation(fields:[enqueteId],references:[id],onDelete:Cascade)
+ opcao EnqueteOpcao @relation(fields:[enqueteId,opcaoId],references:[enqueteId,id],onDelete:Cascade)
+ @@unique([usuarioId,enqueteId])
+ @@index([enqueteId,opcaoId])
+ @@map("enquetes_votos")
+}
+
+model PreferenciaNotificacao {
+ id String @id @default(uuid()) @db.Char(36)
+ usuarioId String @map("usuario_id") @db.Char(36)
+ tipo String @db.VarChar(50)
+ ativa Boolean @default(true)
+ usuario Usuario @relation(fields:[usuarioId],references:[id],onDelete:Cascade)
+ @@unique([usuarioId,tipo])
+ @@map("preferencias_notificacoes")
+}
+
+model ConquistaUsuario {
+ id String @id @default(uuid()) @db.Char(36)
+ usuarioId String @map("usuario_id") @db.Char(36)
+ codigo String @db.VarChar(40)
+ desbloqueadaEm DateTime @default(now()) @map("desbloqueada_em")
+ usuario Usuario @relation(fields:[usuarioId],references:[id],onDelete:Cascade)
+ @@unique([usuarioId,codigo])
+ @@map("conquistas_usuarios")
 }

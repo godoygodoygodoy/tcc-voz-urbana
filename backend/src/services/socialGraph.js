@@ -65,3 +65,9 @@ export const createSocialGraph = (db) => ({
     }, { isolationLevel: 'ReadCommitted' });
   },
 });
+
+// Inverse of profile visibility: selects the users who may receive private updates.
+export const readersOfProfileWhere = owner => !owner.perfilPrivado ? {} : ({ OR: [
+  { id: owner.id }, { admin: { isNot: null } },
+  { seguindo: { some: { followingId: owner.id, status: 'ACEITA' } } },
+] });
