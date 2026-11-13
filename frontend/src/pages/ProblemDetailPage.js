@@ -1,3 +1,8 @@
+import {notifySocialChange} from '../utils/social';
+const SharePublicationButton = React.lazy(() => import('../components/SharePublicationButton'));
+const PinControl = React.lazy(() => import('../components/PinControl'));
+const ProblemTrackingPanel = React.lazy(() => import('../components/ProblemTrackingPanel'));
+const ComparisonPanel = React.lazy(() => import('../components/ComparisonPanel'));
 const WatchControl = React.lazy(() => import('../components/WatchControl'));
 import CommentThread from '../components/CommentThread';
 const PollPanel = React.lazy(() => import('../components/PollPanel'));
@@ -69,7 +74,7 @@ const ProblemDetailPage = () => {
     finally { if (commentOwner.current === id) setCommentLoading(false); }
   };
   const handleReplyCreated = useCallback((id,total) => {
-    setComments(current=>current.map(comment=>comment.id===id?{...comment,replyCount:total}:comment));setCommentTotal(current=>current+1);
+    setComments(current=>current.map(comment=>comment.id===id?{...comment,replyCount:total}:comment));setCommentTotal(current=>current+1);notifySocialChange();
   },[]);
   const handleVote = async (type) => {
     if (!user) {
@@ -102,7 +107,7 @@ const ProblemDetailPage = () => {
       setComments((current) => [...current, response.data]);
       setCommentTotal(current => current + 1);
       setCommentText('');
-      toast.success(t('commentPublished'));
+      notifySocialChange();toast.success(t('commentPublished'));
     } catch (error) {
       toast.error(error.response?.data?.error || t("Erro ao publicar comentário"));
     } finally {
@@ -125,6 +130,8 @@ const ProblemDetailPage = () => {
       </div>
     );
   }
+
+  const refreshProblem = async () => { try { setProblem((await problemsAPI.get(id)).data); } catch { toast.error(tr('apiUnavailable')); } };
 
   const getStatusColor = (status) => {
     const colors = {
@@ -160,7 +167,7 @@ const ProblemDetailPage = () => {
                 <div className="flex items-center gap-3 mb-2">
                   <h1 className="text-3xl font-bold">{problem.title}</h1>
                   <span className={`px-3 py-1 rounded-full text-sm font-semibold ${getStatusColor(problem.status)}`}>
-                    {translateStatus(problem.status)}
+                    {problem.etapa ? problem.etapa.nome || t('workflow'+problem.etapa.codigo) : translateStatus(problem.status)}
                   </span>
                 </div>
                 <p className="site-muted">{problem.description}</p>
@@ -206,6 +213,7 @@ const ProblemDetailPage = () => {
               </span>
             </div>
 
+            <React.Suspense fallback={null}><SharePublicationButton problemId={id}/><PinControl problem={problem}/><ComparisonPanel problem={problem} onChange={refreshProblem}/><ProblemTrackingPanel problemId={id}/></React.Suspense>
             {/* Votos */}
             <div className="border-t pt-6">
               <h2 className="text-xl font-bold mb-4">{t('whatDoYouThink')}</h2>

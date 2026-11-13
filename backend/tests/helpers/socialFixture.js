@@ -1,3 +1,9 @@
+import * as sharingService from '../../src/services/sharing.js';
+import * as profileFeatures from '../../src/services/profileFeatures.js';
+import {validateMedia} from '../../src/utils/mediaValidation.js';
+import * as trackingService from '../../src/services/problemTracking.js';
+import * as workflowService from '../../src/services/workflow.js';
+import * as comparisonService from '../../src/services/comparisons.js';
 import * as geographyService from '../../src/services/geography.js';
 import { createAchievements } from '../../src/services/achievements.js';
 import * as problemStatusService from '../../src/services/problemStatus.js';
@@ -57,10 +63,12 @@ export async function createSocialFixture({ streaming = false } = {}) {
   storage.storeStoryFile = async (file,ownerId) => { const url='/uploads/posts/'+ownerId+'/story-'+storedStoryMedia.size;storedStoryMedia.set(url,file);return{url,path:url}; };
   storage.removeStoredFiles = async urls => { for(const url of urls)storedStoryMedia.delete(url); };
   storage.streamStoredMedia = async url => { const file=storedStoryMedia.get(url);if(!file)throw Object.assign(new Error('storyUnavailable'),{status:404});return{stream:Readable.from(file.buffer),status:200,headers:{'Content-Length':String(file.buffer.length)}}; };
+  storage.storeFiles=async(files,bucket,ownerId)=>{for(const file of files||[])validateMedia(file);return (files||[]).map((file,index)=>({url:'/uploads/'+bucket+'/'+ownerId+'/fixture-'+storedStoryMedia.size+'-'+index+'.png'}));};
+  storage.storeFile=async(file,bucket,ownerId)=>(await storage.storeFiles([file],bucket,ownerId))[0];
   const achievementChecks=[];
   const achievements={achievementService:createAchievements(db),queueAchievementCheck:id=>achievementChecks.push(id)};
   const dependencies={
-    '../services/geography.js':geographyService,express:{default:express},'node:path':{default:path},'../config/prisma.js':{prisma:db},'./prisma.js':{prisma:db},'../services/problemStatus.js':problemStatusService,
+    '../services/sharing.js':sharingService,'../services/profileFeatures.js':profileFeatures,'../services/problemTracking.js':trackingService,'../services/workflow.js':workflowService,'../services/comparisons.js':comparisonService,'../services/geography.js':geographyService,express:{default:express},'node:path':{default:path},'../config/prisma.js':{prisma:db},'./prisma.js':{prisma:db},'../services/problemStatus.js':problemStatusService,
     '../services/votes.js':voteService,'../services/comments.js':commentService,'../services/achievementQueue.js':achievements,'../services/watching.js':watchingService,'../services/notifications.js':notificationService,'../services/activityEvents.js':activityEvents,'../services/polls.js':pollService,'../services/stories.js':storyService,'../services/storyMedia.js':storyMedia,'express-rate-limit':{default:rateLimit},multer:{default:multer},'../services/collections.js':collectionService,'../services/savedPublications.js':savedSerialization,'../services/socialGraph.js':graph,'../services/messaging.js':messaging,
     '../services/publicationMedia.js':media,'../middlewares/errorHandler.js':errors,
     '../middlewares/auth.js':{authMiddleware:authenticate(true),optionalAuthMiddleware:authenticate(false),adminMiddleware:(req,res,next)=>req.isAdmin?next():res.status(403).json({error:'admin'})},
@@ -90,6 +98,9 @@ export async function createSocialFixture({ streaming = false } = {}) {
   app.use('/api/problems',(await load('routes/problems.js')).default);
   app.use('/api/comments',(await load('routes/comments.js')).default);
   app.use('/api/votes',authenticate(true),(await load('routes/votes.js')).default);
+  app.use('/api/profile-features',(await load('routes/profileFeatures.js')).default);
+  const sharing=await load('routes/sharing.js');app.use('/api/shares',sharing.default);app.use('/share',sharing.publicShareRouter);
+  app.use('/api/tracking',(await load('routes/tracking.js')).default);
   app.use('/api/geography',(await load('routes/geography.js')).default);
   app.use('/api/participation',(await load('routes/participation.js')).default);
   app.use('/api/polls',(await load('routes/polls.js')).default);

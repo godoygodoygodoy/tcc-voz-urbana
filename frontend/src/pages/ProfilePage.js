@@ -1,3 +1,4 @@
+const ProfilePresentation = React.lazy(() => import('../components/ProfilePresentation'));
 const NotificationPreferences = React.lazy(() => import('../components/NotificationPreferences'));
 import { createVisibilityPoller, retainEqual } from '../utils/polling';
 import { notifySocialChange, subscribeSocialChanges } from '../utils/social';
@@ -264,7 +265,7 @@ const ProfilePage = () => {
               {saving ? t('saving') : t('saveProfile')}
             </button>
           </form>
-          <React.Suspense fallback={null}><NotificationPreferences/></React.Suspense>
+          <React.Suspense fallback={null}><ProfilePresentation/><NotificationPreferences/></React.Suspense>
           {christmasUnlocked && <section className="theme-settings mt-8 border-t border-white/10 pt-6">
             <h2 className="mb-2 text-xl font-bold">{t("Tema do site")}</h2>
             <p className="site-muted mb-4 text-sm">{t("Personalize a aparência do Voz Urbana.")}</p>

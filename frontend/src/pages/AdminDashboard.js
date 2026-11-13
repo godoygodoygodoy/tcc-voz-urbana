@@ -1,3 +1,4 @@
+const WorkflowSettings = React.lazy(() => import('../components/WorkflowSettings'));
 import { ConfirmDialog } from '../components/SiteDialog';
 import { translateCategory, translateSystemText, getLanguage, useI18n } from '../i18n';
 import React, { useEffect, useMemo, useState } from 'react';
@@ -171,7 +172,7 @@ const AdminDashboard = () => {
             {tab === 'urban' && <section className="space-y-6">
               <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">{statusSummary.map((item) => <StatCard key={item.label} label={item.label} value={item.value} Icon={MapPin} />)}</div>
               <div className="site-panel rounded-3xl p-6"><h2 className="mb-5 text-xl font-black">{t("Registros de problemas por período")}</h2><MiniBars items={stats?.problemsByDay} color="bg-sky-400" /></div>
-              <div className="site-panel rounded-3xl p-4"><h2 className="mb-3 px-2 text-xl font-black">{t("Mapa administrativo")}</h2><Map problems={urbanProblems} height="520px" /></div>
+              <React.Suspense fallback={null}><WorkflowSettings/></React.Suspense><div className="site-panel rounded-3xl p-4"><h2 className="mb-3 px-2 text-xl font-black">{t("Mapa administrativo")}</h2><Map problems={urbanProblems} height="520px" /></div>
             </section>}
 
             {(tab === 'users' || tab === 'problems') && <section className="site-panel rounded-3xl p-6">

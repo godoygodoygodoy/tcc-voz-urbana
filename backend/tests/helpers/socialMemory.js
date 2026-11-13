@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 
 // Deterministic isolated database double. Mutations assert the row-lock protocol.
 export function createSocialMemory() {
-  const state = { users: ['a','b','c'].map(id => ({ id, nome: `Person ${id}`, username: `person.${id}`, perfilPrivado: false, nivel: 'USUARIO', dataCriacao: new Date('2026-01-01'), bio: '', fotoPerfil: null, admin: null })), follows: [], conversations: [], messages: [], notifications: [], problems: [], saved: [], votes: [], comments: [], images: [], collections: [], collectionItems: [], stories: [], storyViews: [], polls: [], pollOptions: [], pollVotes: [], notificationPreferences: [], achievements: [], statusHistory: [], statusDeliveries: [], logs: [] };
+  const state = { users: ['a','b','c'].map(id => ({ id, nome: `Person ${id}`, username: `person.${id}`, perfilPrivado: false, nivel: 'USUARIO', dataCriacao: new Date('2026-01-01'), apresentacao:null,capaUrl:null,bio: '', fotoPerfil: null, admin: null })), follows: [], conversations: [], messages: [], notifications: [], problems: [], saved: [], votes: [], comments: [], images: [], collections: [], collectionItems: [], stories: [], storyViews: [], polls: [], pollOptions: [], pollVotes: [], notificationPreferences: [], achievements: [], statusHistory: [], statusDeliveries: [], logs: [], stages: [], confirmations: [], visits: [], categories: [] };
   let counter = 0, queue = Promise.resolve(), locks = null;
   const queries = [];
   const user = id => state.users.find(row => row.id === id);
@@ -39,6 +39,8 @@ export function createSocialMemory() {
   const sort = (rows, orderBy) => [...rows].sort((a,b) => {
     for (const spec of Array.isArray(orderBy) ? orderBy : orderBy ? [orderBy] : []) for (const [key,direction] of Object.entries(spec)) {
       if(key==='_count'){const field=Object.keys(direction)[0],sign=direction[field]==='desc'?-1:1;if(a._count[field]!==b._count[field])return (a._count[field]-b._count[field])*sign;continue;}
+      if(a[key]==null&&b[key]!=null)return direction==='desc'?1:-1;
+      if(a[key]!=null&&b[key]==null)return direction==='desc'?-1:1;
       if (a[key] < b[key]) return direction === 'desc' ? 1 : -1;
       if (a[key] > b[key]) return direction === 'desc' ? -1 : 1;
     }
@@ -48,9 +50,10 @@ export function createSocialMemory() {
     if (!row) return null;
     let result = { ...row };
     if (kind === 'statusDelivery') result.historico = decorate(state.statusHistory.find(history=>history.id===row.historicoId),'statusHistory');
-    if (kind === 'statusHistory') result.problema = decorate(state.problems.find(problem=>problem.id===row.problemaId),'problem');
+    if (kind === 'confirmation') result.usuario=user(row.usuarioId);
+    if (kind === 'statusHistory') { result.problema = decorate(state.problems.find(problem=>problem.id===row.problemaId),'problem'); result.usuario=user(row.usuarioId); }
     if (kind === 'user') result._count = { problemas: state.problems.filter(p=>p.usuarioId===row.id).length };
-    if (kind === 'problem') result = { ...result, usuario: user(row.usuarioId), imagens: row.imagens || [], atualizacoes: [], votos: [], categoria: { id:'cat',nome:'Iluminação',cor:'#abc' }, _count:{votos:state.votes.filter(vote=>vote.problemaId===row.id).length} };
+    if (kind === 'problem') result = { ...result, usuario: user(row.usuarioId), etapa:state.stages.find(stage=>stage.codigo===row.etapaCodigo)||null, imagens: state.images.filter(image=>image.problemaId===row.id).length?state.images.filter(image=>image.problemaId===row.id):(row.imagens || []), atualizacoes: [], votos: [], categoria: { id:'cat',nome:'Iluminação',cor:'#abc' }, _count:{votos:state.votes.filter(vote=>vote.problemaId===row.id).length} };
     if (kind === 'conversation' && args.include) result = { ...result, usuarioA:user(row.usuarioAId),usuarioB:user(row.usuarioBId),mensagens:sort(state.messages.filter(m=>m.conversaId===row.id),args.include.mensagens?.orderBy).slice(0,args.include.mensagens?.take) };
     if (kind === 'message') result.remetente = user(row.remetenteId);
     if (kind === 'comment') result = {...result,usuario:user(row.usuarioId),_count:{respostas:state.comments.filter(comment=>comment.parentId===row.id).length}};
@@ -81,7 +84,7 @@ export function createSocialMemory() {
     async create({data,...args}) {
       if(kind==='message') { const conversation=state.conversations.find(c=>c.id===data.conversaId);lockedUsers([conversation.usuarioAId,conversation.usuarioBId]);assert.ok(locks.has(`conversas:${data.conversaId}`),'message write must lock the conversation'); }
       let generatedId;do{generatedId=kind+'-'+(++counter);}while(state[key].some(row=>row.id===generatedId));
-      const row={id:generatedId,criadaEm:new Date(),atualizadaEm:new Date(),...(kind==='story'?{excluidoEm:null}:{}),...(['notification','comment','statusHistory'].includes(kind)?{dataCriacao:new Date()}:{}),...(kind==='notification'?{lida:false}:{}),...(kind==='comment'?{parentId:null}:{}),...(kind==='achievement'?{desbloqueadaEm:new Date()}:{}),...(kind==='saved'?{acompanhando:false}:{}),...data};state[key].push(row);if(kind==='poll'&&data.opcoes?.create){for(const option of data.opcoes.create)state.pollOptions.push({id:'pollOption-'+(++counter),enqueteId:row.id,...option});delete row.opcoes;}return decorate(row,kind,args);
+      const row={id:generatedId,criadaEm:new Date(),atualizadaEm:new Date(),...(kind==='story'?{excluidoEm:null}:{}),...(['notification','comment','statusHistory'].includes(kind)?{dataCriacao:new Date()}:{}),...(kind==='notification'?{lida:false}:{}),...(kind==='comment'?{parentId:null}:{}),...(kind==='achievement'?{desbloqueadaEm:new Date()}:{}),...(kind==='confirmation'?{registradaEm:new Date()}:{}),...(kind==='saved'?{acompanhando:false}:{}),...data};state[key].push(row);if(kind==='poll'&&data.opcoes?.create){for(const option of data.opcoes.create)state.pollOptions.push({id:'pollOption-'+(++counter),enqueteId:row.id,...option});delete row.opcoes;}return decorate(row,kind,args);
     },
     async update({where,data,...args}) { const row=state[key].find(r=>matches(r,where,kind));assert.ok(row);if(kind==='user')lockedUsers([row.id]);if(kind==='follow')lockedUsers([row.followerId,row.followingId]);Object.assign(row,data);return decorate(row,kind,args); },
     async updateMany({where,data}) { if(kind==='follow')lockedUsers([where.followingId]);let count=0;for(const row of state[key])if(matches(row,where,kind)){Object.assign(row,data);count++;}return {count}; },
@@ -95,7 +98,7 @@ export function createSocialMemory() {
     },
   });
   const db = {
-    atualizacaoProblema:model('statusHistory','statusHistory'),entregaAtualizacao:model('statusDeliveries','statusDelivery'),log:model('logs','log'),conquistaUsuario:model('achievements','achievement'),notificacao:model('notifications','notification'),preferenciaNotificacao:model('notificationPreferences','notificationPreference'),enquete:model('polls','poll'),enqueteOpcao:model('pollOptions','pollOption'),votoEnquete:model('pollVotes','pollVote'),story:model('stories','story'),storyVisualizacao:model('storyViews','storyView'),colecao:model('collections','collection'),itemColecao:model('collectionItems','collectionItem'),usuario:model('users','user'),seguimento:model('follows','follow'),conversa:model('conversations','conversation'),mensagem:model('messages','message'),problema:model('problems','problem'),publicacaoSalva:model('saved','saved'),voto:model('votes','vote'),comentario:model('comments','comment'),imagem:model('images','image'),
+    visita:model('visits','visit'),categoria:model('categories','category'),etapaProblema:model('stages','stage'),confirmacaoProblema:model('confirmations','confirmation'),atualizacaoProblema:model('statusHistory','statusHistory'),entregaAtualizacao:model('statusDeliveries','statusDelivery'),log:model('logs','log'),conquistaUsuario:model('achievements','achievement'),notificacao:model('notifications','notification'),preferenciaNotificacao:model('notificationPreferences','notificationPreference'),enquete:model('polls','poll'),enqueteOpcao:model('pollOptions','pollOption'),votoEnquete:model('pollVotes','pollVote'),story:model('stories','story'),storyVisualizacao:model('storyViews','storyView'),colecao:model('collections','collection'),itemColecao:model('collectionItems','collectionItem'),usuario:model('users','user'),seguimento:model('follows','follow'),conversa:model('conversations','conversation'),mensagem:model('messages','message'),problema:model('problems','problem'),publicacaoSalva:model('saved','saved'),voto:model('votes','vote'),comentario:model('comments','comment'),imagem:model('images','image'),
     async $queryRaw(strings,...values) { const sql=strings.join('?');assert.match(sql,/FOR UPDATE/);assert.ok(locks);const table=sql.includes('FROM usuarios')?'usuarios':sql.includes('FROM problemas')?'problemas':sql.includes('FROM entregas_atualizacao')?'entregas_atualizacao':'conversas';locks.add(`${table}:${values[0]}`);queries.push({table,id:values[0]});return [{id:values[0]}]; },
     async $transaction(fn,options) {
       assert.equal(options.isolationLevel,'ReadCommitted');

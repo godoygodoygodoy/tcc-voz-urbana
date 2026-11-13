@@ -1,3 +1,4 @@
+const ProfileStats = React.lazy(() => import('../components/ProfileStats'));
 const AchievementsPanel = React.lazy(() => import('../components/AchievementsPanel'));
 const StoriesRail = React.lazy(() => import('../components/StoriesRail'));
 const CollectionsPanel = React.lazy(() => import('../components/CollectionsPanel'));
@@ -167,15 +168,16 @@ const UserProfilePage = () => {
   const tabs = [{ key: 'posts', label: t('Publicações'), icon: FileText }, ...(isOwnProfile ? [{ key: 'saved', label: t('Favoritos'), icon: Bookmark }, { key: 'liked', label: t('Curtidas'), icon: Heart }] : [{ key: 'collections', label: t('collectionsTitle'), icon: Bookmark }])];
   return <div className="site-page profile-page min-h-screen py-8 text-white">
     <main className="profile-shell mx-auto max-w-5xl px-4">
+      {profile.cover && <img src={mediaUrl(profile.cover)} alt={t('profileCover')} width="1200" height="400" className="mb-4 h-44 w-full rounded-3xl object-cover sm:h-64"/>}
       <section className="profile-hero site-panel">
         <div className="profile-avatar">{profile.avatar ? <img src={mediaUrl(profile.avatar)} alt={profile.name} /> : <span>{profile.name?.charAt(0).toUpperCase()}</span>}</div>
-        <div className="profile-summary">
+        <div className="profile-summary">{profile.presentation && <p className="mb-2 break-words text-violet-200">{profile.presentation}</p>}
           <div className="profile-name-row"><h1>{profile.name}</h1><span>{profile.username ? `@${profile.username}` : t('noUsername')}{profile.isPrivate && <Lock size={14} aria-label={t('privateProfile')} />}</span></div>
           <div className="profile-stats">
             <span><b>{profile.publicationCount || 0}</b> {t('publicações')}</span>
             <button type="button" disabled={profile.canViewPosts === false} onClick={() => openNetwork('following')}><b>{profile.following || 0}</b> {t('followingTitle')}</button>
             <button type="button" disabled={profile.canViewPosts === false} onClick={() => openNetwork('followers')}><b>{profile.followers || 0}</b> {t('followersTitle')}</button>
-            <span><b>{profile.likes || 0}</b> {t('curtidas')}</span>
+            {profile.canViewPosts !== false && <span><b>{profile.likes || 0}</b> {t('profileStatsSupportShort')}</span>}
           </div>
           {!isOwnProfile && (relationship?.mutual || relationship?.followedBy) && <p className="social-relationship-badge"><UserCheck size={14} />{t(relationship.mutual ? 'mutualFriends' : 'followsYou')}</p>}
           <div className="profile-actions">
@@ -200,7 +202,7 @@ const UserProfilePage = () => {
           </div>;
         })}</div>}
       </section>}
-      {profile.canViewPosts !== false && <React.Suspense fallback={null}><AchievementsPanel ownerId={profile.id}/></React.Suspense>}
+      {profile.canViewPosts !== false && <React.Suspense fallback={null}><ProfileStats ownerId={profile.id}/><AchievementsPanel ownerId={profile.id}/></React.Suspense>}
       <React.Suspense fallback={null}><StoriesRail ownerId={profile.id}/></React.Suspense>
       <section className="profile-content">
         <nav className="profile-tabs" aria-label={t('Conteúdo do perfil')}>{tabs.map(({ key, label, icon: Icon }) => <button key={key} type="button" className={tab === key ? 'is-active' : ''} onClick={() => setTab(key)}><Icon size={16} />{label}</button>)}</nav>
@@ -208,7 +210,7 @@ const UserProfilePage = () => {
         {tab !== 'collections' && (profile.canViewPosts === false ? <div className="feed-empty social-private-notice"><Lock size={28} /><p>{t('privateProfileNotice')}</p></div>
           : loadingTab ? <div className="feed-empty">{t('Carregando conteúdo…')}</div>
             : posts.length === 0 ? <div className="feed-empty">{tab === 'posts' ? t('profileNoPosts') : t('Nenhuma publicação nesta seção.')}</div>
-              : <div className="profile-post-grid">{posts.map(publication => <Link key={publication.id} to={`/problem/${publication.id}`} className="feed-post block"><span className="feed-category">{translateCategory(publication.category?.name) || t('noCategory')}</span><h2>{publication.title}</h2><p>{publication.description}</p><small>{publication.city && publication.state ? `${publication.city}, ${publication.state}` : publication.address || t('locationNotSpecified')}</small></Link>)}</div>)}
+              : <div className="profile-post-grid">{posts.map(publication => <Link key={publication.id} to={`/problem/${publication.id}`} className="feed-post block">{publication.pinnedAt && <span className="mb-2 block text-xs font-bold text-violet-200">{t('pinnedPost')}</span>}<span className="feed-category">{translateCategory(publication.category?.name) || t('noCategory')}</span><h2>{publication.title}</h2><p>{publication.description}</p><small>{publication.city && publication.state ? `${publication.city}, ${publication.state}` : publication.address || t('locationNotSpecified')}</small></Link>)}</div>)}
       </section>
     </main>
     {network && <div className="context-modal social-network-backdrop" onClick={event => { if (event.target === event.currentTarget) closeNetwork(); }}>

@@ -1,3 +1,5 @@
+import {sharingAPI} from '../services/api';
+const SharePublicationDialog = React.lazy(() => import('../components/SharePublicationDialog'));
 import { subscribeActivityChanges, notifyActivityChange } from '../utils/activity';
 const StoriesRail = React.lazy(() => import('../components/StoriesRail'));
 import { ConfirmDialog } from '../components/SiteDialog';
@@ -70,18 +72,6 @@ const emptyCreateForm = {
   occurrenceTime: ''
 };
 
-const sharePost = async (post) => {
-  const url = `${window.location.origin}${import.meta.env.BASE_URL}problem/${post.id}`;
-  try {
-    if (navigator.share) await navigator.share({ title: post.title, text: post.description, url });
-    else await navigator.clipboard?.writeText(url);
-    toast.success(navigator.share ? tr("Publicação compartilhada.") : tr("Link da publicação copiado."));
-  } catch (error) {
-    if (error.name !== 'AbortError') toast.error(tr("Não foi possível compartilhar a publicação."));
-  } finally {
-    // Closing the local menu is handled by its caller.
-  }
-};
 const MAX_IMAGE_COUNT = 8;
 const MAX_IMAGE_SIZE = 5 * 1024 * 1024;
 const IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
@@ -573,19 +563,8 @@ const FeedPage = () => {
     setSlideByPost((current) => ({ ...current, [postId]: ((current[postId] || 0) + amount + imageCount) % imageCount }));
   };
 
-  const toggleShare = async (post) => {
-    setSharedPosts((current) => {
-      const next = new Set(current);
-      if (next.has(post.id)) next.delete(post.id); else next.add(post.id);
-      return next;
-    });
-    try {
-      await navigator.clipboard?.writeText(`${window.location.origin}${import.meta.env.BASE_URL}problem/${post.id}`);
-      toast.success(t("Link da ocorrência copiado"));
-    } catch (error) {
-      toast.info(t("Ocorrência marcada para compartilhar"));
-    }
-  };
+  const [shareCandidate,setShareCandidate] = useState(null);
+  const toggleShare = post => { setOpenMenu(null); setShareCandidate(post.id); };
 
   const toggleSaved = async (post) => {
     if (!user) {
@@ -608,12 +587,7 @@ const FeedPage = () => {
     }
   };
 
-  const copyPostLink = async (post) => {
-    await navigator.clipboard?.writeText(`${window.location.origin}${import.meta.env.BASE_URL}problem/${post.id}`);
-    setOpenMenu(null);
-    toast.success(t("Link da publicação copiado."));
-  };
-
+  const copyPostLink = async post => { setOpenMenu(null); try { const {data}=await sharingAPI.publication(post.id,getLanguage()); if(!navigator.clipboard?.writeText)throw Error();await navigator.clipboard.writeText(data.url);toast.success(t('shareCopied'));} catch(error){toast.error(error.response?.data?.error||t('shareCopyError'));} };
   const updateCreateForm = (event) => setCreateForm((current) => ({ ...current, [event.target.name]: event.target.value }));
 
   const handleCreate = async (event) => {
@@ -747,7 +721,7 @@ const FeedPage = () => {
   useEffect(() => subscribeSocialChanges(() => loadFeed()), [loadFeed]);
 
   const postActions = useRef({});
-  postActions.current = { startEditing, deletePost, toggleSaved, copyPostLink, sharePost: async post => { setOpenMenu(null); await sharePost(post); }, navigate, setLightboxImage, changeSlide, handleVote, toggleShare, openConversation,
+  postActions.current = { startEditing, deletePost, toggleSaved, copyPostLink, sharePost: post => { setOpenMenu(null); setShareCandidate(post.id); }, navigate, setLightboxImage, changeSlide, handleVote, toggleShare, openConversation,
     menu: (id, mode) => setOpenMenu(current => mode === 'toggle' && current === id ? null : id) };
   const dispatchPostAction = useCallback((name, ...args) => postActions.current[name](...args), []);
   const renderPost = post => <FeedPost key={post.id} post={post} slide={slideByPost[post.id] || 0} liked={likedPosts.has(post.id)} shared={sharedPosts.has(post.id)} menuOpen={openMenu === post.id} saved={savedPosts.some(item => item.id === post.id)} canManage={post.author?.id === user?.id || user?.role === 'admin'} voting={votingPost === post.id} onAction={dispatchPostAction} />;
@@ -911,6 +885,7 @@ const FeedPage = () => {
       </div>}
       {lightboxImage && <button type="button" className="context-modal fixed inset-0 z-[1500] grid place-items-center bg-black/90 p-6" onClick={() => setLightboxImage(null)} aria-label={t("Fechar imagem")}><img src={lightboxImage} alt="" className="max-h-full max-w-full object-contain" /></button>}
       {cropFile && <ImageCropper file={cropFile} onCancel={() => { setCropFile(null); setCropQueue([]); }} onConfirm={handleCroppedImage} />}
+      {shareCandidate && <React.Suspense fallback={null}><SharePublicationDialog problemId={shareCandidate} onClose={()=>setShareCandidate(null)}/></React.Suspense>}
     </main>
   );
 };

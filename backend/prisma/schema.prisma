@@ -16,6 +16,8 @@ model Usuario {
   username               String?               @unique @db.VarChar(30)
   telefone               String?               @db.VarChar(30)
   bio                    String?               @db.Text
+  apresentacao String? @db.VarChar(120)
+  capaUrl String? @map("capa_url") @db.VarChar(500)
   perfilPrivado          Boolean               @default(false) @map("perfil_privado")
   nivel                  String                @default("USUARIO") @db.VarChar(20)
   // Campos legados preservados para futura reativacao da verificacao de e-mail.
@@ -42,6 +44,7 @@ model Usuario {
   conversasIniciadas     Conversa[]             @relation("conversaRemetente")
   conversasRecebidas     Conversa[]             @relation("conversaDestinatario")
   mensagensEnviadas      Mensagem[]
+  confirmacoesProblemas ConfirmacaoProblema[]
 
   @@map("usuarios")
 }
@@ -73,6 +76,7 @@ model Problema {
   dataCriacao    DateTime              @default(now()) @map("data_criacao")
   dataOcorrencia DateTime?             @map("data_ocorrencia")
   editadaEm      DateTime?             @map("editada_em")
+  fixadaEm DateTime? @map("fixada_em")
   usuarioId      String                @map("usuario_id") @db.Char(36)
   categoriaId    String                @map("categoria_id") @db.Char(36)
   atualizacoes   AtualizacaoProblema[]
@@ -83,6 +87,9 @@ model Problema {
   votos          Voto[]
   salvos         PublicacaoSalva[]
   enquete        Enquete?
+  etapaCodigo    String? @map("etapa_codigo") @db.VarChar(40)
+  etapa          EtapaProblema? @relation(fields:[etapaCodigo],references:[codigo],onDelete:SetNull,onUpdate:Restrict,map:"problemas_etapa_fk")
+  confirmacoes   ConfirmacaoProblema[]
 
   @@index([latitude, longitude])
   @@index([status])
@@ -92,6 +99,8 @@ model Problema {
   @@index([estado,cidade,bairro,dataCriacao], map:"problemas_regiao_data_idx")
   @@index([dataCriacao], map: "problemas_data_idx")
   @@index([usuarioId, dataCriacao], map: "problemas_usuario_data_idx")
+  @@index([usuarioId,fixadaEm,dataCriacao],map:"problemas_usuario_destaques_idx")
+  @@index([etapaCodigo],map:"problemas_etapa_codigo_idx")
   @@map("problemas")
 }
 
@@ -161,6 +170,9 @@ model Notificacao {
 }
 
 model AtualizacaoProblema {
+  etapaCodigo String? @map("etapa_codigo") @db.VarChar(40)
+  etapaNome String? @map("etapa_nome") @db.VarChar(80)
+  statusAnterior StatusProblema? @map("status_anterior")
   entrega     EntregaAtualizacao?
   id          String          @id @default(uuid()) @db.Char(36)
   texto       String          @db.Text
@@ -174,6 +186,29 @@ model AtualizacaoProblema {
   @@index([problemaId, dataCriacao], map: "atualizacoes_problemas_data_idx")
   @@index([usuarioId], map: "atualizacoes_usuario_fk")
   @@map("atualizacoes_problemas")
+}
+
+model EtapaProblema {
+  codigo String @id @db.VarChar(40)
+  nome String? @db.VarChar(80)
+  statusBase StatusProblema @map("status_base")
+  cor String @default("#7C3AED") @db.VarChar(7)
+  ativa Boolean @default(true)
+  problemas Problema[]
+  @@map("etapas_problemas")
+}
+
+model ConfirmacaoProblema {
+  id String @id @default(uuid()) @db.Char(36)
+  usuarioId String @map("usuario_id") @db.Char(36)
+  problemaId String @map("problema_id") @db.Char(36)
+  escolha String @db.VarChar(30)
+  registradaEm DateTime @default(now()) @map("registrada_em")
+  usuario Usuario @relation(fields:[usuarioId],references:[id],onDelete:Cascade,onUpdate:Restrict,map:"confirmacoes_usuario_fk")
+  problema Problema @relation(fields:[problemaId],references:[id],onDelete:Cascade,onUpdate:Restrict,map:"confirmacoes_problema_fk")
+  @@unique([usuarioId,problemaId],map:"confirmacoes_usuario_problema_key")
+  @@index([problemaId,escolha,registradaEm], map:"confirmacoes_problema_escolha_data_idx")
+  @@map("confirmacoes_problemas")
 }
 
 model EntregaAtualizacao {

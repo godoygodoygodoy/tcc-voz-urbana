@@ -64,7 +64,7 @@ const base = process.env.I18N_TEST_URL || 'http://127.0.0.1:4173/tecti/2026/gpec
   await page.evaluate(u=>{localStorage.setItem('user',JSON.stringify(u));localStorage.setItem('token','fixture');},user());await go('/admin');
   for(const lang of ['en','es','pt-BR']){await page.locator('.access-menu-trigger').click();await page.locator('.access-menu button').filter({hasText:lang==='en'?/^English/:lang==='es'?/^Español/:/^Português/}).click();await scan('live admin',lang);assert.equal(await page.locator('html').getAttribute('lang'),lang);checks++;await page.reload();assert.equal(await page.locator('html').getAttribute('lang'),lang);checks++;}
   await go('/profile');
-  await page.locator('input[type=file]').setInputFiles({name:'invalid.txt',mimeType:'text/plain',buffer:Buffer.from('fixture')});
+  await page.locator('input[type=file]').first().setInputFiles({name:'invalid.txt',mimeType:'text/plain',buffer:Buffer.from('fixture')});
   await page.locator('.Toastify__toast-body').waitFor();
   await page.locator('.access-menu-trigger').click();
   for(const [lang,label] of [['en',/^English/],['es',/^Español/],['pt-BR',/^Português/]]) {

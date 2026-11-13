@@ -28,6 +28,12 @@ const caPath = process.env.DATABASE_SSL_CA || url?.searchParams.get('sslcert');
 const ssl = process.env.DATABASE_SSL === 'true' || Boolean(caPath) || url?.searchParams.get('sslaccept') === 'strict';
 const adapter = new PrismaMariaDb({ ...config, connectionLimit: 5,
   ...(ssl ? { ssl: { rejectUnauthorized: true, ...(caPath ? { ca: fs.readFileSync(caPath, 'utf8') } : {}) } } : {}),
+}, {
+  // MariaDB's prepared/binary parameters can acquire utf8mb4_bin on the
+  // deployed server and conflict with unicode_ci columns in Prisma LIKE.
+  // The driver's text protocol still binds/escapes parameters; no SQL is
+  // concatenated and table/column collations remain untouched.
+  useTextProtocol: true,
 });
 const prisma = new PrismaClient({ adapter });
 

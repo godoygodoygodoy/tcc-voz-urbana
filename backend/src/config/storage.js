@@ -26,7 +26,7 @@ const supabase = supabaseStorageEnabled
   ? createClient(supabaseUrl, supabaseServiceRoleKey, { auth: { autoRefreshToken: false, persistSession: false } })
   : null;
 
-const bucketNames = new Set(["avatars", "posts", "reports"]);
+const bucketNames = new Set(["avatars", "posts", "reports", "covers"]);
 const bucketReady = new Set();
 
 const getBucket = (bucket) => {
@@ -163,11 +163,11 @@ export const getStorageInfo = () => ({
 
 // Run before accepting HTTP requests; existing public storage URLs must stop bypassing privacy.
 export const securePublicationStorage = async () => {
-  if (supabase) { await ensureBucket('posts'); await ensureBucket('reports'); }
+  if (supabase) { await ensureBucket('posts'); await ensureBucket('reports'); await ensureBucket('covers'); }
 };
 export const readStoredPublication = async (url) => {
   const object = parseSupabaseObjectUrl(url);
-  if (object && supabase && ['posts', 'reports'].includes(object.bucket)) {
+  if (object && supabase && ['posts', 'reports', 'covers'].includes(object.bucket)) {
     const { data, error } = await supabase.storage.from(object.bucket).download(object.path);
     if (error || !data) throw Object.assign(new Error('Image unavailable'), { status: 404 });
     return { buffer: Buffer.from(await data.arrayBuffer()), contentType: data.type || 'application/octet-stream' };
@@ -176,7 +176,7 @@ export const readStoredPublication = async (url) => {
   const root = path.resolve(uploadsRoot);
   const target = path.resolve(root, url.slice('/uploads/'.length));
   const relative = path.relative(root, target);
-  if (relative.startsWith('..') || path.isAbsolute(relative) || !['reports', 'posts'].includes(relative.split(path.sep)[0])) throw Object.assign(new Error('Image unavailable'), { status: 404 });
+  if (relative.startsWith('..') || path.isAbsolute(relative) || !['reports', 'posts', 'covers'].includes(relative.split(path.sep)[0])) throw Object.assign(new Error('Image unavailable'), { status: 404 });
   const contentType = Object.entries(MIME_EXTENSIONS).find(([, extension]) => extension === path.extname(target).toLowerCase())?.[0];
   if (!contentType) throw Object.assign(new Error('Image unavailable'), { status: 404 });
   try { return { buffer: await fs.readFile(target), contentType }; }

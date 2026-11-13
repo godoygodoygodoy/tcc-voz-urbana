@@ -53,7 +53,7 @@ A pedido do usuário, continuar com testes isolados em memória. Não há autori
 
 Vídeos exigem os executáveis `ffmpeg` e `ffprobe` no servidor, ou `FFMPEG_PATH` e `FFPROBE_PATH`. Há erro de indisponibilidade explícito se faltarem; não há publicação de vídeo fictícia. Arquivos de vídeo limitados a 20 MB/60 segundos; fotos a 5 MB. Stories usam o bucket `posts`, sem novo bucket. A privacidade é validada em cada leitura e expiração não depende da limpeza física periódica.
 
-Continuam pendentes os recursos geográficos avançados, workflow/timeline/confirmação comunitária, personalização e estatísticas completas do perfil, moderação/rankings/relatórios, Cidade em Números/índice, comunidades/canais oficiais e a rodada final de desempenho/acessibilidade/regressão. Este progresso não significa entrega completa da expansão.
+As pendências atuais estão consolidadas no checklist ao final deste documento. Os registros anteriores descrevem a sequência da implementação; não devem ser interpretados como se as funcionalidades concluídas posteriormente ainda estivessem ausentes. A expansão inteira ainda não está concluída.
 
 ## Continuação: status e recursos geográficos
 
@@ -67,3 +67,61 @@ Continuam pendentes os recursos geográficos avançados, workflow/timeline/confi
 Schema Prisma validado e client gerado novamente. Build de produção aprovado. A auditoria estática verifica 947 chaves em três idiomas; testes do motor de idioma, tema natalino e scheduler/polling aprovados. Isso não substitui a rodada final completa nem medições reais antes/depois da expansão. Não foram executadas migrações nem usados dados de produção.
 
 Última regressão desta continuação: 25 testes da expansão aprovados, 26 verificações de serviços sociais/perfil/desempenho/status aprovadas (com sobreposição de cenários), seis testes de segurança de dados/pesquisa e 94 verificações de navegador de i18n em três idiomas. Motor i18n, tema natalino e scheduler/polling: nove testes aprovados; sanitização de cor do mapa: um. Fluxos novos no navegador: oito verificações de stories, sete de atividades/SSE, nove de discussão/acompanhamento/conquistas e seis geográficas. Nenhum erro de execução do navegador nos fluxos aprovados. A integração com MySQL real continua deliberadamente sem execução, conforme a preferência do usuário.
+
+## Continuação: acompanhamento, perfil e compartilhamento
+
+Implementação local, com migrações preparadas e testes isolados. Não equivale à publicação nem à aplicação das migrações no MySQL de produção.
+
+### Acompanhamento e antes/depois
+
+- Seis etapas padrão: Registrado, Em análise, Encaminhado, Em andamento, Resolvido e Não confirmado. Administradores podem configurar nomes, cor, disponibilidade e associação aos quatro status legados, além de cadastrar etapas próprias. O formulário fica em Administração → Problemas urbanos; a alteração de uma publicação fica no seu detalhamento. Usuários comuns não podem configurar ou aplicar etapas.
+- As etapas padrão são configurações de fluxo, não registros fictícios de atividade. Nenhuma etapa é aplicada retroativamente aos registros antigos. O novo campo é opcional; a enumeração antiga e os dados existentes são preservados.
+- Alterações de etapa reutilizam a transação de status, o histórico existente, a auditoria e as notificações persistidas aos acompanhantes. O histórico registra ator, data, status anterior e nome/código da etapa naquele momento. Renomear uma etapa não reescreve eventos antigos. “Encaminhado” é uma indicação administrativa manual; não executa envio a um órgão público.
+- Linha do tempo reúne criação, comentários e atualizações existentes, com paginação por cursor e autorização reavaliada. Não inventa o primeiro status de publicações antigas. Comentários mantêm o texto original. A criação de uma comparação registra um evento com o responsável.
+- Publicações relacionadas exigem categoria em comum, bairro/cidade/estado iguais ou proximidade aproximada por coordenadas. São retornados até 12 registros acessíveis, com o motivo da relação. Não há preenchimento com publicações aleatórias.
+- Confirmação comunitária mantém uma observação por conta/publicação, alterável após 24 horas. Repetir a mesma escolha é idempotente. Contagens são calculadas no backend e não alteram o status oficial. O resumo não divulga a lista de pessoas que confirmaram.
+- Upload de um par de fotos antes/depois por autor ou administrador, usando o bucket `reports` e o modelo `Imagem` existente. O comparador permite escolher imagens e usar o controle deslizante pelo teclado. Fotos continuam ligadas ao registro, com comentários e interações preservados. Novas fotos não são tratadas como prova automática de resolução.
+
+### Perfil
+
+- O cabeçalho agora conta apoios recebidos em publicações do perfil, corrigindo a contagem anterior de votos dados pela pessoa.
+- Estatísticas de publicações, seguidores, seguindo, apoios/comentários recebidos e registros atualmente marcados como resolvidos. Acompanhamentos são uma informação privada exibida somente ao próprio usuário. Perfis privados exigem acesso aprovado.
+- Apresentação de até 120 caracteres e capa de até 5 MB. A descrição/bio existente permanece no formulário original. A capa usa o bucket privado `covers`, com fallback local e URL mediada; a privacidade e o acesso são verificados em cada leitura. A limpeza aceita apenas arquivos do bucket e proprietário corretos. Não há exposição da URL bruta do Storage.
+- Fixação de até três publicações próprias, validada com bloqueio transacional do usuário. Nem administradores podem fixar conteúdo alheio no próprio perfil. As fixadas aparecem primeiro e identificadas como destaque. Desafixar preserva o conteúdo e suas interações.
+- URLs mediadas de imagens/capas permanecem estáveis em janelas de cinco minutos para evitar novo download a cada polling, mantendo a expiração e a verificação de acesso no servidor.
+
+### Compartilhamento externo
+
+- Feed e detalhe usam o mesmo diálogo de compartilhamento, com opção nativa, cópia de link e links para WhatsApp, Facebook e X. No Instagram, o fluxo orienta a usar o compartilhamento do dispositivo ou colar o link; não simula uma integração inexistente.
+- Link permanente de prévia em `/share/problem/:id`, metadados Open Graph e imagem pública mediada. O link leva à publicação original com a subpasta correta do frontend. Título e descrição do usuário são escapados no HTML, sem tradução do conteúdo.
+- Prévias e imagens exigem perfil público mesmo para autores e administradores. Mudar a privacidade bloqueia novas leituras do link e da imagem; arquivos privados não são expostos por URLs brutas ou tokens pessoais. O comportamento de caches de redes externas depende dos respectivos serviços.
+- A origem pública utiliza `RENDER_EXTERNAL_URL` ou `PUBLIC_API_URL`, quando disponíveis, e a URL do aplicativo usa `FRONTEND_URL`. Não houve substituição do domínio configurado nem publicação automática.
+
+### Migrações e validação deste conjunto
+
+- `20261112210000_problem_tracking`: tabela de etapas, vínculo opcional da publicação, snapshots de histórico e confirmações comunitárias.
+- `20261112220000_profile_features`: apresentação, referência da capa, data de fixação e índice de destaques.
+- Ambas são aditivas e estão somente preparadas. Nenhuma migração, seed ou alteração de dados de produção foi executada nesta continuação.
+- Prisma validado e client gerado. Build de produção aprovado. 34 testes da expansão aprovados; nove são novos cenários de API para acompanhamento, perfil e compartilhamento. A regressão adicional de autenticação/seguidores/perfis totalizou 29 testes, com sobreposição de cenários. Motor de idioma, versão natalina e scheduler/polling: nove testes aprovados.
+- Dez verificações de navegador aprovadas para fixação, upload/comparação, confirmação, etapa oficial/timeline, capa/apresentação, perfil/estatísticas, compartilhamento público, bloqueio privado, configuração administrativa de etapas e layout desktop. Os fluxos principais também foram exercitados em viewport móvel; as capturas de perfil móvel/desktop foram inspecionadas, sem overflow horizontal. Sem erros de execução no navegador.
+- Auditoria estática de 1.035 chaves em três idiomas e 94 verificações de navegador de i18n aprovadas. A auditoria também passa a detectar caracteres substituídos por falhas de codificação nos catálogos.
+
+## Checklist atual — código local e pendências
+
+| Conjunto | Situação |
+| --- | --- |
+| Stories, coleções, atividades, conquistas e enquetes | Implementados e testados em isolamento; publicação/migrações pendentes |
+| Mapa de calor, filtros combinados e análise de registros por período/região | Implementados; seleção poligonal ainda não restringe as consultas de histórico e o histórico completo de melhorias regionais continua pendente |
+| Antes/depois, etapas configuráveis, timeline, relacionados e confirmação comunitária | Implementados e testados neste conjunto; mudanças oficiais de status notificam acompanhantes |
+| Capa, apresentação, estatísticas recebidas, fixação e compartilhamento externo | Implementados e testados neste conjunto |
+| Moderação persistente de denúncias/comentários e decisões auditadas | Pendente; o atalho antigo de denúncia do feed ainda não equivale a uma denúncia persistida |
+| Sinais de spam/abuso para análise humana | Pendente; não foram criados bloqueios automáticos frágeis |
+| Rankings administrativos, CSV filtrado/neutralizado e PDF | Pendente; o CSV antigo ainda exige correção antes de ser considerado o relatório ampliado |
+| Cidade em Números e Índice de Melhoria Urbana | Pendentes; a análise regional existente não substitui esses recursos públicos |
+| Comunidades por bairro e discussões locais | Pendentes |
+| Diretório verificado de órgãos, associação a problemas e protocolos | Pendentes; não há contatos nem protocolos inventados |
+| Notificação de acompanhantes para toda modalidade de atualização, além do status oficial | Expansão pendente; fotos adicionadas já aparecem na timeline |
+| Desempenho, acessibilidade e regressão final de toda a expansão | Verificações incrementais aprovadas; medições completas antes/depois e revisão final continuam pendentes |
+| MySQL real, Supabase real e deploy | Migrações e testes de escrita em produção não executados; não usar a base da aplicação como fixture |
+
+Os itens pendentes são trabalho de implementação ou validação adicional, não funcionalidades concluídas nem impedimentos técnicos definitivos. As autorizações do usuário para continuar a expansão permanecem válidas.

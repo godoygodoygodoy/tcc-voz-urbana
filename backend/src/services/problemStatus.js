@@ -1,12 +1,13 @@
 import { lockUsers, readersOfProfileWhere, socialError } from './socialGraph.js';
 import { writeNotification } from './notifications.js';
+import { resolveStage } from './workflow.js';
 
 const STATUSES = new Set(['ABERTO', 'EM_ANDAMENTO', 'RESOLVIDO', 'REJEITADO']);
 
 export function createProblemStatus(db) {
   return {
     async update(actorId, problemId, body) {
-      if (!STATUSES.has(body?.status)) throw socialError(400, 'problemStatusInvalid');
+      if (!body?.stageCode && !STATUSES.has(body?.status)) throw socialError(400, 'problemStatusInvalid');
       const candidate = await db.problema.findUnique({ where: { id: problemId }, select: { usuarioId: true } });
       if (!candidate) throw socialError(404, 'problemNotFound');
       return db.$transaction(async tx => {
@@ -17,19 +18,21 @@ export function createProblemStatus(db) {
         await tx.$queryRaw`SELECT id FROM problemas WHERE id = ${problemId} FOR UPDATE`;
         const problem = await tx.problema.findUnique({ where: { id: problemId } });
         if (!problem) throw socialError(404, 'problemNotFound');
-        if (problem.status === body.status) return { problem, notifications: [], changed: false };
-        const updated = await tx.problema.update({ where: { id: problemId }, data: { status: body.status } });
+        const stage = body.stageCode ? await resolveStage(tx,body.stageCode) : null;
+        const status = stage?.statusBase || body.status;
+        if (problem.status === status && (problem.etapaCodigo||null) === (stage?.codigo||null)) return { problem, notifications: [], changed: false };
+        const updated = await tx.problema.update({ where: { id: problemId }, data: { status, etapaCodigo:stage?.codigo||null } });
         const history = await tx.atualizacaoProblema.create({ data: {
-          texto: `Status alterado para ${body.status}`, status: body.status, usuarioId: actorId, problemaId: problemId,
+          texto: `Status alterado para ${status}`, status, statusAnterior:problem.status, etapaCodigo:stage?.codigo||null, etapaNome:stage?.nome||null, usuarioId: actorId, problemaId: problemId,
         } });
-        await tx.log.create({ data: { usuarioId: actorId, acao: `Problema ${problemId}: ${problem.status} → ${body.status}` } });
+        await tx.log.create({ data: { usuarioId: actorId, acao: `Problema ${problemId}: ${problem.status} → ${stage?.codigo||status}` } });
         // Durable delivery cursor commits with the change; a restart cannot lose followers' updates.
         await tx.entregaAtualizacao.create({ data: { historicoId: history.id } });
         const notifications = [];
         if (problem.usuarioId !== actorId) {
           const notification = await writeNotification(tx, {
             usuarioId: problem.usuarioId, tipo: 'STATUS', titulo: 'problemStatusChangedTitle',
-            mensagem: `O status foi alterado para ${body.status}`, link: '/problem/' + problemId,
+            mensagem: `O status foi alterado para ${status}`, link: '/problem/' + problemId,
             eventKey: 'status:' + history.id,
           });
           if (notification) notifications.push(notification);

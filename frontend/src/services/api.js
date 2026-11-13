@@ -202,3 +202,21 @@ export const geographyAPI = {
   heatmap: (params, config = {}) => api.get('/geography/heatmap', { ...config, params }),
   summary: (params, config = {}) => api.get('/geography/summary', { ...config, params }),
 };
+
+export const trackingAPI = {
+  stages: () => sharedGet('/tracking/stages'),
+  configure: (code, body) => api.put('/tracking/stages/'+encodeURIComponent(code),body),
+  confirmations: (id, config) => api.get('/tracking/'+id+'/confirmations',config),
+  confirm: (id, choice) => api.put('/tracking/'+id+'/confirmations',{choice}),
+  timeline: (id, cursor, config) => api.get('/tracking/'+id+'/timeline',{...config,params:{cursor}}),
+  related: (id, config) => api.get('/tracking/'+id+'/related',config),
+  comparison: (id, data) => api.post('/tracking/'+id+'/comparison',data),
+};
+
+export const profileFeaturesAPI = {
+  getPresentation: config => api.get('/profile-features/me/presentation',config),
+  stats: (id,config) => api.get('/profile-features/'+id+'/stats',config),
+  pin: (id,enabled) => enabled?api.put('/profile-features/pins/'+id):api.delete('/profile-features/pins/'+id),
+  presentation: data => api.put('/profile-features/me/presentation',data),
+};
+export const sharingAPI={publication:(id,language,config)=>api.get('/shares/'+id,{...config,params:{lang:language}})};

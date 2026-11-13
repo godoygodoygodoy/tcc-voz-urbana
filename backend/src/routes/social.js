@@ -1,3 +1,4 @@
+import { coverUrl } from '../services/profileFeatures.js';
 import { publicationImages } from '../services/publicationMedia.js';
 import express from 'express';
 import { prisma } from '../config/prisma.js';
@@ -15,22 +16,22 @@ publicSocialRouter.get('/users/search', asyncHandler(createPeopleSearch(prisma))
 
 const serializeProblem = (problem, req) => ({
   id: problem.id, title: problem.titulo, description: problem.descricao, address: problem.endereco,
-  state: problem.estado, city: problem.cidade, status: problem.status, createdAt: problem.dataCriacao,
+  state: problem.estado, city: problem.cidade, status: problem.status, createdAt: problem.dataCriacao, pinnedAt: problem.fixadaEm,
   category: problem.categoria ? { id: problem.categoria.id, name: problem.categoria.nome, color: problem.categoria.cor } : null,
   images: publicationImages(problem.imagens, req), votes: problem._count.votos,
 });
 const getProfile = async (req, res, where) => {
-  const user = await prisma.usuario.findUnique({ where, select: { ...publicUser, bio: true, dataCriacao: true, _count: { select: { problemas: true } } } });
+  const user = await prisma.usuario.findUnique({ where, select: { ...publicUser, bio: true, apresentacao:true,capaUrl:true, dataCriacao: true, _count: { select: { problemas: true } } } });
   if (!user) return res.status(404).json({ error: 'profileNotFound' });
   const canViewPosts = await canViewProfile(prisma, user, req.userId, req.isAdmin === true);
   const [followers, following, likes, publications, relation] = await Promise.all([
     prisma.seguimento.count({ where: { followingId: user.id, status: 'ACEITA' } }),
     prisma.seguimento.count({ where: { followerId: user.id, status: 'ACEITA' } }),
-    prisma.voto.count({ where: { usuarioId: user.id } }),
-    canViewPosts ? prisma.problema.findMany({ where: { usuarioId: user.id }, orderBy: { dataCriacao: 'desc' }, take: 30, include: { categoria: true, imagens: true, _count: { select: { votos: true } } } }) : [],
+    canViewPosts ? prisma.voto.count({ where: { tipo:'CONFIRMAR',problema:{is:{usuarioId:user.id}} } }) : null,
+    canViewPosts ? prisma.problema.findMany({ where: { usuarioId: user.id }, orderBy: [{fixadaEm:'desc'},{dataCriacao:'desc'}], take: 30, include: { categoria: true, imagens: true, _count: { select: { votos: true } } } }) : [],
     relationship(prisma, req.userId, user.id),
   ]);
-  res.json({ id: user.id, name: user.nome, username: user.username, avatar: user.fotoPerfil, bio: user.bio, joinedAt: user.dataCriacao, isPrivate: user.perfilPrivado, canViewPosts, followers, following, likes, publicationCount: user._count.problemas, publications: publications.map(problem => serializeProblem(problem, req)), relationship: relation });
+  res.json({ id: user.id, name: user.nome, username: user.username, avatar: user.fotoPerfil, presentation:canViewPosts?user.apresentacao:null,cover:canViewPosts&&user.capaUrl?coverUrl(user.id,req.userId):null,bio: user.bio, joinedAt: user.dataCriacao, isPrivate: user.perfilPrivado, canViewPosts, followers, following, likes, publicationCount: user._count.problemas, publications: publications.map(problem => serializeProblem(problem, req)), relationship: relation });
 };
 publicSocialRouter.get('/users/username/:username/profile', asyncHandler((req, res) => getProfile(req, res, { username: req.params.username.replace(/^@/, '').trim().toLowerCase() })));
 publicSocialRouter.get('/users/:id/profile', asyncHandler((req, res) => getProfile(req, res, { id: req.params.id })));

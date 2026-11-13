@@ -1,4 +1,7 @@
 import geographyRoutes from './routes/geography.js';
+import trackingRoutes from './routes/tracking.js';
+import profileFeatureRoutes from './routes/profileFeatures.js';
+import sharingRoutes,{publicShareRouter} from './routes/sharing.js';
 import { createProblemStatus, startStatusDelivery } from './services/problemStatus.js';
 import { announceNotification } from './utils/notifications.js';
 import participationRoutes from './routes/participation.js';
@@ -30,7 +33,6 @@ import adminRoutes from "./routes/admin.js";
 import commentRoutes from "./routes/comments.js";
 import notificationRoutes from "./routes/notifications.js";
 import socialRoutes, { publicSocialRouter } from "./routes/social.js";
-import publicPeopleRoutes from './routes/publicPeople.js';
 import savedRoutes from "./routes/saved.js";
 import conversationRoutes from "./routes/conversations.js";
 import visitRoutes from "./routes/visits.js";
@@ -115,6 +117,10 @@ app.use("/api/stories", storyRoutes);
 app.use("/api/polls", pollRoutes);
 app.use("/api/participation", participationRoutes);
 app.use("/api/geography", geographyRoutes);
+app.use('/api/tracking',trackingRoutes);
+app.use('/api/profile-features',profileFeatureRoutes);
+app.use('/api/shares',sharingRoutes);
+app.use('/share',publicShareRouter);
 
 // 404 handler
 app.use((req, res) => {
@@ -143,7 +149,7 @@ let stopStatus = () => {};
     console.log("✅ Conectado ao banco de dados MySQL via Prisma");
 
     server = app.listen(PORT, "0.0.0.0", () => {
-      console.log(`🚀 Servidor rodando em http://localhost:${PORT}`);
+      console.log(JSON.stringify({ event: "server_listening", host: "0.0.0.0", port: Number(PORT) }));
       console.log(`Ambiente: ${process.env.NODE_ENV}`);
     });
   } catch (error) {

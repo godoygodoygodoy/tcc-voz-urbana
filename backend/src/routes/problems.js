@@ -213,6 +213,7 @@ router.get(
         where,
         include: {
           categoria: true,
+        etapa: true,
           usuario: {
             select: {
               id: true,
@@ -405,6 +406,7 @@ router.put(
       where: { id: current.id },
       include: {
         categoria: true,
+        etapa: true,
         usuario: { select: { id: true, nome: true, username: true, fotoPerfil: true } },
         imagens: true,
         atualizacoes: { orderBy: { dataCriacao: "desc" } },
@@ -450,6 +452,7 @@ router.get(
       where: { id: req.params.id, ...visibleProblemWhere(req) },
       include: {
         categoria: true,
+        etapa: true,
         usuario: {
           select: {
             id: true,
