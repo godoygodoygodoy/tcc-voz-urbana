@@ -5,7 +5,7 @@
   "main": "src/server.js",
   "type": "module",
   "scripts": {
-    "start": "node src/server.js",
+    "start": "node scripts/start.js",
     "start:production": "node scripts/start-production.js",
     "dev": "nodemon src/server.js",
     "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js --watchAll=false",
@@ -25,7 +25,7 @@
     "test:feed-performance": "node --experimental-vm-modules --test tests/feed-listing.node.js tests/media-variants.node.js",
     "test:profile-connections": "node --experimental-vm-modules --test tests/profile-connections.node.js",
     "test:expansion": "node --experimental-vm-modules --test tests/collections.node.js tests/stories.node.js tests/stories-api.node.js tests/story-media.node.js tests/story-ranges.node.js tests/media-validation.node.js tests/polls.node.js tests/notifications.node.js tests/comments-replies.node.js tests/participation.node.js tests/storage-ownership.node.js tests/problem-status.node.js tests/geography.node.js tests/tracking.node.js tests/profile-features.node.js tests/sharing.node.js",
-    "test:production": "node --experimental-vm-modules --test tests/production-config.node.js tests/people-search.node.js tests/data-safety.node.js",
+    "test:production": "node --experimental-vm-modules --test tests/production-config.node.js tests/people-search.node.js tests/data-safety.node.js tests/start-entry.node.js",
     "diagnose:production": "node scripts/diagnose-production.js --read-only",
     "check:deployment": "node scripts/check-deployment.js --read-only",
     "test:profile-routes": "node --experimental-vm-modules --test tests/profile-routes.node.js tests/profile-connections.node.js tests/profile-features.node.js tests/participation.node.js tests/notifications.node.js",

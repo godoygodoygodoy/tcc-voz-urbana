@@ -1,5 +1,7 @@
 # Stories e bibliotecas de mídia — 16/11/2026
 
+**Atualização posterior:** a migration de composição foi ensaiada com restauração verificada e aplicada em produção em 16/11/2026 às 17:03, America/Sao_Paulo. O banco real passou no diff e na verificação de integridade. Os trechos abaixo descrevem o estado histórico da primeira entrega; consulte [o relatório da correção de produção](CORRECAO-SCHEMA-STORIES-2026-11-16.md) para o estado atual da migration e da inicialização.
+
 ## Estado da entrega
 
 Esta implementação amplia o sistema existente. **O ecossistema completo solicitado ainda não está concluído nem publicado em produção.** Não houve escrita no MySQL de produção, publicação de conteúdo de teste ou alteração de credenciais.

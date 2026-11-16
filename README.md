@@ -80,6 +80,8 @@ Crie um Web Service Node vinculado ao repositório GitHub:
 
 Selecione a branch e habilite auto-deploy se desejar publicar novos commits automaticamente. `render.yaml` contém a configuração base. A aplicação escuta em `0.0.0.0` usando `PORT` fornecida pelo Render (fallback local 5000). A inicialização exige conexão com o banco. `/api/health` permanece disponível por compatibilidade.
 
+Serviços existentes podem manter um Start Command antigo no painel do Render. Com `NODE_ENV=production`, `npm start` também encaminha para o fluxo protegido de `start:production`; em desenvolvimento, continua iniciando o servidor diretamente. Prefira o comando explícito da tabela no painel. Gerar o Prisma Client durante o build não aplica migrations. Migrações pendentes continuam exigindo revisão, backup e restauração verificada; não substitua esse fluxo por `db push` ou `migrate reset`.
+
 | Variável | Uso |
 | --- | --- |
 | NODE_ENV | `production` |
