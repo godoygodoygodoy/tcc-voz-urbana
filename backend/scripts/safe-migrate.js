@@ -9,7 +9,7 @@ export function migrationNeedsReview(sql) {
   return /\b(DROP|TRUNCATE|DELETE|UPDATE|REPLACE|RENAME)\b|\b(MODIFY|CHANGE)\s+(COLUMN\s+)?|\bSET\s+(FOREIGN_KEY_CHECKS|GLOBAL)\b/i.test(executable);
 }
 export async function safeMigrate() {
-  if (!process.argv.includes('--apply')) throw new Error('No changes made. Use prisma:deploy -- --apply only after reviewing the migration files and configuring backup verification.');
+  if (!process.argv.includes('--apply')) throw new Error('No changes made. This is a guarded migration command, not the web service start command. In Render use Start Command: npm start. Run prisma:deploy -- --apply separately only after reviewing migrations and verifying a backup.');
   const present = (await query(process.env.DATABASE_URL, "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema=DATABASE() AND table_name='_prisma_migrations'")).trim();
   if (present !== '1') throw new Error('Existing migration history required. Initial provisioning/baseline must be reviewed separately; no database will be recreated.');
   const applied = new Set((await query(process.env.DATABASE_URL, 'SELECT migration_name FROM _prisma_migrations WHERE finished_at IS NOT NULL AND rolled_back_at IS NULL')).trim().split('\n').map(s=>s.trim()));

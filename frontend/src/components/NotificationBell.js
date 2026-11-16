@@ -10,16 +10,19 @@ import { toast } from './LocalizedToast';
 export default function NotificationBell() {
   const navigate = useNavigate(), userId = useAuthStore(state=>state.user?.id);
   const [items,setItems] = useState([]), [unread,setUnread] = useState(0), [open,setOpen] = useState(false);
+  const [loadError,setLoadError] = useState(false), [loading,setLoading] = useState(true);
   const {t} = useI18n(), refresh = useRef(()=>{}), requestSequence = useRef(0);
   useEffect(()=>{
-    let active=true,lastLoaded=0;++requestSequence.current;setItems([]);setUnread(0);
+    let active=true,lastLoaded=0;++requestSequence.current;setItems([]);setUnread(0);setLoadError(false);setLoading(true);
     const load=async()=>{
       if(!active||document.hidden)return;
       const sequence=++requestSequence.current;
       try {const{data}=await notificationsAPI.list({paginated:'true',page:1});if(!active||sequence!==requestSequence.current)return;
+        if(!Array.isArray(data)&&!Array.isArray(data?.data))throw new Error('Invalid notifications response');
         const rows=Array.isArray(data)?data:data.data||[];
-        setItems(current=>retainEqual(current,rows));setUnread(Array.isArray(data)?rows.filter(row=>!row.lida).length:data.unread||0);lastLoaded=Date.now();
-      }catch{ /* Preserve loaded notifications on a transient failure. */ }
+        setItems(current=>retainEqual(current,rows));setUnread(Array.isArray(data)?rows.filter(row=>!row.lida).length:data.unread||0);lastLoaded=Date.now();setLoadError(false);
+      }catch{if(active&&sequence===requestSequence.current)setLoadError(true);}
+      finally{if(active&&sequence===requestSequence.current)setLoading(false);}
     };
     refresh.current=load;
     const poller=createVisibilityPoller(()=>isActivityConnected()&&Date.now()-lastLoaded<60000?undefined:load(),15000,{immediate:true});
@@ -41,7 +44,7 @@ export default function NotificationBell() {
     </button>
     {open&&<div className="absolute right-0 top-full z-[100] mt-3 w-80 max-w-[calc(100vw-24px)] rounded-2xl border border-white/10 bg-[#202326] p-3 text-white shadow-2xl" onKeyDown={event=>{if(event.key==='Escape')setOpen(false);}}>
       <div className="flex items-center justify-between border-b border-white/10 pb-2"><strong>{t('notifications')}</strong><button type="button" onClick={markAll} className="text-xs text-violet-200"><CheckCheck className="mr-1 inline h-3 w-3"/>{t('markAllRead')}</button></div>
-      <div className="context-scroll max-h-72 overflow-auto py-2">{items.length===0?<p className="py-5 text-center text-sm text-white/50">{t('noNotifications')}</p>:items.map(item=><button type="button" key={item.id} onClick={()=>openItem(item)} className={'block w-full rounded-xl p-3 text-left text-sm '+(item.lida?'text-white/55':'bg-white/8 text-white')}><strong>{translateSystemText(item.titulo)}</strong><p className="mt-1">{translateSystemText(item.mensagem)}</p></button>)}</div>
+      <div className="context-scroll max-h-72 overflow-auto py-2">{loadError&&<div role="status" className="py-3 text-sm text-white/70"><p>{t('notificationsUnavailable')}</p><button type="button" className="profile-action mt-2" onClick={()=>refresh.current()}>{t('collectionRetry')}</button></div>}{loading&&items.length===0?<p role="status" className="py-5 text-center text-sm text-white/50">{t('loading')}</p>:items.length===0&&!loadError?<p className="py-5 text-center text-sm text-white/50">{t('noNotifications')}</p>:items.map(item=><button type="button" key={item.id} onClick={()=>openItem(item)} className={'block w-full rounded-xl p-3 text-left text-sm '+(item.lida?'text-white/55':'bg-white/8 text-white')}><strong>{translateSystemText(item.titulo)}</strong><p className="mt-1">{translateSystemText(item.mensagem)}</p></button>)}</div>
       <button type="button" className="profile-action w-full justify-center" onClick={()=>{setOpen(false);navigate('/feed#notifications');}}>{t('activityViewAll')}</button>
     </div>}
   </div>;

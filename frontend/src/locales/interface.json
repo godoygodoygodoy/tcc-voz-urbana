@@ -789,7 +789,10 @@
     "shareInstagramHint": "No Instagram, use o compartilhamento do dispositivo quando disponível ou cole o link manualmente.",
     "shareLink": "Link público",
     "Facebook": "Facebook",
-    "X": "X"
+    "X": "X",
+    "apiRouteUnavailable": "A API publicada não contém esta rota. Verifique o deploy do backend.",
+    "notificationsUnavailable": "Não foi possível carregar as notificações. Verifique a API e tente novamente.",
+    "followRequestsUnavailable": "Não foi possível carregar as solicitações de acompanhamento. A consulta será tentada novamente."
   },
   "en": {
     "Perfil": "Profile",
@@ -1581,7 +1584,10 @@
     "shareInstagramHint": "For Instagram, use device sharing when available or paste the link manually.",
     "shareLink": "Public link",
     "Facebook": "Facebook",
-    "X": "X"
+    "X": "X",
+    "apiRouteUnavailable": "The published API does not contain this route. Check the backend deployment.",
+    "notificationsUnavailable": "Could not load notifications. Check the API and try again.",
+    "followRequestsUnavailable": "Could not load follow requests. The query will be retried."
   },
   "es": {
     "Perfil": "Perfil",
@@ -2373,6 +2379,9 @@
     "shareInstagramHint": "Para Instagram, usa la opción de compartir del dispositivo cuando está disponible o pega el enlace manualmente.",
     "shareLink": "Enlace público",
     "Facebook": "Facebook",
-    "X": "X"
+    "X": "X",
+    "apiRouteUnavailable": "La API publicada no contiene esta ruta. Revisa el despliegue del backend.",
+    "notificationsUnavailable": "No se pudieron cargar las notificaciones. Revisa la API e inténtalo de nuevo.",
+    "followRequestsUnavailable": "No se pudieron cargar las solicitudes de seguimiento. Se volverá a intentar."
   }
 }

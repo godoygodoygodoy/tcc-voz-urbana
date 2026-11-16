@@ -1,8 +1,11 @@
 import { defineConfig, loadEnv, transformWithEsbuild } from "vite";
 import react from "@vitejs/plugin-react";
 import { readFileSync } from 'node:fs';
+import { execFileSync } from 'node:child_process';
+import { API_CONTRACT } from '../backend/src/config/release.js';
 
 const deploymentTarget = JSON.parse(readFileSync(new URL('./deployment-target.json', import.meta.url), 'utf8'));
+const buildIdentity=()=>{try{return {revision:execFileSync('git',['rev-parse','HEAD'],{encoding:'utf8',stdio:['ignore','pipe','ignore']}).trim(),dirty:Boolean(execFileSync('git',['status','--porcelain'],{encoding:'utf8',stdio:['ignore','pipe','ignore']}).trim())};}catch{return {revision:null,dirty:null};}};
 
 export default defineConfig(({ command, mode }) => {
   const env = loadEnv(mode, process.cwd(), "VITE_");
@@ -47,7 +50,7 @@ export default defineConfig(({ command, mode }) => {
         name: 'public-deployment-manifest',
         apply: 'build',
         generateBundle() {
-          this.emitFile({type:'asset', fileName:'deployment.json', source:JSON.stringify({apiOrigin:new URL(env.VITE_API_URL).origin, basePath:'/tecti/2026/gpec03/', builtAt:new Date().toISOString()}, null, 2)});
+          this.emitFile({type:'asset', fileName:'deployment.json', source:JSON.stringify({apiOrigin:new URL(env.VITE_API_URL).origin, basePath:'/tecti/2026/gpec03/', builtAt:new Date().toISOString(),apiContract:API_CONTRACT,...buildIdentity()}, null, 2)});
         },
       },
       {

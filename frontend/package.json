@@ -47,7 +47,8 @@
     "test:geography:browser": "node --experimental-vm-modules tests/geography-browser.cjs",
     "test:map": "node --test tests/map-color.test.cjs",
     "test:api-config": "node --experimental-vm-modules --test tests/api-config.test.cjs",
-    "test:tracking-profile:browser": "node --experimental-vm-modules tests/tracking-profile-browser.cjs"
+    "test:tracking-profile:browser": "node --experimental-vm-modules tests/tracking-profile-browser.cjs",
+    "test:profile-errors:browser": "node --experimental-vm-modules tests/profile-api-errors-browser.cjs"
   },
   "browserslist": {
     "production": [

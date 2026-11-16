@@ -25,7 +25,9 @@ api.interceptors.response.use(
   (error) => {
     if (error.response?.data && typeof error.response.data === 'object') {
       for (const field of ['error', 'message']) {
-        const original = error.response.data[field];
+        const source = error.response.data[field];
+        const original = typeof source === 'string' && error.response.status === 404 && (error.response.data.code === 'API_ROUTE_NOT_FOUND' || source === 'Rota não encontrada')
+          ? 'apiRouteUnavailable' : source;
         if (typeof original === 'string') Object.defineProperty(error.response.data, field, {
           configurable: true, enumerable: true, get: () => translateApiError(original),
         });

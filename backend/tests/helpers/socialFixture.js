@@ -1,4 +1,5 @@
 import * as sharingService from '../../src/services/sharing.js';
+import {notFound} from '../../src/middlewares/notFound.js';
 import * as profileFeatures from '../../src/services/profileFeatures.js';
 import {validateMedia} from '../../src/utils/mediaValidation.js';
 import * as trackingService from '../../src/services/problemTracking.js';
@@ -113,6 +114,7 @@ export async function createSocialFixture({ streaming = false } = {}) {
   if(!streaming)app.get('/api/notifications/stream',authenticate(true),(req,res)=>res.type('text/event-stream').send('retry: 60000\nevent: ready\ndata: {}\n\n'));
   app.use('/api/notifications',(await load('routes/notifications.js')).default);
   app.post('/api/visits',(req,res)=>res.json({ok:true}));
+  app.use(notFound);
   app.use(errors.errorHandler);
   return {app,...memory,storedStoryMedia,achievementChecks,close(){
     if(!path.resolve(root).startsWith(path.resolve(os.tmpdir())+path.sep)||!path.basename(root).startsWith('voz-social-test-'))throw Error('Unsafe fixture cleanup');

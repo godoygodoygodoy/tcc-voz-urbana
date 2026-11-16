@@ -25,6 +25,7 @@ export default function ProfileStats({
         } = await profileFeaturesAPI.stats(ownerId, {
           signal: controller.signal
         });
+        if (!['posts','followers','following','support','comments','resolved'].every(key=>Number.isInteger(data?.[key])&&data[key]>=0) || data.watched!==null&&(!Number.isInteger(data.watched)||data.watched<0)) throw new Error('Invalid profile statistics response');
         if (active) {
           setData(data);
           setError(false);

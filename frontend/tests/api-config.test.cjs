@@ -36,3 +36,14 @@ test('local development retains localhost and guests do not send a fabricated to
   };
   await api.get('/social/users/search');
 });
+
+test('a missing API route remains a rejected HTTP 404 and is distinguished from a missing private profile',async()=>{
+  const {default:api}=await loadApi({VITE_API_URL:'https://voz-urbana-api.onrender.com',DEV:false,BASE_URL:'/'},'isolated-test-token');
+  const failure=body=>async config=>{throw new axios.AxiosError('Not found','ERR_BAD_REQUEST',config,null,{status:404,data:body,headers:{},config});};
+  for(const body of [{error:'Rota não encontrada'},{error:'Rota não encontrada',code:'API_ROUTE_NOT_FOUND'}]){
+    api.defaults.adapter=failure(body);
+    await assert.rejects(api.get('/missing'),error=>error.response.status===404&&error.response.data.error==='apiRouteUnavailable');
+  }
+  api.defaults.adapter=failure({error:'profileNotFound'});
+  await assert.rejects(api.get('/social/users/unknown/profile'),error=>error.response.status===404&&error.response.data.error==='profileNotFound');
+});

@@ -25,7 +25,7 @@ export default function ActivityConnection() {
             const lines = frame.split('\n'), event = lines.find(line=>line.startsWith('event:'))?.slice(6).trim();
             const serverRetry = lines.find(line=>line.startsWith('retry:'))?.slice(6).trim();
             if (serverRetry && Number.isFinite(Number(serverRetry))) retry = Math.max(3000,Math.min(60000,Number(serverRetry)));
-            if (event === 'ready') { setActivityConnected(true); notificationsAPI.invalidate(); window.dispatchEvent(new CustomEvent(ACTIVITY_EVENT,{detail:{kind:'SYNC'}})); }
+            if (event === 'ready') { if(!serverRetry)retry=3000;setActivityConnected(true); notificationsAPI.invalidate(); window.dispatchEvent(new CustomEvent(ACTIVITY_EVENT,{detail:{kind:'SYNC'}})); }
             if (event === 'activity') {
               try {
                 const data = JSON.parse(lines.filter(line=>line.startsWith('data:')).map(line=>line.slice(5).trim()).join('\n'));
@@ -39,7 +39,7 @@ export default function ActivityConnection() {
       } catch { /* Polling remains available when a proxy cannot stream events. */ }
       finally {
         connecting = false;controller?.abort();if(!stopped)setActivityConnected(false);
-        if (!stopped && !document.hidden) timer = setTimeout(connect,retry);
+        if (!stopped && !document.hidden) { timer = setTimeout(connect,retry); retry = Math.min(60000,retry*2); }
       }
     };
     const visibility = () => { clearTimeout(timer);if(document.hidden){controller?.abort();setActivityConnected(false);}else connect(); };

@@ -33,6 +33,8 @@ const ProfilePage = () => {
   const [cropFile, setCropFile] = useState(null);
   const [followRequests, setFollowRequests] = useState([]);
   const [sentRequests, setSentRequests] = useState([]);
+  const [requestsError,setRequestsError] = useState(false);
+  const [requestsLoaded,setRequestsLoaded] = useState(false);
   const setUser = useAuthStore((state) => state.setUser);
   const { t } = useI18n();
   const { theme: siteTheme, unlocked: christmasUnlocked, effects } = useChristmasTheme();
@@ -60,8 +62,8 @@ const ProfilePage = () => {
 
     fetchProfile();
     Promise.all([socialAPI.requests(), socialAPI.sentRequests()])
-      .then(([received, sent]) => { setFollowRequests(current => retainEqual(current, received.data || [])); setSentRequests(current => retainEqual(current, sent.data || [])); })
-      .catch(() => {});
+      .then(([received, sent]) => { if(!Array.isArray(received.data)||!Array.isArray(sent.data))throw new Error('Invalid follow requests response');setFollowRequests(current => retainEqual(current, received.data)); setSentRequests(current => retainEqual(current, sent.data));setRequestsError(false);setRequestsLoaded(true); })
+      .catch(() => {setRequestsError(true);setRequestsLoaded(true);});
   }, []);
 
   useEffect(() => {
@@ -70,8 +72,9 @@ const ProfilePage = () => {
       if (document.hidden) return;
       try {
         const [received, sent] = await Promise.all([socialAPI.requests(), socialAPI.sentRequests()]);
-        if (active) { setFollowRequests(current => retainEqual(current, received.data || [])); setSentRequests(current => retainEqual(current, sent.data || [])); }
-      } catch { /* A failed refresh must not discard pending requests. */ }
+        if(!Array.isArray(received.data)||!Array.isArray(sent.data))throw new Error('Invalid follow requests response');
+        if (active) { setFollowRequests(current => retainEqual(current, received.data)); setSentRequests(current => retainEqual(current, sent.data));setRequestsError(false);setRequestsLoaded(true); }
+      } catch { if(active){setRequestsError(true);setRequestsLoaded(true);} }
     };
     const poller = createVisibilityPoller(refresh, 5000);
     const unsubscribe = subscribeSocialChanges(poller.refresh);
@@ -284,7 +287,9 @@ const ProfilePage = () => {
           </section>}
           <section className="mt-10 border-t border-white/10 pt-6">
             <h2 className="mb-4 text-xl font-bold">{t('followRequestsTitle')}</h2>
-            {followRequests.length === 0 && sentRequests.length === 0 && <p className="text-sm text-white/55">{t("Nenhuma solicitação pendente.")}</p>}
+            {requestsError&&<p role="status" className="text-sm text-white/65">{t('followRequestsUnavailable')}</p>}
+            {!requestsLoaded&&<p role="status" className="text-sm text-white/65">{t('loading')}</p>}
+            {requestsLoaded&&!requestsError&&followRequests.length === 0 && sentRequests.length === 0 && <p className="text-sm text-white/55">{t("Nenhuma solicitação pendente.")}</p>}
             {followRequests.length > 0 && <h3 className="mb-3 text-sm font-semibold">{t('followReceivedRequests')}</h3>}
             <div className="space-y-3">{followRequests.map((request) => <div key={request.id} className="follow-request-row flex items-center justify-between gap-3 rounded-xl bg-white/5 p-3"><span><Link to={profilePath(request.follower)}><strong>{request.follower.nome}</strong></Link><small className="ml-2 text-white/50">{request.follower.username ? `@${request.follower.username}` : ''}</small></span><span className="flex gap-2"><button type="button" onClick={() => updateRequest(request, 'accept')} className="rounded-lg bg-violet-600 px-3 py-1 text-xs font-bold">{t("Aceitar")}</button><button type="button" onClick={() => updateRequest(request, 'reject')} className="rounded-lg border border-white/10 px-3 py-1 text-xs">{t("Recusar")}</button></span></div>)}</div>
             {sentRequests.length > 0 && <h3 className="mb-3 mt-5 text-sm font-semibold">{t('followSentRequests')}</h3>}

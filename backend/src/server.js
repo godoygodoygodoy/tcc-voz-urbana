@@ -40,6 +40,9 @@ import rateLimit from "express-rate-limit";
 import { uploadedMedia } from "./config/media.js";
 import { startAutomaticBackup } from './services/automaticBackup.js';
 import { checkPersistenceIdentity } from './config/persistence.js';
+import { releaseInfo } from './config/release.js';
+import { assertSchemaReady } from './services/schemaCompatibility.js';
+import { notFound } from './middlewares/notFound.js';
 
 // Importar middlewares
 import { errorHandler } from "./middlewares/errorHandler.js";
@@ -72,7 +75,8 @@ app.use(
 
       return callback(null, false);
     },
-    credentials: true
+    credentials: true,
+    exposedHeaders: ['X-API-Contract','X-Release-Revision']
   })
 );
 app.use(express.json({ limit: "10mb" }));
@@ -86,14 +90,17 @@ app.use('/api/auth/', rateLimit({ windowMs:15*60*1000,limit:20,skipSuccessfulReq
 app.use("/uploads", uploadedMedia);
 
 // Health check independente do limite da API
-app.get("/health", (req, res) => res.json({ status: "ok" }));
+app.get("/health", (req, res) => res.set('Cache-Control','no-store').json({ status: "ok", ...releaseInfo() }));
 
 // Health check
 app.get("/api/health", (req, res) => {
-  res.json({ status: "OK", timestamp: new Date().toISOString() });
+  res.set('Cache-Control','no-store').json({ status: "OK", timestamp: new Date().toISOString(), ...releaseInfo() });
 });
 
-app.use('/api', (req, res, next) => { res.set('Cache-Control', 'private, no-store'); next(); });
+app.use('/api', (req, res, next) => {
+  const release=releaseInfo();res.set({'Cache-Control':'private, no-store','X-API-Contract':release.apiContract});
+  if(release.revision)res.set('X-Release-Revision',release.revision);next();
+});
 
 // Rotas públicas
 app.use("/api/auth", authRoutes);
@@ -123,9 +130,7 @@ app.use('/api/shares',sharingRoutes);
 app.use('/share',publicShareRouter);
 
 // 404 handler
-app.use((req, res) => {
-  res.status(404).json({ error: "Rota não encontrada" });
-});
+app.use(notFound);
 
 // Error handler
 app.use(errorHandler);
@@ -141,7 +146,7 @@ let stopStatus = () => {};
   try {
     checkPersistenceIdentity();
     await prisma.$connect();
-    await prisma.usuario.findFirst({ select: { perfilPrivado: true } });
+    await assertSchemaReady(prisma);
     await securePublicationStorage();
     stopBackups = startAutomaticBackup();
     stopStories = startStoryCleanup(prisma, removeStoredFiles);
@@ -149,11 +154,11 @@ let stopStatus = () => {};
     console.log("✅ Conectado ao banco de dados MySQL via Prisma");
 
     server = app.listen(PORT, "0.0.0.0", () => {
-      console.log(JSON.stringify({ event: "server_listening", host: "0.0.0.0", port: Number(PORT) }));
+      console.log(JSON.stringify({ event: "server_listening", host: "0.0.0.0", port: Number(PORT), ...releaseInfo() }));
       console.log(`Ambiente: ${process.env.NODE_ENV}`);
     });
   } catch (error) {
-    console.error(JSON.stringify({event:'database_startup_failed', time:new Date().toISOString(), code:error.code || error.name}));
+    console.error(JSON.stringify({event:'database_startup_failed', time:new Date().toISOString(), code:error.code || error.name, missingSchema:error.missingSchema, ...releaseInfo()}));
     await prisma.$disconnect();
     process.exit(1);
   }
