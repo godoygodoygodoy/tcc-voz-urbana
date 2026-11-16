@@ -3,7 +3,7 @@ import jwt from 'jsonwebtoken';
 import { prisma } from '../config/prisma.js';
 import { authMiddleware } from '../middlewares/auth.js';
 import { asyncHandler } from '../middlewares/errorHandler.js';
-import { notificationFields, markNotificationsRead, getNotificationPreferences, saveNotificationPreferences } from '../services/notifications.js';
+import { notificationFields, presentNotifications, markNotificationsRead, getNotificationPreferences, saveNotificationPreferences } from '../services/notifications.js';
 import { activityListeners, subscribeActivity, publishActivity } from '../services/activityEvents.js';
 const router=express.Router();router.use(authMiddleware);
 router.get('/stream',(req,res)=>{
@@ -23,9 +23,9 @@ router.get('/',asyncHandler(async(req,res)=>{
   const page=Math.min(10000,Math.max(1,Number.parseInt(req.query.page,10)||1)),limit=30;
   const read=req.query.read==='true'?true:req.query.read==='false'?false:undefined;
   const where={usuarioId:req.userId,...(read!==undefined?{lida:read}:{})};
-  if(req.query.paginated!=='true')return res.json(await prisma.notificacao.findMany({where,orderBy:[{dataCriacao:'desc'},{id:'asc'}],take:50,select:notificationFields}));
+  if(req.query.paginated!=='true')return res.json(await presentNotifications(prisma,await prisma.notificacao.findMany({where,orderBy:[{dataCriacao:'desc'},{id:'asc'}],take:50,select:notificationFields}),req.userId,req.isAdmin===true));
   const[data,total,unread]=await Promise.all([prisma.notificacao.findMany({where,orderBy:[{dataCriacao:'desc'},{id:'asc'}],skip:(page-1)*limit,take:limit,select:notificationFields}),prisma.notificacao.count({where}),prisma.notificacao.count({where:{usuarioId:req.userId,lida:false}})]);
-  res.json({data,total,unread,page,limit});
+  res.json({data:await presentNotifications(prisma,data,req.userId,req.isAdmin===true),total,unread,page,limit});
 }));
 router.patch('/:id/read',asyncHandler(async(req,res)=>{const count=await markNotificationsRead(prisma,req.userId,req.params.id);const unread=await prisma.notificacao.count({where:{usuarioId:req.userId,lida:false}});publishActivity(req.userId,'READ');res.json({updated:count>0,unread});}));
 router.patch('/read-all',asyncHandler(async(req,res)=>{const count=await markNotificationsRead(prisma,req.userId);const unread=await prisma.notificacao.count({where:{usuarioId:req.userId,lida:false}});publishActivity(req.userId,'READ');res.json({updated:count,unread});}));

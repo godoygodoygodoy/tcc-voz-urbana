@@ -96,9 +96,7 @@ export const createMessaging = (db, { notify = async () => null } = {}) => ({
       if (!current.canSend) throw Object.assign(socialError(403, 'chatLimitReached'), { code: 'MESSAGE_LIMIT_REACHED', messaging: current });
       const message = await tx.mensagem.create({ data: { texto: value.trim(), conversaId: conversation.id, remetenteId: userId }, include: { remetente: { select: publicUser } } });
       await tx.conversa.update({ where: { id: conversation.id }, data: { atualizadaEm: new Date() } });
-      const sender = await tx.usuario.findUnique({where:{id:userId},select:{nome:true,username:true}});
-      const senderName = sender?.username?'@'+sender.username:sender?.nome;
-      const notification = await notify(tx, { usuarioId: participantId(conversation, userId), tipo:'MENSAGEM',titulo:'notificationMessageTitle',mensagem:senderName?senderName+' enviou uma mensagem.':'notificationMessageBody',link:'/feed?conversation='+encodeURIComponent(conversation.id)+'#conversations' });
+      const notification = await notify(tx, { usuarioId: participantId(conversation, userId), autorId:userId, tipo:'MENSAGEM',titulo:'notificationMessageTitle',mensagem:'notificationMessageBody',link:'/feed?conversation='+encodeURIComponent(conversation.id)+'#conversations' });
       return { message, messaging: messageAllowance(current.mutual, current.sent + 1), ...(notification ? { notification } : {}) };
     }, { isolationLevel: 'ReadCommitted' });
   },

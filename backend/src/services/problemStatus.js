@@ -31,7 +31,7 @@ export function createProblemStatus(db) {
         const notifications = [];
         if (problem.usuarioId !== actorId) {
           const notification = await writeNotification(tx, {
-            usuarioId: problem.usuarioId, tipo: 'STATUS', titulo: 'problemStatusChangedTitle',
+            usuarioId: problem.usuarioId, autorId:actorId, tipo: 'STATUS', titulo: 'problemStatusChangedTitle',
             mensagem: `O status foi alterado para ${status}`, link: '/problem/' + problemId,
             eventKey: 'status:' + history.id,
           });
@@ -64,7 +64,7 @@ export function createProblemStatus(db) {
           // The owner is notified by the original transaction. Actors do not notify themselves.
           if ([problem.usuarioId, history.usuarioId].includes(row.usuarioId)) continue;
           const notification = await writeNotification(tx, {
-            usuarioId: row.usuarioId, tipo: 'ACOMPANHAMENTO', titulo: 'watchedProblemChangedTitle',
+            usuarioId: row.usuarioId, autorId:history.usuarioId, tipo: 'ACOMPANHAMENTO', titulo: 'watchedProblemChangedTitle',
             mensagem: `O status foi alterado para ${history.status}`, link: '/problem/' + problem.id,
             eventKey: 'status:' + history.id,
           });

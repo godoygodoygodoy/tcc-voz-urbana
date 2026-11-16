@@ -16,4 +16,4 @@ export const createNotification = async data => {
   void announceNotification(notification).catch(error=>console.error(JSON.stringify({event:'notification_delivery_pending',code:error.code||error.name})));
   return notification;
 };
-export const notifyProblemOwner = async ({problem,tipo,titulo,mensagem,eventKey}) => !problem?.usuarioId ? null : createNotification({usuarioId:problem.usuarioId,tipo,titulo,mensagem,eventKey,link:'/problem/'+problem.id});
+export const notifyProblemOwner = async ({problem,autorId,tipo,titulo,mensagem,eventKey}) => !problem?.usuarioId ? null : createNotification({usuarioId:problem.usuarioId,autorId,tipo,titulo,mensagem,eventKey,link:'/problem/'+problem.id});

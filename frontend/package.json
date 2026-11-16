@@ -27,6 +27,9 @@
     "zustand": "^4.3.7"
   },
   "scripts": {
+    "test:feed-pagination:browser": "node --experimental-vm-modules tests/feed-pagination-browser.cjs",
+    "measure:feed:real": "node tests/feed-real-performance.cjs",
+    "test:notification-actors:browser": "node --experimental-vm-modules tests/notification-actors-browser.cjs",
     "test:people-search:browser": "node --experimental-vm-modules tests/people-search-browser.cjs",
     "dev": "vite",
     "start": "vite",

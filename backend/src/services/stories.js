@@ -60,7 +60,7 @@ export const createStories = (db, { notify = async () => null } = {}) => ({
    if(!row)throw socialError(404,'storyUnavailable');
    if(row.usuarioId===viewerId)throw socialError(403,'storySelfReaction');
    const view=await tx.storyVisualizacao.upsert({where:{storyId_usuarioId:{storyId:id,usuarioId:viewerId}},create:{storyId:id,usuarioId:viewerId,reacao:enabled?'heart':null},update:{reacao:enabled?'heart':null}});
-   const notification=enabled?await notify(tx,{usuarioId:row.usuarioId,tipo:'STORY',titulo:'notificationStoryTitle',mensagem:'notificationStoryBody',link:'/feed?story='+encodeURIComponent(id),eventKey:'storyReaction:'+id+':'+viewerId}):null;
+   const notification=enabled?await notify(tx,{usuarioId:row.usuarioId,autorId:viewerId,tipo:'STORY',titulo:'notificationStoryTitle',mensagem:'notificationStoryBody',link:'/feed?story='+encodeURIComponent(id),eventKey:'storyReaction:'+id+':'+viewerId}):null;
    return{story:serializeStory({...row,visualizacoes:[view]},viewerId),notification};
   },{isolationLevel:'ReadCommitted'});
  },

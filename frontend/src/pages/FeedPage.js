@@ -32,8 +32,7 @@ import {
   Flag,
   Users,
 } from 'lucide-react';
-import { formatDistanceToNow } from 'date-fns';
-import { ptBR, enUS, es } from 'date-fns/locale';
+import {formatRelativeTime} from '../utils/relativeTime';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { toast } from '../components/LocalizedToast';
 import { categoriesAPI, conversationsAPI, mediaUrl, notificationsAPI, problemsAPI, savedAPI, socialAPI, votesAPI } from '../services/api';
@@ -43,7 +42,8 @@ import AmbientContour from '../components/AmbientContour';
 import { FloatingDatePicker, FloatingSelect, FloatingTimePicker, UploadField } from '../components/FloatingFields';
 import { brazilStates, fetchCep, fetchCities, formatCep, normalizeCep } from '../utils/brazil';
 import Avatar from '../components/Avatar';
-import ImageCropper from '../components/ImageCropper';
+import NotificationItem from '../components/NotificationItem';
+const ImageCropper=React.lazy(()=>import('../components/ImageCropper'));
 import { profilePath } from '../utils/profileLinks';
 
 const actionAsset = (name) => `${import.meta.env.BASE_URL}feed-actions/${name}.webp`;
@@ -96,7 +96,7 @@ const FeedHeader = ({ title, description, children }) => { const { t } = useI18n
     <div className="feed-view-actions">{children}</div>
   </div>); };
 
-const FeedPost = React.memo(function FeedPost({ post, slide, liked, shared, menuOpen, saved, canManage, voting, onAction }) {
+const FeedPost = React.memo(function FeedPost({ post, slide, liked, shared, menuOpen, saved, saving, canManage, voting, onAction }) {
     const { t } = useI18n();
     const images = post.images?.length ? post.images : [];
     const authorName = post.author?.name || t("Usuário");
@@ -104,13 +104,13 @@ const FeedPost = React.memo(function FeedPost({ post, slide, liked, shared, menu
     return <article key={post.id} className="feed-post">
       <div className="feed-post-head">
         <Link to={profilePath(post.author)} className="feed-post-author"><Avatar user={post.author} className="feed-avatar" /></Link>
-        <Link to={profilePath(post.author)} className="min-w-0 feed-post-author-copy"><strong>{authorHandle}</strong><span>{authorName} · {post.createdAt ? formatDistanceToNow(new Date(post.createdAt), { locale: ({ 'pt-BR': ptBR, en: enUS, es })[getLanguage()], addSuffix: true }) : t('now')}</span></Link>
+        <Link to={profilePath(post.author)} className="min-w-0 feed-post-author-copy"><strong>{authorHandle}</strong><span>{authorName} · {post.createdAt ? formatRelativeTime(post.createdAt,getLanguage())||t('now') : t('now')}</span></Link>
         <div className="relative flex items-center gap-1">
           <button type="button" className="feed-more" aria-label={t("Mais opções")} onClick={() => onAction('menu', post.id, 'toggle')}><Ellipsis size={18} /></button>
               {menuOpen && <div className="feed-post-menu" role="menu">
             {canManage && <button type="button" onClick={() => { onAction('startEditing', post); onAction('menu', null); }}><Ellipsis size={14} /> {t("Editar publicação")}</button>}
             {canManage && <button type="button" onClick={() => { onAction('menu', null); onAction('deletePost', post); }}><Trash2 size={14} /> {t("Apagar publicação")}</button>}
-            <button type="button" onClick={() => onAction('toggleSaved', post)}><Bookmark size={14} /> {saved ? t("Remover dos salvos") : t("Salvar publicação")}</button>
+            <button type="button" disabled={saving} onClick={() => onAction('toggleSaved', post)}><Bookmark size={14} /> {saved ? t("Remover dos salvos") : t("Salvar publicação")}</button>
             <button type="button" onClick={() => onAction('copyPostLink', post)}><Copy size={14} /> {t("Copiar link")}</button>
             <button type="button" onClick={() => onAction('sharePost', post)}><Share2 size={14} /> {t("Compartilhar publicação")}</button>
             <button type="button" onClick={() => { onAction('menu', null); onAction('navigate', `/problem/${post.id}`); }}><Check size={14} /> {t("Ver detalhes")}</button>
@@ -121,7 +121,7 @@ const FeedPost = React.memo(function FeedPost({ post, slide, liked, shared, menu
       <Link to={`/problem/${post.id}`} className="block">
         <div className="feed-post-copy"><span className="feed-category">{translateCategory(post.category?.name) || t('noCategory')}</span><h2>{post.title}{post.isEdited && <small className="ml-2 text-xs text-white/45">{t("(editado)")}</small>}</h2><p>{post.description}</p><span className="feed-location"><MapPin size={13} />{post.address || t('locationOnMap')}</span></div>
         <div className="feed-media" style={{ aspectRatio: images.length ? (images[slide].proporcao === '16:9' ? '16 / 9' : images[slide].proporcao === '9:16' ? '9 / 16' : images[slide].proporcao === '4:5' ? '4 / 5' : images[slide].proporcao === '5:4' ? '5 / 4' : '1 / 1') : '1.85 / 1' }}>
-          {images.length > 0 ? <button type="button" className="block h-full w-full" style={{ aspectRatio: images[slide].proporcao === '16:9' ? '16 / 9' : images[slide].proporcao === '9:16' ? '9 / 16' : images[slide].proporcao === '4:5' ? '4 / 5' : images[slide].proporcao === '5:4' ? '5 / 4' : '1 / 1' }} onClick={(event) => { event.preventDefault(); onAction('setLightboxImage', mediaUrl(images[slide].url)); }}><img loading="lazy" decoding="async" src={mediaUrl(images[slide].url)} alt={post.title} /></button> : <div className="feed-media-placeholder"><span>Voz Urbana</span><strong>{post.title}</strong><small>{translateStatus(post.status)}</small></div>}
+          {images.length > 0 ? <button type="button" className="block h-full w-full" style={{ aspectRatio: images[slide].proporcao === '16:9' ? '16 / 9' : images[slide].proporcao === '9:16' ? '9 / 16' : images[slide].proporcao === '4:5' ? '4 / 5' : images[slide].proporcao === '5:4' ? '5 / 4' : '1 / 1' }} onClick={(event) => { event.preventDefault(); onAction('setLightboxImage', mediaUrl(images[slide].url)); }}><picture>{images[slide].variants?.length>0&&<source type="image/webp" srcSet={images[slide].variants.map(variant=>`${mediaUrl(variant.url)} ${variant.width}w`).join(", ")} sizes="(max-width: 900px) calc(100vw - 32px), (max-width: 1200px) calc(100vw - 300px), 780px"/>}<img width="1080" height={images[slide].proporcao === "16:9" ? 608 : images[slide].proporcao === "9:16" ? 1920 : images[slide].proporcao === "4:5" ? 1350 : images[slide].proporcao === "5:4" ? 864 : 1080} loading="lazy" decoding="async" src={mediaUrl(images[slide].url)} alt={post.title} /></picture></button> : <div className="feed-media-placeholder"><span>Voz Urbana</span><strong>{post.title}</strong><small>{translateStatus(post.status)}</small></div>}
           {images.length > 1 && <><button type="button" onClick={(event) => { event.preventDefault(); onAction('changeSlide', post.id, -1, images.length); }} className="feed-slide feed-slide-left" aria-label={t("Imagem anterior")}><ChevronLeft size={20} /></button><button type="button" onClick={(event) => { event.preventDefault(); onAction('changeSlide', post.id, 1, images.length); }} className="feed-slide feed-slide-right" aria-label={t("Próxima imagem")}><ChevronRight size={20} /></button><div className="feed-dots">{images.map((image, index) => <span key={image.id || index} className={index === slide ? 'is-current' : ''} />)}</div></>}
         </div>
       </Link>
@@ -139,6 +139,8 @@ const FeedPage = () => {
 
   const { t, language } = useI18n();
   const { user, openAuthModal } = useAuthStore(state => ({ user: state.user, openAuthModal: state.openAuthModal }), shallow);
+  const currentViewer=useRef(user?.id);currentViewer.current=user?.id;
+  const savedOwner=useRef(user?.id);
   const location = useLocation();
   const navigate = useNavigate();
   const [posts, setPosts] = useState([]);
@@ -149,13 +151,19 @@ const FeedPage = () => {
   const [search, setSearch] = useState('');
   const [sort, setSort] = useState('recent');
   const [page, setPage] = useState(1);
+  const [hasMorePosts,setHasMorePosts]=useState(false);
+  const nextFeedCursor=useRef(null),feedController=useRef(null),feedInFlight=useRef(false),feedEnd=useRef(null);
+  const [savedIds,setSavedIds]=useState(()=>new Set());
+  const [savingPosts,setSavingPosts]=useState(()=>new Set());
+  const savesInFlight=useRef(new Set());
+  const feedInitialized=useRef(false),savedRefresh=useRef(0);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
   const [feedError, setFeedError] = useState(false);
   const [likedPosts, setLikedPosts] = useState(() => new Set());
   const [sharedPosts, setSharedPosts] = useState(() => new Set());
   const [slideByPost, setSlideByPost] = useState({});
-  const [votingPost, setVotingPost] = useState(null);
+  const [votingPosts, setVotingPosts] = useState(()=>new Set());
   const votesInFlight = useRef(new Set());
   const [notifications, setNotifications] = useState([]);
   const [notificationFilter,setNotificationFilter] = useState('all');
@@ -226,52 +234,79 @@ const FeedPage = () => {
   }, [editingPost, lightboxImage]);
 
   const feedRequest = useRef(0);
-  const loadFeed = useCallback(async () => {
+  const loadFeed = useCallback(async (append=false) => {
+    if(append&&feedInFlight.current)return;
+    feedController.current?.abort();
+    const controller=new AbortController();feedController.current=controller;feedInFlight.current=true;
     const sequence = ++feedRequest.current;
     try {
       setLoading(true);
       setFeedError(false);
-      const [problemsResult, categoriesResult] = await Promise.allSettled([
-        problemsAPI.list({ category: category || undefined, status: status || undefined, sort, page, limit: 9 }),
-        categoriesAPI.list(),
-      ]);
+      const response=await problemsAPI.list({view:'feed',category:category||undefined,status:status||undefined,sort,page:append?page+1:1,limit:12,...(append?{count:'false',...(nextFeedCursor.current?{cursor:nextFeedCursor.current}:{})}:{})},{signal:controller.signal});
       if (sequence !== feedRequest.current) return;
-      if (problemsResult.status === 'rejected') throw problemsResult.reason;
-      const problemsResponse = problemsResult.value;
-      setPosts(problemsResponse.data?.data || []);
-      setLikedPosts(new Set((problemsResponse.data?.data || []).filter((post) => post.supportedByMe).map((post) => post.id)));
-      setTotal(problemsResponse.data?.total || 0);
-      if (categoriesResult.status === 'rejected'
-        || !Array.isArray(categoriesResult.value.data)
-        || categoriesResult.value.data.length === 0) {
-        setCategories([]);
-        setCategoryError(true);
-        toast.error(tr("Não foi possível carregar as categorias."));
-      } else {
-        setCategories(categoriesResult.value.data);
-        setCategoryError(false);
-      }
+      const data=response.data,rows=data?.data||[];
+      setPosts(current=>append?[...current,...rows.filter(row=>!current.some(post=>post.id===row.id))]:rows);
+      setLikedPosts(current=>new Set([...(append?current:[]),...rows.filter(post=>post.supportedByMe).map(post=>post.id)]));
+      setSavedIds(current=>new Set([...(append?current:[]),...rows.filter(post=>post.savedByMe).map(post=>post.id)]));
+      if(data.total!==null&&data.total!==undefined)setTotal(data.total);
+      setPage(append?page+1:1);nextFeedCursor.current=data.nextCursor||null;
+      setHasMorePosts(typeof data.hasMore==='boolean'?data.hasMore:Boolean(data.page*data.limit<data.total));
+      feedInitialized.current=true;
     } catch (error) {
-      if (sequence !== feedRequest.current) return;
-      setCategoryError(true);
+      if (sequence !== feedRequest.current||controller.signal.aborted) return;
       setFeedError(true);
       toast.error(tr('apiUnavailable'));
     } finally {
-      if (sequence === feedRequest.current) setLoading(false);
+      if (sequence === feedRequest.current) {setLoading(false);feedInFlight.current=false;}
     }
-  }, [category, page, sort, status]);
+  }, [category, page, sort, status,user?.id]);
 
-  useEffect(() => { loadFeed(); return () => { ++feedRequest.current; }; }, [loadFeed]);
+  const loadFeedRef=useRef(loadFeed);loadFeedRef.current=loadFeed;
+  const loadedPosts=useRef([]);loadedPosts.current=[...posts,...savedPosts];
+  useEffect(()=>{
+    if(savedOwner.current!==user?.id){savedOwner.current=user?.id;++savedRefresh.current;setSavedPosts([]);setSavingPosts(new Set());}
+    let active=true,sequence=0;
+    const refresh=async()=>{
+      const ids=[...new Set(loadedPosts.current.map(post=>post.id))];if(!ids.length)return;
+      const current=++sequence;
+      try{
+        const groups=[];for(let i=0;i<ids.length;i+=100)groups.push(ids.slice(i,i+100));
+        const results=await Promise.all(groups.map(group=>problemsAPI.list({view:'visibility',ids:group.join(',')})));
+        if(!active||current!==sequence)return;
+        const allowed=new Set(results.flatMap(result=>result.data.ids));
+        const retain=rows=>rows.filter(post=>!ids.includes(post.id)||allowed.has(post.id));
+        setPosts(retain);setSavedPosts(retain);
+      }catch{/* Authorization is still rechecked on every content/media request. */}
+    };
+    const unsubscribe=subscribeSocialChanges(refresh);
+    return()=>{active=false;++sequence;unsubscribe();};
+  },[user?.id]);
+  useEffect(()=>{
+    nextFeedCursor.current=null;feedInitialized.current=false;setHasMorePosts(false);setPosts([]);setLikedPosts(new Set());setSavedIds(new Set());
+    if(activeTab==='home'||activeTab==='search')loadFeedRef.current(false);
+    return()=>{++feedRequest.current;feedController.current?.abort();feedInFlight.current=false;};
+  },[category,sort,status,user?.id]);
+  useEffect(()=>{if((activeTab==='home'||activeTab==='search')&&!feedInitialized.current&&!feedInFlight.current)loadFeedRef.current(false);},[activeTab]);
+
+  useEffect(()=>{
+    if(activeTab!=='home'||!hasMorePosts||loading||feedError||!feedEnd.current||!('IntersectionObserver'in window))return undefined;
+    const observer=new IntersectionObserver(entries=>{if(entries.some(entry=>entry.isIntersecting))loadFeedRef.current(true);},{rootMargin:'300px 0px'});
+    observer.observe(feedEnd.current);return()=>observer.disconnect();
+  },[activeTab,hasMorePosts,loading,feedError]);
+
+  useEffect(()=>{let active=true;categoriesAPI.list().then(({data})=>{if(!Array.isArray(data)||!data.length)throw Error();if(active){setCategories(data);setCategoryError(false);}}).catch(()=>{if(active){setCategoryError(true);toast.error(tr("Não foi possível carregar as categorias."));}});return()=>{active=false;};},[]);
 
   useEffect(() => {
     if (!user) {
       setSavedPosts([]);
       return undefined;
     }
-    savedAPI.list().then((response) => setSavedPosts(response.data || []))
-      .catch((error) => toast.error(error.response?.data?.error || t("Não foi possível carregar as publicações salvas.")));
-    return undefined;
-  }, [activeTab, user]);
+    if(activeTab!=='saved')return undefined;
+    let active=true;const sequence=++savedRefresh.current,controller=new AbortController();
+    savedAPI.list({signal:controller.signal}).then((response) => {if(active&&sequence===savedRefresh.current){setSavedPosts(response.data||[]);setSavedIds(new Set((response.data||[]).map(post=>post.id)));}})
+      .catch((error) => {if(active)toast.error(error.response?.data?.error || t("Não foi possível carregar as publicações salvas."));});
+    return ()=>{active=false;controller.abort();};
+  }, [activeTab, user?.id]);
 
   useEffect(() => {
     if (!user || activeTab !== 'conversations') return undefined;
@@ -546,7 +581,7 @@ const FeedPage = () => {
     if (votesInFlight.current.has(post.id)) return;
     votesInFlight.current.add(post.id);
     const wasLiked = likedPosts.has(post.id), previousVotes = post.votes || 0;
-    setVotingPost(post.id);
+    setVotingPosts(current=>new Set([...current,post.id]));
     setLikedPosts(current => { const next = new Set(current); if (wasLiked) next.delete(post.id); else next.add(post.id); return next; });
     setPosts(current => current.map(item => item.id === post.id ? { ...item, votes: Math.max(0, previousVotes + (wasLiked ? -1 : 1)) } : item));
     try {
@@ -558,7 +593,7 @@ const FeedPage = () => {
       toast.error(error.response?.data?.error || t('reportError'));
     } finally {
       votesInFlight.current.delete(post.id);
-      setVotingPost(current => current === post.id ? null : current);
+      setVotingPosts(current=>{const next=new Set(current);next.delete(post.id);return next;});
     }
   };
 
@@ -574,20 +609,30 @@ const FeedPage = () => {
       toast.info(t("Entre na sua conta para salvar publicações."));
       return;
     }
+    const owner=user.id,saveKey=owner+':'+post.id;
+    if(savesInFlight.current.has(saveKey))return;
+    savesInFlight.current.add(saveKey);
+    ++savedRefresh.current;
+    setSavingPosts(current=>new Set([...current,post.id]));
+    const saved=savedIds.has(post.id),oldIndex=savedPosts.findIndex(item=>item.id===post.id),oldPost=savedPosts[oldIndex]||post;
+    setSavedIds(current=>{const next=new Set(current);if(saved)next.delete(post.id);else next.add(post.id);return next;});
+    setSavedPosts(current=>saved?current.filter(item=>item.id!==post.id):[{...post,savedByMe:true},...current.filter(item=>item.id!==post.id)]);
+    setOpenMenu(null);
     try {
-      const saved = savedPosts.some((item) => item.id === post.id);
       if (saved) {
         await savedAPI.remove(post.id);
-        setSavedPosts((current) => current.filter((item) => item.id !== post.id));
       } else {
         await savedAPI.save(post.id);
-        setSavedPosts((current) => [{ ...post, savedByMe: true }, ...current]);
       }
+      if(currentViewer.current!==owner)return;
       setOpenMenu(null);
       toast.success(saved ? t("Publicação removida dos salvos.") : t("Publicação salva."));
     } catch (error) {
+      if(currentViewer.current!==owner)return;
+      setSavedIds(current=>{const next=new Set(current);if(saved)next.add(post.id);else next.delete(post.id);return next;});
+      setSavedPosts(current=>{const next=current.filter(item=>item.id!==post.id);if(saved)next.splice(Math.max(0,Math.min(oldIndex,next.length)),0,oldPost);return next;});
       toast.error(error.response?.data?.error || t("Não foi possível atualizar os salvos."));
-    }
+    }finally{savesInFlight.current.delete(saveKey);if(currentViewer.current===owner)setSavingPosts(current=>{const next=new Set(current);next.delete(post.id);return next;});}
   };
 
   const copyPostLink = async post => { setOpenMenu(null); try { const {data}=await sharingAPI.publication(post.id,getLanguage()); if(!navigator.clipboard?.writeText)throw Error();await navigator.clipboard.writeText(data.url);toast.success(t('shareCopied'));} catch(error){toast.error(error.response?.data?.error||t('shareCopyError'));} };
@@ -706,6 +751,7 @@ const FeedPage = () => {
     try {
       const { data } = await (relation?.following || relation?.pending ? socialAPI.unfollow(person.id) : socialAPI.follow(person.id));
       setRelationships(current => ({ ...current, [person.id]: data }));
+      if(data.following)feedInitialized.current=false;
       notifySocialChange();
     } catch (error) { toast.error(error.response?.data?.error || t('followError')); }
     finally {
@@ -725,16 +771,15 @@ const FeedPage = () => {
     const unsubscribe = subscribeSocialChanges(refresh);
     return () => { active = false; unsubscribe(); };
   }, [user?.id, userResults]);
-  useEffect(() => subscribeSocialChanges(() => loadFeed()), [loadFeed]);
 
   const postActions = useRef({});
   postActions.current = { startEditing, deletePost, toggleSaved, copyPostLink, sharePost: post => { setOpenMenu(null); setShareCandidate(post.id); }, navigate, setLightboxImage, changeSlide, handleVote, toggleShare, openConversation,
     menu: (id, mode) => setOpenMenu(current => mode === 'toggle' && current === id ? null : id) };
   const dispatchPostAction = useCallback((name, ...args) => postActions.current[name](...args), []);
-  const renderPost = post => <FeedPost key={post.id} post={post} slide={slideByPost[post.id] || 0} liked={likedPosts.has(post.id)} shared={sharedPosts.has(post.id)} menuOpen={openMenu === post.id} saved={savedPosts.some(item => item.id === post.id)} canManage={post.author?.id === user?.id || user?.role === 'admin'} voting={votingPost === post.id} onAction={dispatchPostAction} />;
+  const renderPost = post => <FeedPost key={post.id} post={post} slide={slideByPost[post.id] || 0} liked={likedPosts.has(post.id)} shared={sharedPosts.has(post.id)} menuOpen={openMenu === post.id} saved={savedIds.has(post.id)} saving={savingPosts.has(post.id)} canManage={post.author?.id === user?.id || user?.role === 'admin'} voting={votingPosts.has(post.id)} onAction={dispatchPostAction} />;
 
   const renderHome = () => <>
-    <React.Suspense fallback={null}><StoriesRail/></React.Suspense>
+    {user&&<React.Suspense fallback={null}><StoriesRail/></React.Suspense>}
     <FeedHeader title={t('recentIdentifications')} description={t("Relatos urbanos, apoio comunitário e acompanhamento real.")}>
       <button type="button" onClick={() => selectTab('create')} className="feed-report-button"><Plus size={15} /> <span>{t('reportProblem')}</span></button>
     </FeedHeader>
@@ -744,9 +789,9 @@ const FeedPage = () => {
       <FloatingSelect value={category} onChange={(value) => { setCategory(value); setPage(1); }} options={[{ value: '', label: categoryError ? t("Categorias indisponíveis") : t("Todas as categorias") }, ...categories.map((item) => ({ value: item.id, label: translateCategory(item.name) }))]} />
       <FloatingSelect value={sort} onChange={(value) => { setSort(value); setPage(1); }} options={[{ value: 'recent', label: t("Ocorrências recentes") }, { value: 'votes', label: t("Mais apoiadas") }]} />
     </section>
-    {feedError && <div className="feed-empty" role="alert">{t("Não foi possível consultar as publicações. Isso não significa que foram apagadas.")}<button type="button" onClick={loadFeed}>{t("Tentar novamente")}</button></div>}
+    {feedError && <div className="feed-empty" role="alert">{t("Não foi possível consultar as publicações. Isso não significa que foram apagadas.")}<button type="button" onClick={()=>loadFeed(posts.length>0)}>{t("Tentar novamente")}</button></div>}
     {loading && posts.length === 0 ? <div className="feed-post-skeleton" role="status" aria-busy="true"><span className="sr-only">{t('loadingPosts')}</span><div className="route-skeleton-title" /><div className="route-skeleton-line" /><div className="route-skeleton-card" /></div> : feedError && filteredPosts.length === 0 ? null : filteredPosts.length === 0 ? <div className="feed-empty"><ImageIcon size={30} />{t('noPosts')}</div> : <div className="space-y-5">{filteredPosts.map(renderPost)}</div>}
-    <footer className="feed-pagination"><span>{total} {t("publicações")}</span><div><button type="button" disabled={page <= 1} onClick={() => setPage((value) => value - 1)}><ChevronLeft size={16} /></button><span>{page}</span><button type="button" disabled={page * 9 >= total} onClick={() => setPage((value) => value + 1)}><ChevronRight size={16} /></button></div></footer>
+    <footer ref={feedEnd} className="feed-pagination"><span>{total} {t("publicações")}</span>{hasMorePosts&&<button type="button" className="feed-secondary-button" disabled={loading} onClick={()=>loadFeed(true)}>{t(loading?'loading':'loadMore')}</button>}</footer>
   </>;
 
   const loadOlderMessages = async () => {
@@ -816,7 +861,7 @@ const FeedPage = () => {
     <div className="mb-4 flex flex-wrap gap-2">{['all','unread','read'].map(value=><button type="button" className="profile-action" key={value} aria-pressed={notificationFilter===value} onClick={()=>{setNotificationFilter(value);setNotificationPage(1);}}>{t('activityFilter'+value)}</button>)}</div>
     {notificationError&&<p role="status" className="site-muted mb-4">{t('activityLoadError')}</p>}
     <div className="feed-notification-balloon"><div className="feed-notification-head"><span><Bell size={17}/>{t('notifications')}</span><strong>{notificationMeta.unread} {t('activityUnread')}</strong></div>
-      {loadingNotifications&&notifications.length===0?<div className="feed-empty" role="status">{t('loading')}</div>:notifications.length===0?<p className="feed-empty">{t('noNotifications')}</p>:notifications.map(item=><button type="button" key={item.id} onClick={()=>openNotification(item)} className={'feed-notification w-full text-left '+(item.lida?'':'is-unread')}><span className="feed-notification-icon"><Bell size={15}/></span><span><strong>{translateSystemText(item.titulo)}</strong><p>{translateSystemText(item.mensagem)}</p><small>{item.dataCriacao?formatDistanceToNow(new Date(item.dataCriacao),{locale:({'pt-BR':ptBR,en:enUS,es})[getLanguage()],addSuffix:true}):t('now')}</small></span></button>)}
+      {loadingNotifications&&notifications.length===0?<div className="feed-empty" role="status">{t('loading')}</div>:notifications.length===0?<p className="feed-empty">{t('noNotifications')}</p>:notifications.map(item=><NotificationItem key={item.id} item={item} onOpen={openNotification}/>)}
     </div>
     {notificationMeta.total>notificationMeta.limit&&<div className="mt-4 flex justify-between"><button type="button" disabled={notificationPage<=1||loadingNotifications} onClick={()=>setNotificationPage(value=>value-1)}>{t('previous')}</button><span>{notificationPage}</span><button type="button" disabled={notificationPage*notificationMeta.limit>=notificationMeta.total||loadingNotifications} onClick={()=>setNotificationPage(value=>value+1)}>{t('next')}</button></div>}
   </>;
@@ -897,7 +942,7 @@ const FeedPage = () => {
         </form>
       </div>}
       {lightboxImage && <button type="button" className="context-modal fixed inset-0 z-[1500] grid place-items-center bg-black/90 p-6" onClick={() => setLightboxImage(null)} aria-label={t("Fechar imagem")}><img src={lightboxImage} alt="" className="max-h-full max-w-full object-contain" /></button>}
-      {cropFile && <ImageCropper file={cropFile} onCancel={() => { setCropFile(null); setCropQueue([]); }} onConfirm={handleCroppedImage} />}
+      {cropFile && <React.Suspense fallback={<p role="status">{t('loading')}</p>}><ImageCropper file={cropFile} onCancel={() => { setCropFile(null); setCropQueue([]); }} onConfirm={handleCroppedImage} /></React.Suspense>}
       {shareCandidate && <React.Suspense fallback={null}><SharePublicationDialog problemId={shareCandidate} onClose={()=>setShareCandidate(null)}/></React.Suspense>}
     </main>
   );

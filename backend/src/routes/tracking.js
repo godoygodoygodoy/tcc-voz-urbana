@@ -7,6 +7,7 @@ import { listStages, configureStage } from '../services/workflow.js';
 import { memoryImageUpload } from '../middleware/memoryUpload.js';
 import { storeFiles, removeStoredFiles } from '../config/storage.js';
 import { attachComparison } from '../services/comparisons.js';
+import { announceNotification } from '../utils/notifications.js';
 const router = express.Router(),
   service = createProblemTracking(prisma);
 const upload = memoryImageUpload({
@@ -19,7 +20,11 @@ router.get('/stages', asyncHandler(async (req, res) => res.json({
 })));
 router.put('/stages/:code', authMiddleware, adminMiddleware, asyncHandler(async (req, res) => res.json(await configureStage(prisma, req.userId, req.params.code, req.body))));
 router.get('/:id/confirmations', optionalAuthMiddleware, asyncHandler(async (req, res) => res.json(await service.confirmations(req, req.params.id))));
-router.put('/:id/confirmations', authMiddleware, asyncHandler(async (req, res) => res.json(await service.confirm(req, req.params.id, req.body.choice))));
+router.put('/:id/confirmations', authMiddleware, asyncHandler(async (req, res) => {
+  const {notification,...result}=await service.confirm(req,req.params.id,req.body.choice);
+  if(notification)void announceNotification(notification).catch(()=>{});
+  res.json(result);
+}));
 router.get('/:id/timeline', optionalAuthMiddleware, asyncHandler(async (req, res) => res.json(await service.timeline(req, req.params.id, req.query.cursor))));
 router.get('/:id/related', optionalAuthMiddleware, asyncHandler(async (req, res) => res.json(await service.related(req, req.params.id))));
 router.post('/:id/comparison', authMiddleware, upload.fields([{

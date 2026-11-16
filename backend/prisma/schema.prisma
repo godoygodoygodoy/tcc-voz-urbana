@@ -31,7 +31,8 @@ model Usuario {
   atualizacoes           AtualizacaoProblema[]
   comentarios            Comentario[]
   logs                   Log[]
-  notificacoes           Notificacao[]
+  notificacoes           Notificacao[] @relation("destinatarioNotificacao")
+  acoesNotificadas        Notificacao[] @relation("autorNotificacao")
   problemas              Problema[]
   votos                  Voto[]
   publicacoesSalvas      PublicacaoSalva[]
@@ -158,6 +159,8 @@ model Comentario {
 }
 
 model Notificacao {
+  autorId String? @map("autor_id") @db.Char(36)
+  autor Usuario? @relation("autorNotificacao",fields:[autorId],references:[id],onDelete:SetNull,onUpdate:Cascade,map:"notificacoes_autor_fk")
   chaveEvento String? @unique @map("chave_evento") @db.VarChar(191)
   id          String   @id @default(uuid()) @db.Char(36)
   tipo        String   @db.VarChar(50)
@@ -167,9 +170,10 @@ model Notificacao {
   link        String?  @db.VarChar(300)
   dataCriacao DateTime @default(now()) @map("data_criacao")
   usuarioId   String   @map("usuario_id") @db.Char(36)
-  usuario     Usuario  @relation(fields: [usuarioId], references: [id], onDelete: Cascade, onUpdate: Restrict, map: "notificacoes_usuario_fk")
+  usuario     Usuario  @relation("destinatarioNotificacao",fields: [usuarioId], references: [id], onDelete: Cascade, onUpdate: Restrict, map: "notificacoes_usuario_fk")
 
   @@index([usuarioId, lida, dataCriacao], map: "notificacoes_usuario_lida_data_idx")
+  @@index([autorId],map:"notificacoes_autor_idx")
   @@map("notificacoes")
 }
 

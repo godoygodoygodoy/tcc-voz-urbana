@@ -107,7 +107,7 @@ export const collectionsAPI = {
   removeItem: (id,problemId) => api.delete('/collections/'+id+'/items/'+problemId),
 };
 export const savedAPI = {
-  list: () => api.get('/saved'),
+  list: (options) => api.get('/saved',options),
   save: (problemId) => api.post(`/saved/${problemId}`),
   remove: (problemId) => api.delete(`/saved/${problemId}`),
 };

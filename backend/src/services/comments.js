@@ -46,7 +46,7 @@ export const createComments = db => ({
       recipients.delete(req.userId);
       const allowed=recipients.size?await tx.usuario.findMany({where:{AND:[{id:{in:[...recipients.keys()]}},readersOfProfileWhere(problem.usuario)]},select:{id:true}}):[];
       const notifications=[];
-      for(const recipient of allowed){const tipo=recipients.get(recipient.id);const notification=await writeNotification(tx,{usuarioId:recipient.id,tipo,titulo:'notification'+tipo+'Title',mensagem:'notification'+tipo+'Body',link:'/problem/'+problemId+'#comments',eventKey:'comment:'+comment.id+':'+tipo});if(notification)notifications.push(notification);}
+      for(const recipient of allowed){const tipo=recipients.get(recipient.id);const notification=await writeNotification(tx,{usuarioId:recipient.id,autorId:req.userId,tipo,titulo:'notification'+tipo+'Title',mensagem:'notification'+tipo+'Body',link:'/problem/'+problemId+'#comments',eventKey:'comment:'+comment.id+':'+tipo});if(notification)notifications.push(notification);}
       return{comment:{...commentDto(comment),...(parentId?{threadTotal:await tx.comentario.count({where:{parentId}})}:{})},notifications};
     },{isolationLevel:'ReadCommitted'});
   },

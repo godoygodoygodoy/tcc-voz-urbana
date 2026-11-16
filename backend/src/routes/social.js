@@ -85,13 +85,13 @@ router.get('/users/:id/likes', asyncHandler(async (req, res) => {
 router.get('/users/:id/relationship', asyncHandler(async (req, res) => res.json(await relationship(prisma, req.userId, req.params.id))));
 router.post('/users/:id/follow', asyncHandler(async (req, res) => {
   const result = await graph.follow(req.userId, req.params.id);
-  if (result.changed) await createNotification({ usuarioId: req.params.id, tipo: result.pending ? 'SEGUIR_SOLICITACAO' : 'NOVO_SEGUIDOR', titulo: result.pending ? "Nova solicitação para seguir" : "Novo seguidor", mensagem: result.pending ? "Uma pessoa pediu para seguir seu perfil privado." : "Uma pessoa começou a seguir seu perfil.", link: `/profile/${req.userId}` });
+  if (result.changed) await createNotification({ usuarioId: req.params.id, autorId:req.userId, tipo: result.pending ? 'SEGUIR_SOLICITACAO' : 'NOVO_SEGUIDOR', titulo: result.pending ? "Nova solicitação para seguir" : "Novo seguidor", mensagem: result.pending ? "Uma pessoa pediu para seguir seu perfil privado." : "Uma pessoa começou a seguir seu perfil.", link: `/profile/${req.userId}` });
   res.status(201).json(result);
 }));
 router.delete('/users/:id/follow', asyncHandler(async (req, res) => res.json(await graph.unfollow(req.userId, req.params.id))));
 router.patch('/follow-requests/:id', asyncHandler(async (req, res) => {
   const result = await graph.respond(req.userId, req.params.id, String(req.body.action || ''));
-  if (req.body.action === 'accept') await createNotification({ usuarioId: result.request.followerId, tipo: 'SEGUIR_ACEITA', titulo: "Solicitação para seguir aprovada", mensagem: "Sua solicitação para seguir foi aprovada.", link: `/profile/${req.userId}` });
+  if (req.body.action === 'accept') await createNotification({ usuarioId: result.request.followerId, autorId:req.userId, tipo: 'SEGUIR_ACEITA', titulo: "Solicitação para seguir aprovada", mensagem: "Sua solicitação para seguir foi aprovada.", link: `/profile/${req.userId}` });
   res.json(result.relationship);
 }));
 for (const direction of ['received', 'sent']) router.get(`/follow-requests/${direction}`, asyncHandler(async (req, res) => {

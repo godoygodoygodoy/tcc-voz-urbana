@@ -1,6 +1,7 @@
 import { lockUsers, socialError, visibleProblemWhere } from './socialGraph.js';
 import { publicUser } from './socialGraph.js';
 import { stageDto } from './workflow.js';
+import { writeNotification } from './notifications.js';
 const CHOICES = ['EXISTE', 'RESOLVIDO', 'ATUALIZAR'];
 const includeAuthor = {
   usuario: {
@@ -87,7 +88,7 @@ export const createProblemTracking = db => ({
   async confirm(req, id, choice) {
     if (!CHOICES.includes(choice)) throw socialError(400, 'confirmationInvalid');
     const candidate = await getProblem(db, req, id);
-    await db.$transaction(async tx => {
+    const notification = await db.$transaction(async tx => {
       await lockUsers(tx, [req.userId, candidate.usuarioId]);
       await getProblem(tx, req, id);
       const where = {
@@ -113,10 +114,14 @@ export const createProblemTracking = db => ({
           registradaEm: new Date()
         }
       });
+      return candidate.usuarioId === req.userId ? null : writeNotification(tx,{
+        usuarioId:candidate.usuarioId,autorId:req.userId,tipo:'CONFIRMACAO',
+        titulo:'notificationConfirmationTitle',mensagem:'notificationConfirmationBody',link:'/problem/'+id,
+      });
     }, {
       isolationLevel: 'ReadCommitted'
     });
-    return this.confirmations(req, id);
+    return {...await this.confirmations(req, id),notification};
   },
   async timeline(req, id, rawCursor) {
     const problem = await getProblem(db, req, id),

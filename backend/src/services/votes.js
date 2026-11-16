@@ -14,7 +14,7 @@ export const createVotes = db => ({
       if(existing?.tipo===tipo)await tx.voto.delete({where:{id:existing.id}});
       else if(existing){await tx.voto.update({where:{id:existing.id},data:{tipo}});added=true;}
       else {await tx.voto.create({data:{usuarioId:req.userId,problemaId:problemId,tipo}});added=true;}
-      const notification=added&&problem.usuarioId!==req.userId?await writeNotification(tx,{usuarioId:problem.usuarioId,tipo:'VOTO',titulo:'notificationVoteTitle',mensagem:'notificationVoteBody',link:'/problem/'+problemId}):null;
+      const notification=added&&problem.usuarioId!==req.userId?await writeNotification(tx,{usuarioId:problem.usuarioId,autorId:req.userId,tipo:'VOTO',titulo:'notificationVoteTitle',mensagem:'notificationVoteBody',link:'/problem/'+problemId}):null;
       const updated=await tx.problema.findUnique({where:{id:problemId},include:{categoria:true,usuario:{select:{id:true,nome:true,username:true,fotoPerfil:true}},imagens:true,atualizacoes:{orderBy:{dataCriacao:'desc'}},_count:{select:{votos:true}}}});
       return{problem:updated,notification};
     },{isolationLevel:'ReadCommitted'});

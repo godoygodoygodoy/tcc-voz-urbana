@@ -22,6 +22,7 @@
     "test:followers": "node --experimental-vm-modules --test tests/followers.node.js tests/followers-api.node.js",
     "test:followers:db": "node --test tests/followers-mysql.node.js",
     "test:performance": "node --experimental-vm-modules --test tests/performance.node.js",
+    "test:feed-performance": "node --experimental-vm-modules --test tests/feed-listing.node.js tests/media-variants.node.js",
     "test:profile-connections": "node --experimental-vm-modules --test tests/profile-connections.node.js",
     "test:expansion": "node --experimental-vm-modules --test tests/collections.node.js tests/stories.node.js tests/stories-api.node.js tests/story-media.node.js tests/story-ranges.node.js tests/media-validation.node.js tests/polls.node.js tests/notifications.node.js tests/comments-replies.node.js tests/participation.node.js tests/storage-ownership.node.js tests/problem-status.node.js tests/geography.node.js tests/tracking.node.js tests/profile-features.node.js tests/sharing.node.js",
     "test:production": "node --experimental-vm-modules --test tests/production-config.node.js tests/people-search.node.js tests/data-safety.node.js",
@@ -56,6 +57,7 @@
     "jsonwebtoken": "^9.0.0",
     "multer": "^1.4.5-lts.1",
     "nodemailer": "^10.0.10",
+    "sharp": "0.35.5",
     "socket.io": "^4.8.3"
   },
   "devDependencies": {

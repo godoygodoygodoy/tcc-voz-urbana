@@ -38,6 +38,7 @@ export function createSocialMemory() {
   };
   const sort = (rows, orderBy) => [...rows].sort((a,b) => {
     for (const spec of Array.isArray(orderBy) ? orderBy : orderBy ? [orderBy] : []) for (const [key,direction] of Object.entries(spec)) {
+      if(key==='votos'&&direction?._count){const count=id=>state.votes.filter(vote=>vote.problemaId===id).length;const delta=count(a.id)-count(b.id);if(delta)return direction._count==='desc'?-delta:delta;continue;}
       if(key==='_count'){const field=Object.keys(direction)[0],sign=direction[field]==='desc'?-1:1;if(a._count[field]!==b._count[field])return (a._count[field]-b._count[field])*sign;continue;}
       if(a[key]==null&&b[key]!=null)return direction==='desc'?1:-1;
       if(a[key]!=null&&b[key]==null)return direction==='desc'?-1:1;
@@ -54,6 +55,8 @@ export function createSocialMemory() {
     if (kind === 'statusHistory') { result.problema = decorate(state.problems.find(problem=>problem.id===row.problemaId),'problem'); result.usuario=user(row.usuarioId); }
     if (kind === 'user') result._count = { problemas: state.problems.filter(p=>p.usuarioId===row.id).length };
     if (kind === 'problem') result = { ...result, usuario: user(row.usuarioId), etapa:state.stages.find(stage=>stage.codigo===row.etapaCodigo)||null, imagens: state.images.filter(image=>image.problemaId===row.id).length?state.images.filter(image=>image.problemaId===row.id):(row.imagens || []), atualizacoes: [], votos: [], categoria: { id:'cat',nome:'Iluminação',cor:'#abc' }, _count:{votos:state.votes.filter(vote=>vote.problemaId===row.id).length} };
+    if(kind==='problem'&&args.select?.votos)result.votos=state.votes.filter(vote=>vote.problemaId===row.id&&matches(vote,args.select.votos.where));
+    if(kind==='problem'&&args.select?.salvos)result.salvos=state.saved.filter(saved=>saved.problemaId===row.id&&matches(saved,args.select.salvos.where));
     if (kind === 'conversation' && args.include) result = { ...result, usuarioA:user(row.usuarioAId),usuarioB:user(row.usuarioBId),mensagens:sort(state.messages.filter(m=>m.conversaId===row.id),args.include.mensagens?.orderBy).slice(0,args.include.mensagens?.take) };
     if (kind === 'message') result.remetente = user(row.remetenteId);
     if (kind === 'comment') result = {...result,usuario:user(row.usuarioId),_count:{respostas:state.comments.filter(comment=>comment.parentId===row.id).length}};

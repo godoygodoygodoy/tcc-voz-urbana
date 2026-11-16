@@ -1,12 +1,13 @@
 ﻿import { useNavigate } from 'react-router-dom';
 import { createVisibilityPoller, retainEqual } from '../utils/polling';
 import { isActivityConnected, subscribeActivityChanges } from '../utils/activity';
-import { translateSystemText, useI18n } from '../i18n';
+import { useI18n } from '../i18n';
 import React, { useEffect, useRef, useState } from 'react';
 import { Bell, CheckCheck } from 'lucide-react';
 import { notificationsAPI } from '../services/api';
 import { useAuthStore } from '../store';
 import { toast } from './LocalizedToast';
+import NotificationItem from './NotificationItem';
 export default function NotificationBell() {
   const navigate = useNavigate(), userId = useAuthStore(state=>state.user?.id);
   const [items,setItems] = useState([]), [unread,setUnread] = useState(0), [open,setOpen] = useState(false);
@@ -44,7 +45,7 @@ export default function NotificationBell() {
     </button>
     {open&&<div className="absolute right-0 top-full z-[100] mt-3 w-80 max-w-[calc(100vw-24px)] rounded-2xl border border-white/10 bg-[#202326] p-3 text-white shadow-2xl" onKeyDown={event=>{if(event.key==='Escape')setOpen(false);}}>
       <div className="flex items-center justify-between border-b border-white/10 pb-2"><strong>{t('notifications')}</strong><button type="button" onClick={markAll} className="text-xs text-violet-200"><CheckCheck className="mr-1 inline h-3 w-3"/>{t('markAllRead')}</button></div>
-      <div className="context-scroll max-h-72 overflow-auto py-2">{loadError&&<div role="status" className="py-3 text-sm text-white/70"><p>{t('notificationsUnavailable')}</p><button type="button" className="profile-action mt-2" onClick={()=>refresh.current()}>{t('collectionRetry')}</button></div>}{loading&&items.length===0?<p role="status" className="py-5 text-center text-sm text-white/50">{t('loading')}</p>:items.length===0&&!loadError?<p className="py-5 text-center text-sm text-white/50">{t('noNotifications')}</p>:items.map(item=><button type="button" key={item.id} onClick={()=>openItem(item)} className={'block w-full rounded-xl p-3 text-left text-sm '+(item.lida?'text-white/55':'bg-white/8 text-white')}><strong>{translateSystemText(item.titulo)}</strong><p className="mt-1">{translateSystemText(item.mensagem)}</p></button>)}</div>
+      <div className="context-scroll max-h-72 overflow-auto py-2">{loadError&&<div role="status" className="py-3 text-sm text-white/70"><p>{t('notificationsUnavailable')}</p><button type="button" className="profile-action mt-2" onClick={()=>refresh.current()}>{t('collectionRetry')}</button></div>}{loading&&items.length===0?<p role="status" className="py-5 text-center text-sm text-white/50">{t('loading')}</p>:items.length===0&&!loadError?<p className="py-5 text-center text-sm text-white/50">{t('noNotifications')}</p>:items.map(item=><NotificationItem key={item.id} item={item} onOpen={openItem} onActorOpen={()=>setOpen(false)} compact/>)}</div>
       <button type="button" className="profile-action w-full justify-center" onClick={()=>{setOpen(false);navigate('/feed#notifications');}}>{t('activityViewAll')}</button>
     </div>}
   </div>;

@@ -1,4 +1,6 @@
 import * as sharingService from '../../src/services/sharing.js';
+import * as feedListing from '../../src/services/feedListing.js';
+import * as mediaVariants from '../../src/services/mediaVariants.js';
 import {notFound} from '../../src/middlewares/notFound.js';
 import * as profileFeatures from '../../src/services/profileFeatures.js';
 import {validateMedia} from '../../src/utils/mediaValidation.js';
@@ -69,6 +71,8 @@ export async function createSocialFixture({ streaming = false } = {}) {
   const achievementChecks=[];
   const achievements={achievementService:createAchievements(db),queueAchievementCheck:id=>achievementChecks.push(id)};
   const dependencies={
+    '../services/feedListing.js':feedListing,
+    '../services/mediaVariants.js':mediaVariants,
     '../services/sharing.js':sharingService,'../services/profileFeatures.js':profileFeatures,'../services/problemTracking.js':trackingService,'../services/workflow.js':workflowService,'../services/comparisons.js':comparisonService,'../services/geography.js':geographyService,express:{default:express},'node:path':{default:path},'../config/prisma.js':{prisma:db},'./prisma.js':{prisma:db},'../services/problemStatus.js':problemStatusService,
     '../services/votes.js':voteService,'../services/comments.js':commentService,'../services/achievementQueue.js':achievements,'../services/watching.js':watchingService,'../services/notifications.js':notificationService,'../services/activityEvents.js':activityEvents,'../services/polls.js':pollService,'../services/stories.js':storyService,'../services/storyMedia.js':storyMedia,'express-rate-limit':{default:rateLimit},multer:{default:multer},'../services/collections.js':collectionService,'../services/savedPublications.js':savedSerialization,'../services/socialGraph.js':graph,'../services/messaging.js':messaging,
     '../services/publicationMedia.js':media,'../middlewares/errorHandler.js':errors,

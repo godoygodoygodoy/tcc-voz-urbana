@@ -1,4 +1,5 @@
 import { problemFilters } from '../services/geography.js';
+import { createFeedListing, visibleFeedIds } from '../services/feedListing.js';
 import { queueAchievementCheck } from '../services/achievementQueue.js';
 import { publicationImages } from '../services/publicationMedia.js';
 import { visibleProblemWhere } from '../services/socialGraph.js';
@@ -12,6 +13,7 @@ import { authMiddleware, optionalAuthMiddleware } from "../middlewares/auth.js";
 const upload = memoryImageUpload({ limits: { files: 8 } });
 
 const router = express.Router();
+const listFeed=createFeedListing(prisma);
 
 const stateNames = {
   AC: "Acre", AL: "Alagoas", AP: "Amapá", AM: "Amazonas", BA: "Bahia", CE: "Ceará",
@@ -185,6 +187,8 @@ router.get(
   "/",
   optionalAuthMiddleware,
   asyncHandler(async (req, res) => {
+    if(req.query.view==='visibility')return res.json(await visibleFeedIds(prisma,req));
+    if(req.query.view==='feed')return res.json(await listFeed(req));
     const {
       page = 1,
       limit = 20,
