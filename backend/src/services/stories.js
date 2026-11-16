@@ -1,5 +1,6 @@
+import {assertInteractionAllowed} from './socialGraph.js';
 ﻿import { lockUsers, publicUser, socialError, visibleUserWhere } from './socialGraph.js';
-export const STORY_AUDIENCES = ['PUBLICO','SEGUIDORES','AMIGOS','SO_EU'];
+export const STORY_AUDIENCES = ['PUBLICO','SEGUIDORES','AMIGOS','SO_EU','PROXIMOS'];
 import { validateComposition,validateStickerAnswer,INTERACTIVE_STICKERS } from './storyComposition.js';
 import { mediaProviders } from './mediaProviders.js';
 export const storyVisibilityWhere = (viewerId, now = new Date()) => ({
@@ -11,6 +12,7 @@ export const storyVisibilityWhere = (viewerId, now = new Date()) => ({
     { OR: [
       { audiencia:'PUBLICO' },
       ...(viewerId ? [
+       { audiencia:'PROXIMOS',usuario:{is:{proximos:{some:{convidadoId:viewerId}}}} },
        { audiencia:'SEGUIDORES', usuario:{is:{seguidores:{some:{followerId:viewerId,status:'ACEITA'}}}} },
        { audiencia:'AMIGOS', usuario:{is:{AND:[{seguidores:{some:{followerId:viewerId,status:'ACEITA'}}},{seguindo:{some:{followingId:viewerId,status:'ACEITA'}}}]}} },
       ] : []),
@@ -18,8 +20,8 @@ export const storyVisibilityWhere = (viewerId, now = new Date()) => ({
   ] },
  ],
 });
-const include = viewerId => ({ usuario:{select:publicUser},visualizacoes:{where:{usuarioId:viewerId},select:{id:true,reacao:true}},_count:{select:{visualizacoes:true}} });
-export const serializeStory = (row, viewerId) => ({ id:row.id,author:row.usuario,mime:row.mime,composition:row.composicao||null,audience:row.audiencia,createdAt:row.criadaEm,expiresAt:row.expiraEm,viewed:row.usuarioId===viewerId||Boolean(row.visualizacoes?.length),reaction:row.visualizacoes?.[0]?.reacao||null,...(row.usuarioId===viewerId?{viewCount:row._count?.visualizacoes||0}:{}),hasPoster:Boolean(row.posterUrl) });
+const include = viewerId => ({ usuario:{select:publicUser},visualizacoes:{where:{usuarioId:viewerId},select:{id:true,reacao:true}},_count:{select:{visualizacoes:{where:{usuarioId:{not:viewerId}}}}} });
+export const serializeStory = (row, viewerId) => ({ id:row.id,author:row.usuario,mime:row.mime,composition:row.composicao||null,audience:row.audiencia,createdAt:row.criadaEm,expiresAt:row.expiraEm,viewed:Boolean(row.visualizacoes?.length),reaction:row.visualizacoes?.[0]?.reacao||null,...(row.usuarioId===viewerId?{viewCount:row._count?.visualizacoes||0}:{}),hasPoster:Boolean(row.posterUrl) });
 export const createStories = (db, { notify = async () => null, resolveMusic = id=>mediaProviders.song(id) } = {}) => ({
  async existingPublication(viewerId,key,hash) {
   if(!key)return null;
@@ -56,14 +58,18 @@ export const createStories = (db, { notify = async () => null, resolveMusic = id
  async viewers(viewerId,id,query={}) {
   const story=await this.get(viewerId,id);if(story.usuarioId!==viewerId)throw socialError(403,'storyUnavailable');
   const page=Math.min(10000,Math.max(1,Number.parseInt(query.page,10)||1)),limit=30;
-  const [rows,total]=await Promise.all([db.storyVisualizacao.findMany({where:{storyId:id},include:{usuario:{select:publicUser}},orderBy:[{criadaEm:'desc'},{id:'asc'}],skip:(page-1)*limit,take:limit}),db.storyVisualizacao.count({where:{storyId:id}})]);
+  const where={storyId:id,usuarioId:{not:story.usuarioId}};
+  const [rows,total]=await Promise.all([db.storyVisualizacao.findMany({where,include:{usuario:{select:publicUser}},orderBy:[{criadaEm:'desc'},{id:'asc'}],skip:(page-1)*limit,take:limit}),db.storyVisualizacao.count({where})]);
   return{data:rows.map(row=>({id:row.id,viewedAt:row.criadaEm,reaction:row.reacao||null,user:row.usuario?{id:row.usuario.id,nome:row.usuario.nome,username:row.usuario.username,fotoPerfil:row.usuario.fotoPerfil}:null})),total,page,limit};
  },
  async list(viewerId,query={}) {
   const page=Math.min(10000,Math.max(1,Number.parseInt(query.page,10)||1)),limit=30;
   const where={...storyVisibilityWhere(viewerId),...(typeof query.owner==='string'?{usuarioId:query.owner}:{}),...(query.scope==='following'?{AND:[{OR:[{usuarioId:viewerId},{usuario:{is:{seguidores:{some:{followerId:viewerId,status:'ACEITA'}}}}}]}]}:{})};
-  const [total,rows]=await Promise.all([db.story.count({where}),db.story.findMany({where,include:include(viewerId),orderBy:[{criadaEm:'desc'},{id:'asc'}],skip:(page-1)*limit,take:limit})]);
-  return{data:rows.map(row=>serializeStory(row,viewerId)),total,page,limit};
+  // The author's circle must remain accurate even when their stories are outside
+  // the current discovery page. Publishing already caps active stories at 20.
+  const withOwn=Boolean(viewerId&&query.scope==='following'&&!query.owner);
+  const [total,rows,own]=await Promise.all([db.story.count({where}),db.story.findMany({where,include:include(viewerId),orderBy:[{criadaEm:'desc'},{id:'asc'}],skip:(page-1)*limit,take:limit}),withOwn?db.story.findMany({where:{...storyVisibilityWhere(viewerId),usuarioId:viewerId},include:include(viewerId),orderBy:[{criadaEm:'asc'},{id:'asc'}],take:20}):[]]);
+  return{data:rows.map(row=>serializeStory(row,viewerId)),total,page,limit,...(withOwn?{ownStories:own.map(row=>serializeStory(row,viewerId))}:{})};
  },
  async get(viewerId,id) {
   const row=await db.story.findFirst({where:{id,...storyVisibilityWhere(viewerId)},include:include(viewerId)});
@@ -78,6 +84,7 @@ export const createStories = (db, { notify = async () => null, resolveMusic = id
    await lockUsers(tx,[viewerId]);
    if(publicationKey){const prior=await tx.story.findFirst({where:{usuarioId:viewerId,chavePublicacao:publicationKey},include:include(viewerId)});if(prior){if(prior.hashPublicacao!==publicationHash)throw socialError(409,'storyPublicationConflict');if(prior.excluidoEm||+new Date(prior.expiraEm)<=Date.now())throw socialError(409,'storyUnavailable');return{...serializeStory(prior,viewerId),reused:true};}}
    for(const element of document?.elements||[])if(element.type==='mention'){
+    await assertInteractionAllowed(tx,viewerId,element.userId,'mencoes');
     const person=await tx.usuario.findFirst({where:{id:element.userId,...visibleUserWhere(viewerId)},select:publicUser});
     if(!person)throw socialError(400,'storyUnavailable');element.text=person.username?'@'+person.username:person.nome;
    }
@@ -97,8 +104,8 @@ export const createStories = (db, { notify = async () => null, resolveMusic = id
    await lockUsers(tx,[viewerId,candidate.usuarioId]);
    const row=await tx.story.findFirst({where:{id,...storyVisibilityWhere(viewerId)},include:include(viewerId)});
    if(!row)throw socialError(404,'storyUnavailable');
-   const view=row.usuarioId!==viewerId?await tx.storyVisualizacao.upsert({where:{storyId_usuarioId:{storyId:id,usuarioId:viewerId}},create:{storyId:id,usuarioId:viewerId},update:{}}):null;
-   return serializeStory({...row,visualizacoes:view?[view]:row.visualizacoes},viewerId);
+   const view=await tx.storyVisualizacao.upsert({where:{storyId_usuarioId:{storyId:id,usuarioId:viewerId}},create:{storyId:id,usuarioId:viewerId},update:{}});
+   return serializeStory({...row,visualizacoes:[view]},viewerId);
   },{isolationLevel:'ReadCommitted'});
  },
  async react(viewerId,id,enabled=true) {

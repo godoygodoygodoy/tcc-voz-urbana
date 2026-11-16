@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 
 // Deterministic isolated database double. Mutations assert the row-lock protocol.
 export function createSocialMemory() {
-  const state = { users: ['a','b','c'].map(id => ({ id, nome: `Person ${id}`, username: `person.${id}`, perfilPrivado: false, nivel: 'USUARIO', dataCriacao: new Date('2026-01-01'), apresentacao:null,capaUrl:null,bio: '', fotoPerfil: null, admin: null })), follows: [], conversations: [], messages: [], notifications: [], problems: [], saved: [], votes: [], comments: [], images: [], collections: [], collectionItems: [], stories: [], storyViews: [], storyAnswers: [], polls: [], pollOptions: [], pollVotes: [], notificationPreferences: [], achievements: [], statusHistory: [], statusDeliveries: [], logs: [], stages: [], confirmations: [], visits: [], categories: [] };
+  const state = { users: ['a','b','c'].map(id => ({ id, nome: `Person ${id}`, username: `person.${id}`, perfilPrivado: false, nivel: 'USUARIO', dataCriacao: new Date('2026-01-01'), apresentacao:null,capaUrl:null,bio: '', fotoPerfil: null, admin: null })), follows: [], conversations: [], messages: [], notifications: [], problems: [], saved: [], votes: [], comments: [], images: [], collections: [], collectionItems: [], stories: [], storyViews: [], storyAnswers: [], polls: [], pollOptions: [], pollVotes: [], notificationPreferences: [], achievements: [], statusHistory: [], statusDeliveries: [], logs: [], stages: [], confirmations: [], visits: [], categories: [], safetyRelations: [], hiddenPosts: [], socialPreferences: [], socialReports: [], notes: [], reposts: [], conversationMembers: [], messageReactions: [], closeFriends: [] };
   let counter = 0, queue = Promise.resolve(), locks = null;
   const queries = [];
   const user = id => state.users.find(row => row.id === id);
@@ -13,6 +13,12 @@ export function createSocialMemory() {
       if (value === undefined) return true;
       if (value === null && row[key] === undefined) return true;
       if (key === 'admin' && value && 'isNot' in value) return Boolean(row.admin);
+      if (key === 'NOT') return !(Array.isArray(value)?value.some(item=>matches(row,item,kind)):matches(row,value,kind));
+      if (key === 'medidasOrigem' || key === 'medidasDestino') {const rows=state.safetyRelations.filter(item=>(key==='medidasOrigem'?item.origemId:item.destinoId)===row.id);return value.none?!rows.some(item=>matches(item,value.none)):rows.some(item=>matches(item,value.some));}
+      if(key==='participantes')return state.conversationMembers.filter(item=>item.conversaId===row.id).some(item=>matches(item,value.some));
+      if(key==='proximos')return state.closeFriends.filter(item=>item.donoId===row.id).some(item=>matches(item,value.some));
+      if (key === 'ocultacoes') return !state.hiddenPosts.some(item=>item.problemaId===row.id&&matches(item,value.none));
+      if (['origemId_destinoId_tipo','autorId_tipoAlvo_alvoId_categoria','usuarioId_originalId','conversaId_usuarioId','mensagemId_usuarioId','donoId_convidadoId'].includes(key)) return matches(row,value,kind);
       if (key === 'OR') return value.some(item => matches(row,item,kind));
       if (key === 'AND') return value.every(item => matches(row,item,kind));
       if (key === 'followerId_followingId' || key === 'usuarioAId_usuarioBId') return matches(row,value,kind);
@@ -23,6 +29,9 @@ export function createSocialMemory() {
       if (key === 'usuarioId_enqueteId') return matches(row,value,kind);
       if (key === 'storyId_elementoId_usuarioId') return matches(row,value,kind);
       if (key === 'storyId_usuarioId' || key === 'usuarioId_problemaId' || key === 'colecaoId_salvoId') return matches(row,value,kind);
+      if(key==='remetente')return matches(user(row.remetenteId),value.is||value,'user');
+      if(key==='follower')return matches(user(row.followerId),value.is||value,'user');
+      if(key==='following')return matches(user(row.followingId),value.is||value,'user');
       if (key === 'usuario') return matches(user(row.usuarioId),value.is || value,'user');
       if (key === 'seguindo') return state.follows.some(item => item.followerId === row.id && matches(item,value.some,'follow'));
       if (key === 'seguidores') return state.follows.some(item => item.followingId === row.id && matches(item,value.some,'follow'));
@@ -59,14 +68,19 @@ export function createSocialMemory() {
     if(kind==='problem'&&args.select?.votos)result.votos=state.votes.filter(vote=>vote.problemaId===row.id&&matches(vote,args.select.votos.where));
     if(kind==='problem'&&args.select?.salvos)result.salvos=state.saved.filter(saved=>saved.problemaId===row.id&&matches(saved,args.select.salvos.where));
     if (kind === 'conversation' && args.include) result = { ...result, usuarioA:user(row.usuarioAId),usuarioB:user(row.usuarioBId),mensagens:sort(state.messages.filter(m=>m.conversaId===row.id),args.include.mensagens?.orderBy).slice(0,args.include.mensagens?.take) };
-    if (kind === 'message') result.remetente = user(row.remetenteId);
+    if(kind==='conversationMember')result.usuario=user(row.usuarioId);
+    if(kind==='conversation'){result.participantes=state.conversationMembers.filter(item=>item.conversaId===row.id&&item.estado==='ATIVO').map(item=>({...item,usuario:user(item.usuarioId)}));}
+    if (kind === 'message'){result.remetente=user(row.remetenteId);result.resposta=state.messages.find(item=>item.id===row.respostaId)||null;result.reacoes=state.messageReactions.filter(item=>item.mensagemId===row.id);}
+    if (kind === 'safetyRelation') result.destino=user(row.destinoId);
+    if(kind==='note'||kind==='repost')result.usuario=user(row.usuarioId);
+    if(kind==='closeFriend')result.convidado=user(row.convidadoId);
     if (kind === 'storyAnswer') result.usuario=user(row.usuarioId);
     if (kind === 'storyView') result.usuario=user(row.usuarioId);
     if (kind === 'comment') result = {...result,usuario:user(row.usuarioId),_count:{respostas:state.comments.filter(comment=>comment.parentId===row.id).length}};
     if (kind === 'image') result.problema = decorate(state.problems.find(p=>p.id===row.problemaId),'problem');
     if (kind === 'follow' && args.include) result = { ...result, follower:user(row.followerId), following:user(row.followingId) };
     if (kind === 'poll') result.opcoes = sort(state.pollOptions.filter(option=>option.enqueteId===row.id),{ordem:'asc'}).map(option=>({...option,_count:{votos:state.pollVotes.filter(vote=>vote.opcaoId===option.id).length}}));
-    if (kind === 'story') result = {...result,usuario:user(row.usuarioId),visualizacoes:state.storyViews.filter(v=>v.storyId===row.id&&(!args.include?.visualizacoes?.where?.usuarioId||v.usuarioId===args.include.visualizacoes.where.usuarioId)),_count:{visualizacoes:state.storyViews.filter(v=>v.storyId===row.id).length}};
+    if (kind === 'story') result = {...result,usuario:user(row.usuarioId),visualizacoes:state.storyViews.filter(v=>v.storyId===row.id&&(!args.include?.visualizacoes?.where?.usuarioId||v.usuarioId===args.include.visualizacoes.where.usuarioId)),_count:{visualizacoes:state.storyViews.filter(v=>v.storyId===row.id&&matches(v,args.include?._count?.select?.visualizacoes?.where)).length}};
     if (kind === 'collection') result.usuario = user(row.usuarioId);
     if (kind === 'collectionItem') result.salvo = decorate(state.saved.find(s => s.id === row.salvoId), 'saved');
     if (kind === 'saved' || kind === 'vote') result.problema = decorate(state.problems.find(p=>p.id===row.problemaId),'problem');
@@ -88,7 +102,7 @@ export function createSocialMemory() {
     },
     async count(args={}) { return state[key].filter(row=>matches(row,args.where,kind)).length; },
     async create({data,...args}) {
-      if(kind==='message') { const conversation=state.conversations.find(c=>c.id===data.conversaId);lockedUsers([conversation.usuarioAId,conversation.usuarioBId]);assert.ok(locks.has(`conversas:${data.conversaId}`),'message write must lock the conversation'); }
+      if(kind==='message') { const conversation=state.conversations.find(c=>c.id===data.conversaId);lockedUsers(conversation.tipo&&conversation.tipo!=='DIRETA'?state.conversationMembers.filter(item=>item.conversaId===conversation.id&&item.estado==='ATIVO').map(item=>item.usuarioId):[conversation.usuarioAId,conversation.usuarioBId]);assert.ok(locks.has(`conversas:${data.conversaId}`),'message write must lock the conversation'); }
       let generatedId;do{generatedId=kind+'-'+(++counter);}while(state[key].some(row=>row.id===generatedId));
       const row={id:generatedId,criadaEm:new Date(),atualizadaEm:new Date(),...(kind==='story'?{excluidoEm:null}:{}),...(['notification','comment','statusHistory'].includes(kind)?{dataCriacao:new Date()}:{}),...(kind==='notification'?{lida:false}:{}),...(kind==='comment'?{parentId:null}:{}),...(kind==='achievement'?{desbloqueadaEm:new Date()}:{}),...(kind==='confirmation'?{registradaEm:new Date()}:{}),...(kind==='saved'?{acompanhando:false}:{}),...data};state[key].push(row);if(kind==='poll'&&data.opcoes?.create){for(const option of data.opcoes.create)state.pollOptions.push({id:'pollOption-'+(++counter),enqueteId:row.id,...option});delete row.opcoes;}return decorate(row,kind,args);
     },
@@ -104,6 +118,7 @@ export function createSocialMemory() {
     },
   });
   const db = {
+    amigoProximo:model('closeFriends','closeFriend'),participanteConversa:model('conversationMembers','conversationMember'),reacaoMensagem:model('messageReactions','messageReaction'),nota:model('notes','note'),repost:model('reposts','repost'),relacaoSeguranca:model('safetyRelations','safetyRelation'),ocultacaoPublicacao:model('hiddenPosts','hiddenPost'),preferenciaSocial:model('socialPreferences','socialPreference'),denunciaSocial:model('socialReports','socialReport'),
     visita:model('visits','visit'),categoria:model('categories','category'),etapaProblema:model('stages','stage'),confirmacaoProblema:model('confirmations','confirmation'),atualizacaoProblema:model('statusHistory','statusHistory'),entregaAtualizacao:model('statusDeliveries','statusDelivery'),log:model('logs','log'),conquistaUsuario:model('achievements','achievement'),notificacao:model('notifications','notification'),preferenciaNotificacao:model('notificationPreferences','notificationPreference'),enquete:model('polls','poll'),enqueteOpcao:model('pollOptions','pollOption'),votoEnquete:model('pollVotes','pollVote'),story:model('stories','story'),storyResposta:model('storyAnswers','storyAnswer'),storyVisualizacao:model('storyViews','storyView'),colecao:model('collections','collection'),itemColecao:model('collectionItems','collectionItem'),usuario:model('users','user'),seguimento:model('follows','follow'),conversa:model('conversations','conversation'),mensagem:model('messages','message'),problema:model('problems','problem'),publicacaoSalva:model('saved','saved'),voto:model('votes','vote'),comentario:model('comments','comment'),imagem:model('images','image'),
     async $queryRaw(strings,...values) { const sql=strings.join('?');assert.match(sql,/FOR UPDATE/);assert.ok(locks);const table=sql.includes('FROM usuarios')?'usuarios':sql.includes('FROM problemas')?'problemas':sql.includes('FROM entregas_atualizacao')?'entregas_atualizacao':'conversas';locks.add(`${table}:${values[0]}`);queries.push({table,id:values[0]});return [{id:values[0]}]; },
     async $transaction(fn,options) {

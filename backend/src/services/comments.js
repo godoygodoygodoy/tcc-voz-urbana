@@ -1,3 +1,4 @@
+import {unblockedUserWhere} from './socialGraph.js';
 ﻿import { lockUsers, readersOfProfileWhere, socialError, visibleProblemWhere } from './socialGraph.js';
 import { writeNotification } from './notifications.js';
 export const commentInclude = { usuario:{select:{id:true,nome:true,username:true,fotoPerfil:true}},_count:{select:{respostas:true}} };
@@ -17,7 +18,7 @@ export const createComments = db => ({
     await getProblem(db,req,problemId);
     if(parentId&&!await db.comentario.findFirst({where:{id:parentId,problemaId:problemId,parentId:null},select:{id:true}}))throw socialError(404,'commentUnavailable');
     const page=pageNumber(rawPage),limit=Math.min(100,Math.max(1,Number.parseInt(rawLimit,10)||30));
-    const where={problemaId:problemId,parentId};
+    const where={problemaId:problemId,parentId,usuario:{is:unblockedUserWhere(req.userId)}};
     const [rows,total,commentTotal]=await Promise.all([
       db.comentario.findMany({where,include:commentInclude,orderBy:[{dataCriacao:'asc'},{id:'asc'}],skip:(page-1)*limit,take:limit}),
       db.comentario.count({where}),db.comentario.count({where:{problemaId:problemId}}),

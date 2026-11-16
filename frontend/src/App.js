@@ -1,3 +1,4 @@
+const RadarPage=React.lazy(()=>import('./pages/RadarPage'));
 import ActivityConnection from './components/ActivityConnection';
 import { shallow } from 'zustand/shallow';
 import RouteScroll from './components/RouteScroll';
@@ -106,6 +107,7 @@ function App() {
                 <Suspense fallback={<RouteSkeleton />}><Routes>
                   <Route path="/map" element={<HomePage />} />
                   <Route path="/feed" element={<FeedPage />} />
+                  <Route path="/feed/radar" element={<RadarPage/>}/>
                   <Route path="/login" element={user ? <Navigate to="/" /> : <LoginPage />} />
                   <Route path="/forgot-password" element={user ? <Navigate to="/" /> : <ForgotPasswordPage />} />
                   <Route path="/reset-password" element={user ? <Navigate to="/" /> : <ResetPasswordPage />} />

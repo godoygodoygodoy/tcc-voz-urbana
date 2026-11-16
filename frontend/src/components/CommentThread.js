@@ -1,3 +1,4 @@
+import {SafetyActions} from './LazySafety';
 ﻿import React, { useEffect, useId, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { formatDistanceToNow } from 'date-fns';
@@ -10,7 +11,7 @@ import Avatar from './Avatar';
 import { toast } from './LocalizedToast';
 const CommentRow = React.memo(function CommentRow({comment}) {
   const {t}=useI18n();
-  return <div className="site-comment rounded-lg p-4"><div className="flex flex-wrap items-center justify-between gap-3"><Link to={profilePath(comment.usuario)} className="flex min-w-0 items-center gap-2"><Avatar user={comment.usuario} className="h-8 w-8"/><strong className="break-all">{comment.usuario?.username?'@'+comment.usuario.username:comment.usuario?.nome||t('Usuário')}</strong></Link><span className="site-muted text-xs">{formatDistanceToNow(new Date(comment.dataCriacao),{locale:({'pt-BR':ptBR,en:enUS,es})[getLanguage()],addSuffix:true})}</span></div><p className="mt-2 whitespace-pre-wrap break-words text-white/70">{comment.texto}</p></div>;
+  return <div className="site-comment rounded-lg p-4"><div className="flex flex-wrap items-center justify-between gap-3"><Link to={profilePath(comment.usuario)} className="flex min-w-0 items-center gap-2"><Avatar user={comment.usuario} className="h-8 w-8"/><strong className="break-all">{comment.usuario?.username?'@'+comment.usuario.username:comment.usuario?.nome||t('Usuário')}</strong></Link><span className="site-muted text-xs">{formatDistanceToNow(new Date(comment.dataCriacao),{locale:({'pt-BR':ptBR,en:enUS,es})[getLanguage()],addSuffix:true})}</span></div><p className="mt-2 whitespace-pre-wrap break-words text-white/70">{comment.texto}</p><SafetyActions targetType="COMENTARIO" targetId={comment.id}/></div>;
 });
 export default React.memo(function CommentThread({comment,problemId,onReplyCreated}) {
   const {t}=useI18n(),user=useAuthStore(state=>state.user),openAuthModal=useAuthStore(state=>state.openAuthModal),inputId=useId();

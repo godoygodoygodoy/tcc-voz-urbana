@@ -1,3 +1,6 @@
+import {CreateConversation,ManageConversation,MessageActions} from '../components/LazyConversationTools';
+import {NotesRail,RepostButton,RepostsPanel} from '../components/SocialPublishing';
+import {SafetyActions} from '../components/LazySafety';
 import {sharingAPI} from '../services/api';
 const SharePublicationDialog = React.lazy(() => import('../components/SharePublicationDialog'));
 import { subscribeActivityChanges, notifyActivityChange } from '../utils/activity';
@@ -125,10 +128,12 @@ const FeedPost = React.memo(function FeedPost({ post, slide, liked, shared, menu
           {images.length > 1 && <><button type="button" onClick={(event) => { event.preventDefault(); onAction('changeSlide', post.id, -1, images.length); }} className="feed-slide feed-slide-left" aria-label={t("Imagem anterior")}><ChevronLeft size={20} /></button><button type="button" onClick={(event) => { event.preventDefault(); onAction('changeSlide', post.id, 1, images.length); }} className="feed-slide feed-slide-right" aria-label={t("Próxima imagem")}><ChevronRight size={20} /></button><div className="feed-dots">{images.map((image, index) => <span key={image.id || index} className={index === slide ? 'is-current' : ''} />)}</div></>}
         </div>
       </Link>
+      <RepostButton postId={post.id}/>
+      <SafetyActions targetId={post.id} targetType="PROBLEMA" onHidden={()=>onAction('hidePost',post.id)}/>
       <div className="feed-post-actions">
         <FeedAction active={liked} asset="curtir" label={t("Curtir ocorrência")} count={`${post.votes || 0} ${t('apoios')}`} onClick={() => onAction('handleVote', post)} disabled={voting} />
         <FeedAction asset="comentar" label={t("Comentar ocorrência")} count={t("Comentar")} onClick={() => onAction('navigate', `/problem/${post.id}#comments`)} />
-        <FeedAction active={shared} asset="republicar" label={t("Republicar ocorrência")} count={t("Republicar")} onClick={() => onAction('toggleShare', post)} />
+        <FeedAction active={shared} asset="republicar" label={t("Compartilhar")} count={t("Compartilhar")} onClick={() => onAction('toggleShare', post)} />
         <button type="button" className="feed-action-icon" aria-label={t("Enviar mensagem")} onClick={() => onAction('openConversation', post.author)}><img width="32" height="32" decoding="async" src={actionAsset('mensagem')} alt="" /></button>
         <Link to={`/problem/${post.id}`} className="ml-auto feed-bookmark" aria-label={t("Abrir ocorrência")}><MessageCircle size={17} /></Link>
       </div>
@@ -182,10 +187,12 @@ const FeedPage = () => {
   const followInFlight = useRef(new Set());
   const relationshipRequest = useRef(0);
   const [messages, setMessages] = useState([]);
+  const [replyTo,setReplyTo]=useState(null);
   const messageCursor = useRef(null);
   const [hasOlderMessages, setHasOlderMessages] = useState(false);
   const [loadingOlderMessages, setLoadingOlderMessages] = useState(false);
   const [conversations, setConversations] = useState([]);
+  const [conversationQuery,setConversationQuery]=useState('');
   const [selectedConversation, setSelectedConversation] = useState(null);
   const [messageText, setMessageText] = useState('');
   const [sendingMessage, setSendingMessage] = useState(false);
@@ -322,7 +329,7 @@ const FeedPage = () => {
         setConversations(current => retainEqual(current, data || []));
         const requested = chooseRequested && data.find(item => item.id === (location.state?.conversationId || new URLSearchParams(location.search).get('conversation')));
         chooseRequested = false;
-        setSelectedConversation(current => retainEqual(current, requested || (current ? { ...current, participant: data.find(item => item.id === current.id)?.participant || current.participant } : data[0] || null)));
+        setSelectedConversation(current => retainEqual(current, requested || (current ? data.find(item => item.id === current.id) || data[0] || null : data[0] || null)));
       } catch { /* Keep existing conversations visible when a refresh fails. */ }
     };
     refresh();
@@ -354,7 +361,7 @@ const FeedPage = () => {
       if (data.messages?.length) messageCursor.current = data.messages[data.messages.length - 1].id;
       if (!after) setHasOlderMessages(Boolean(data.pageInfo?.hasOlder));
       setSelectedConversation(current => current?.id === conversationId ? retainEqual(current, { ...current, messaging: data.messaging }) : current);
-      setHistoryReady(true); setHistoryError(false);
+      setHistoryReady(true); setHistoryError(false);if(data.messages?.length)void conversationsAPI.read(conversationId).catch(()=>{});
     } catch {
       if (sequence === messageRequest.current && selectedConversationId.current === conversationId) setHistoryError(true);
     }
@@ -364,7 +371,7 @@ const FeedPage = () => {
     if (activeTab !== 'conversations' || !conversationId || !user) return undefined;
     dmAtBottom.current = true;
     messageCursor.current = null; setHasOlderMessages(false);
-    setMessages([]); setMessageText(''); setHistoryReady(false); setHistoryError(false);
+    setMessages([]); setMessageText(''); setReplyTo(null); setHistoryReady(false); setHistoryError(false);
     readMessages(conversationId);
     const refresh = () => !document.hidden && readMessages(conversationId);
     const poller = createVisibilityPoller(refresh, 3000);
@@ -717,11 +724,11 @@ const FeedPage = () => {
     dmAtBottom.current = true;
     ++messageRequest.current; messageSending.current = true; setSendingMessage(true);
     try {
-      const { data } = await conversationsAPI.send(conversationId, { texto: messageText.trim() });
+      const { data } = await conversationsAPI.send(conversationId, { texto: messageText.trim(),...(replyTo?{replyId:replyTo.id}:{}) });
       if (selectedConversationId.current === conversationId) {
         setMessages(current => current.some(item => item.id === data.message.id) ? current : [...current, data.message]);
         setSelectedConversation(current => current?.id === conversationId ? { ...current, messaging: data.messaging } : current);
-        setMessageText('');
+        setMessageText('');setReplyTo(null);
       }
       setConversations(current => current.map(item => item.id === conversationId ? { ...item, ultimaMensagem: data.message, messaging: data.messaging } : item));
     } catch (error) {
@@ -773,16 +780,18 @@ const FeedPage = () => {
   }, [user?.id, userResults]);
 
   const postActions = useRef({});
-  postActions.current = { startEditing, deletePost, toggleSaved, copyPostLink, sharePost: post => { setOpenMenu(null); setShareCandidate(post.id); }, navigate, setLightboxImage, changeSlide, handleVote, toggleShare, openConversation,
+  postActions.current = { hidePost:id=>setPosts(current=>current.filter(post=>post.id!==id)), startEditing, deletePost, toggleSaved, copyPostLink, sharePost: post => { setOpenMenu(null); setShareCandidate(post.id); }, navigate, setLightboxImage, changeSlide, handleVote, toggleShare, openConversation,
     menu: (id, mode) => setOpenMenu(current => mode === 'toggle' && current === id ? null : id) };
   const dispatchPostAction = useCallback((name, ...args) => postActions.current[name](...args), []);
   const renderPost = post => <FeedPost key={post.id} post={post} slide={slideByPost[post.id] || 0} liked={likedPosts.has(post.id)} shared={sharedPosts.has(post.id)} menuOpen={openMenu === post.id} saved={savedIds.has(post.id)} saving={savingPosts.has(post.id)} canManage={post.author?.id === user?.id || user?.role === 'admin'} voting={votingPosts.has(post.id)} onAction={dispatchPostAction} />;
 
   const renderHome = () => <>
+    <NotesRail/>
     {user&&<React.Suspense fallback={null}><StoriesRail/></React.Suspense>}
-    <FeedHeader title={t('recentIdentifications')} description={t("Relatos urbanos, apoio comunitário e acompanhamento real.")}>
+    <FeedHeader title={t('pracaTitle')} description={t("Relatos urbanos, apoio comunitário e acompanhamento real.")}>
       <button type="button" onClick={() => selectTab('create')} className="feed-report-button"><Plus size={15} /> <span>{t('reportProblem')}</span></button>
     </FeedHeader>
+    <Link className="profile-action mb-4" to="/feed/radar">{t('radarTitle')}</Link>
     <section id="search" className="feed-filters">
       <label className="feed-search"><Search size={16} /><input value={search} onChange={(event) => setSearch(event.target.value)} placeholder={t("Buscar no feed...")} /></label>
       <FloatingSelect value={status} onChange={(value) => { setStatus(value); setPage(1); }} options={[{ value: '', label: t("Todos os status") }, { value: 'ABERTO', label: t('openStatus') }, { value: 'EM_ANDAMENTO', label: t('progressStatus') }, { value: 'RESOLVIDO', label: t('resolvedStatus') }]} />
@@ -791,6 +800,7 @@ const FeedPage = () => {
     </section>
     {feedError && <div className="feed-empty" role="alert">{t("Não foi possível consultar as publicações. Isso não significa que foram apagadas.")}<button type="button" onClick={()=>loadFeed(posts.length>0)}>{t("Tentar novamente")}</button></div>}
     {loading && posts.length === 0 ? <div className="feed-post-skeleton" role="status" aria-busy="true"><span className="sr-only">{t('loadingPosts')}</span><div className="route-skeleton-title" /><div className="route-skeleton-line" /><div className="route-skeleton-card" /></div> : feedError && filteredPosts.length === 0 ? null : filteredPosts.length === 0 ? <div className="feed-empty"><ImageIcon size={30} />{t('noPosts')}</div> : <div className="space-y-5">{filteredPosts.map(renderPost)}</div>}
+    <RepostsPanel/>
     <footer ref={feedEnd} className="feed-pagination"><span>{total} {t("publicações")}</span>{hasMorePosts&&<button type="button" className="feed-secondary-button" disabled={loading} onClick={()=>loadFeed(true)}>{t(loading?'loading':'loadMore')}</button>}</footer>
   </>;
 
@@ -812,16 +822,20 @@ const FeedPage = () => {
 
   const renderConversations = () => <>
     <FeedHeader title={t('conversationsTitle')} description={t('Troque mensagens com pessoas que também cuidam da cidade.')} />
+    <CreateConversation onCreated={id=>navigate('/feed?conversation='+encodeURIComponent(id)+'#conversations')}/>
     <div className="feed-dm-shell">
       <div className="feed-dm-list">
         <div className="feed-dm-list-head"><strong>{t('Mensagens')}</strong><button type="button" aria-label={t('Nova conversa')} onClick={() => selectTab('search')}><Plus size={17} /></button></div>
-        {conversations.length === 0 ? <div className="feed-empty">{t('chatStartHint')}</div> : conversations.map(conversation => <button key={conversation.id} type="button" className={`feed-dm-contact ${selectedConversation?.id === conversation.id ? 'is-selected' : ''}`} onClick={() => { ++messageRequest.current; selectedConversationId.current = conversation.id; setMessages([]); setHistoryReady(false); setMessageText(''); setSelectedConversation(conversation); }}><Avatar user={conversation.participant} /><span><strong>{conversation.participant?.nome}</strong><small>{conversation.ultimaMensagem?.texto || t('Nenhuma mensagem ainda')}</small></span></button>)}
+        <label className="feed-search my-3"><Search size={16}/><input value={conversationQuery} onChange={event=>setConversationQuery(event.target.value)} placeholder={t('chatSearch')}/></label>
+        {conversations.length === 0 ? <div className="feed-empty">{t('chatStartHint')}</div> : conversations.filter(conversation=>[conversation.participant?.nome,conversation.ultimaMensagem?.texto].some(value=>String(value||'').toLowerCase().includes(conversationQuery.toLowerCase()))).map(conversation => <button key={conversation.id} type="button" className={`feed-dm-contact ${selectedConversation?.id === conversation.id ? 'is-selected' : ''}`} onClick={() => { ++messageRequest.current; selectedConversationId.current = conversation.id; setMessages([]); setHistoryReady(false);setReplyTo(null);messageCursor.current=null; setMessageText(''); setSelectedConversation(conversation); }}><Avatar user={conversation.participant} /><span><strong>{conversation.participant?.nome}</strong><small>{conversation.ultimaMensagem?.texto || t('Nenhuma mensagem ainda')}</small>{conversation.unreadCount>0&&<b aria-label={t('chatUnread',{count:conversation.unreadCount})}>{conversation.unreadCount}</b>}</span></button>)}
       </div>
       <div className="feed-dm-thread">
+        <ManageConversation conversation={selectedConversation} onLeave={()=>{setSelectedConversation(null);setMessages([]);navigate('/feed#conversations');}}/>
         <div className="feed-dm-thread-head"><Avatar user={selectedConversation?.participant} /><div><strong>{selectedConversation?.participant?.nome || t('Nenhuma conversa selecionada')}</strong><small>{!selectedConversation ? t('chatChooseConversation') : selectedConversation.messaging?.mutual ? t('chatUnlimited') : selectedConversation.messaging ? t('chatMessagesRemaining', { count: selectedConversation.messaging.remaining }) : t('loading')}</small></div></div>
         {historyError && <p className="feed-dm-history-error" role="alert">{t('chatHistoryError')}</p>}
-        <div className="feed-dm-messages" ref={dmMessages} onScroll={event => { const el = event.currentTarget; dmAtBottom.current = el.scrollHeight - el.scrollTop - el.clientHeight < 60; }}>{hasOlderMessages && <button type="button" disabled={loadingOlderMessages} onClick={loadOlderMessages}>{t(loadingOlderMessages ? 'loading' : 'loadMore')}</button>}{messages.length ? messages.map(message => <div key={message.id} className={`feed-message ${message.remetenteId === user?.id ? 'is-own' : ''}`}><span>{message.texto}</span><small>{new Date(message.criadaEm).toLocaleTimeString(getLanguage(), { hour: '2-digit', minute: '2-digit' })}</small></div>) : <div className="feed-empty">{t(historyReady ? 'Nenhuma mensagem.' : selectedConversation ? 'loading' : 'chatChooseConversation')}</div>}</div>
-        {selectedConversation?.messaging?.canSend === false ? <div className="feed-dm-limit" role="status"><Lock size={18} /><p>{t('chatLimitReached')}</p></div>
+        <div className="feed-dm-messages" ref={dmMessages} onScroll={event => { const el = event.currentTarget; dmAtBottom.current = el.scrollHeight - el.scrollTop - el.clientHeight < 60; }}>{hasOlderMessages && <button type="button" disabled={loadingOlderMessages} onClick={loadOlderMessages}>{t(loadingOlderMessages ? 'loading' : 'loadMore')}</button>}{messages.length ? messages.map(message => <div key={message.id} className={`feed-message ${message.remetenteId === user?.id ? 'is-own' : ''}`}>{selectedConversation?.tipo&&selectedConversation.tipo!=='DIRETA'&&<strong className="block text-xs">{message.remetente?.nome}</strong>}{message.resposta&&<blockquote className="my-2 border-l border-white/30 pl-2 text-xs">{message.resposta.texto}</blockquote>}<span>{message.texto}</span><MessageActions message={message} conversationId={selectedConversation.id} canReply={historyReady&&selectedConversation.messaging?.canSend!==false} onReply={()=>setReplyTo(message)} onReaction={emoji=>setMessages(current=>current.map(row=>row.id===message.id?{...row,reacoes:[...(row.reacoes||[]).filter(reaction=>reaction.usuarioId!==user.id),...(emoji?[{usuarioId:user.id,emoji}]:[])]}:row))}/><small>{new Date(message.criadaEm).toLocaleTimeString(getLanguage(), { hour: '2-digit', minute: '2-digit' })}</small></div>) : <div className="feed-empty">{t(historyReady ? 'Nenhuma mensagem.' : selectedConversation ? 'loading' : 'chatChooseConversation')}</div>}</div>
+        {replyTo&&<div className="rounded-xl border border-white/10 p-3 text-sm"><p>{t('chatReplyingTo')} {replyTo.texto}</p><button className="profile-action" onClick={()=>setReplyTo(null)}>{t('close')}</button></div>}
+        {selectedConversation?.messaging?.canSend === false ? <div className="feed-dm-limit" role="status"><Lock size={18} /><p>{t(selectedConversation.messaging.restriction||'chatLimitReached')}</p></div>
           : <form onSubmit={sendMessage} className="feed-dm-compose"><input value={messageText} onChange={event => setMessageText(event.target.value)} maxLength={2000} placeholder={t(selectedConversation ? 'Escreva uma mensagem...' : 'chatChooseConversation')} disabled={!selectedConversation || !historyReady || sendingMessage} /><button type="submit" aria-label={t(sendingMessage ? 'chatSendBusy' : 'Enviar mensagem')} disabled={!selectedConversation || !historyReady || sendingMessage || !messageText.trim()}><Send size={17} /></button></form>}
       </div>
     </div>

@@ -639,7 +639,7 @@ export default function StoryComposer({
             label: t('composerEffect' + value)
           }))} /></label>
     <label>{t('storyEffectIntensity')}<input type="range" min="0" max="1" step="0.1" value={intensity} onChange={event => setIntensity(Number(event.target.value))} /></label>
-    <label data-story-audience>{t('storyAudience')}<FloatingSelect value={audience} onChange={setAudience} options={['PUBLICO', 'SEGUIDORES', 'AMIGOS', 'SO_EU'].map(value => ({
+    <label data-story-audience>{t('storyAudience')}<FloatingSelect value={audience} onChange={setAudience} options={['PUBLICO', 'SEGUIDORES', 'AMIGOS', 'SO_EU', 'PROXIMOS'].map(value => ({
             value,
             label: t('storyAudience' + value)
           }))} /></label>

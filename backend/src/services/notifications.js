@@ -1,6 +1,7 @@
+import {isBlocked,unblockedUserWhere,assertInteractionAllowed} from './socialGraph.js';
 ﻿import { createHash } from 'node:crypto';
 import { socialError, visibleUserWhere } from './socialGraph.js';
-export const NOTIFICATION_TYPES = ['NOVO_SEGUIDOR','SEGUIR_SOLICITACAO','SEGUIR_ACEITA','VOTO','COMENTARIO','RESPOSTA','MENCAO','MENSAGEM','STORY','ACOMPANHAMENTO','STATUS','CONQUISTA','CONFIRMACAO'];
+export const NOTIFICATION_TYPES = ['REPOST','NOVO_SEGUIDOR','SEGUIR_SOLICITACAO','SEGUIR_ACEITA','VOTO','COMENTARIO','RESPOSTA','MENCAO','MENSAGEM','STORY','ACOMPANHAMENTO','STATUS','CONQUISTA','CONFIRMACAO'];
 export const notificationFields = { id:true,tipo:true,titulo:true,mensagem:true,lida:true,link:true,dataCriacao:true,autorId:true };
 const internalFields = { ...notificationFields, usuarioId:true };
 const directSocialTypes = new Set(['NOVO_SEGUIDOR','SEGUIR_SOLICITACAO','SEGUIR_ACEITA','AMIZADE_SOLICITACAO','AMIZADE_ACEITA']);
@@ -13,18 +14,23 @@ export async function presentNotifications(db, rows, viewerId, isAdmin=false) {
   const select={id:true,nome:true,username:true,fotoPerfil:true};
   const [actors,directActors]=await Promise.all([
     ids.length?db.usuario.findMany({where:{AND:[{id:{in:ids}},visibleUserWhere(viewerId,isAdmin)]},select}):[],
-    direct.length?db.usuario.findMany({where:{id:{in:direct}},select}):[],
+    direct.length?db.usuario.findMany({where:{id:{in:direct},...unblockedUserWhere(viewerId)},select}):[],
   ]);
   const index=actors=>new Map(actors.map(actor=>[actor.id,{id:actor.id,nome:actor.nome,username:actor.username,fotoPerfil:actor.fotoPerfil}]));
   const byId=index(actors),directById=index(directActors);
   return rows.map(row=>{
     const {autorId,...item}=Object.fromEntries(Object.keys(notificationFields).map(key=>[key,row[key]]));
     const actor=byId.get(autorId)||(directSocialTypes.has(row.tipo)?directById.get(autorId):null)||null;
-    return {...item,...(!actor&&directSocialTypes.has(row.tipo)?{link:null}:{}),actor,actorStatus:actor?'available':autorId?'restricted':'unavailable'};
+    // Historical bodies may contain a former display name. Do not disclose it
+    // after the actor becomes inaccessible; keep the original record intact.
+    const unavailable = !actor && autorId;
+    return {...item,...(unavailable?{mensagem:'notificationActorRestricted',link:null}:!actor&&directSocialTypes.has(row.tipo)?{link:null}:{}),actor,actorStatus:actor?'available':autorId?'restricted':'unavailable'};
   });
 }
 export async function writeNotification(db, { usuarioId, autorId=null, tipo, titulo, mensagem, link, eventKey }) {
   if (!usuarioId) return null;
+  if(autorId&&await isBlocked(db,autorId,usuarioId))return null;
+  if(tipo==='MENCAO'&&autorId){try{await assertInteractionAllowed(db,autorId,usuarioId,'mencoes');}catch(error){if(error.code==='socialInteractionUnavailable')return null;throw error;}}
   const preference = await db.preferenciaNotificacao.findUnique({ where: { usuarioId_tipo: { usuarioId, tipo } }, select: { ativa:true } });
   if (preference?.ativa === false) return null;
   const permanent = Boolean(eventKey);

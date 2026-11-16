@@ -5,14 +5,29 @@ export const socialError = (status, code) => Object.assign(new Error(code), { st
 export const lockUsers = async (tx, ids) => {
   for (const id of [...new Set(ids)].sort()) await tx.$queryRaw`SELECT id FROM usuarios WHERE id = ${id} FOR UPDATE`;
 };
-export const visibleUserWhere = (viewerId, isAdmin = false) => isAdmin ? {} : ({
+export const unblockedUserWhere = viewerId => viewerId ? {
+  medidasOrigem:{none:{destinoId:viewerId,tipo:'BLOQUEIO'}},
+  medidasDestino:{none:{origemId:viewerId,tipo:'BLOQUEIO'}},
+} : {};
+export const visibleUserWhere = (viewerId, isAdmin = false) => ({
+  ...unblockedUserWhere(viewerId),
+  ...(isAdmin?{}:{
   OR: [
     { perfilPrivado: false },
     ...(viewerId ? [{ id: viewerId }, { seguidores: { some: { followerId: viewerId, status: 'ACEITA' } } }] : []),
   ],
+  }),
 });
+export const isBlocked = async(db,left,right) => left&&right&&left!==right?Boolean(await db.relacaoSeguranca.findFirst({where:{tipo:'BLOQUEIO',OR:[{origemId:left,destinoId:right},{origemId:right,destinoId:left}]},select:{id:true}})):false;
+export async function assertInteractionAllowed(db,from,to,kind) {
+  if(await isBlocked(db,from,to))throw socialError(403,'socialInteractionUnavailable');
+  if(!kind||from===to)return;
+  const preferences=await db.preferenciaSocial.findUnique({where:{usuarioId:to}}),policy=preferences?.[kind]||'TODOS';
+  if(policy==='NINGUEM'||policy==='MUTUOS'&&!(await relationship(db,from,to)).mutual)throw socialError(403,'socialInteractionUnavailable');
+}
 export const visibleProblemWhere = (req) => ({ usuario: { is: visibleUserWhere(req.userId, req.isAdmin === true) } });
 export const canViewProfile = async (db, owner, viewerId, isAdmin = false) => {
+  if(await isBlocked(db,viewerId,owner.id))return false;
   if (!owner.perfilPrivado || owner.id === viewerId || isAdmin) return true;
   if (!viewerId) return false;
   return Boolean(await db.seguimento.findFirst({ where: { followerId: viewerId, followingId: owner.id, status: 'ACEITA' }, select: { id: true } }));
@@ -34,6 +49,7 @@ export const createSocialGraph = (db) => ({
       await lockUsers(tx, [userId, targetId]);
       const target = await tx.usuario.findUnique({ where: { id: targetId }, select: { id: true, perfilPrivado: true } });
       if (!target) throw socialError(404, 'profileNotFound');
+      await assertInteractionAllowed(tx,userId,targetId);
       const where = { followerId_followingId: { followerId: userId, followingId: targetId } };
       const existing = await tx.seguimento.findUnique({ where });
       const status = existing?.status === 'ACEITA' || !target.perfilPrivado ? 'ACEITA' : 'PENDENTE';
@@ -56,6 +72,7 @@ export const createSocialGraph = (db) => ({
       let request = await tx.seguimento.findUnique({ where: { id: requestId } });
       if (!request) throw socialError(404, 'followRequestNotFound');
       await lockUsers(tx, [request.followerId, request.followingId]);
+      await assertInteractionAllowed(tx,request.followerId,request.followingId);
       request = await tx.seguimento.findUnique({ where: { id: requestId } });
       if (!request || request.status !== 'PENDENTE') throw socialError(409, 'followRequestNotPending');
       if (action === 'cancel' ? request.followerId !== userId : request.followingId !== userId) throw socialError(403, 'followRequestForbidden');
@@ -67,7 +84,7 @@ export const createSocialGraph = (db) => ({
 });
 
 // Inverse of profile visibility: selects the users who may receive private updates.
-export const readersOfProfileWhere = owner => !owner.perfilPrivado ? {} : ({ OR: [
+export const readersOfProfileWhere = owner => ({...unblockedUserWhere(owner.id),...(!owner.perfilPrivado?{}:{OR: [
   { id: owner.id }, { admin: { isNot: null } },
   { seguindo: { some: { followingId: owner.id, status: 'ACEITA' } } },
-] });
+]})});

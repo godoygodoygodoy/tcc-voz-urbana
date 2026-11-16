@@ -14,7 +14,7 @@ export const createPeopleSearch = (database) => async (req, res) => {
   const where = Prisma.sql`WHERE (
     nome COLLATE utf8mb4_unicode_ci LIKE CONVERT(${pattern} USING utf8mb4) COLLATE utf8mb4_unicode_ci ESCAPE '!'
     OR username COLLATE utf8mb4_unicode_ci LIKE CONVERT(${pattern} USING utf8mb4) COLLATE utf8mb4_unicode_ci ESCAPE '!'
-  )`;
+  ) ${req.userId?Prisma.sql`AND NOT EXISTS (SELECT 1 FROM relacoes_seguranca AS safety WHERE safety.tipo='BLOQUEIO' AND ((safety.origem_id=${req.userId} AND safety.destino_id=usuarios.id) OR (safety.destino_id=${req.userId} AND safety.origem_id=usuarios.id)))`:Prisma.empty}`;
   const [counts, users] = await Promise.all([
     database.$queryRaw(Prisma.sql`SELECT COUNT(*) AS total FROM usuarios ${where}`),
     database.$queryRaw(Prisma.sql`SELECT id, nome, username, foto_perfil AS fotoPerfil,

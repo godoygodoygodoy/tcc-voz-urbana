@@ -1,3 +1,4 @@
+import {unblockedUserWhere} from '../src/services/socialGraph.js';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { createSocialGraph, relationship, canViewProfile, visibleUserWhere, visibleProblemWhere } from '../src/services/socialGraph.js';
@@ -71,7 +72,7 @@ test('limits belong to each conversation; nonparticipants cannot read or send',a
  for(const text of ['', '   ', 'x'.repeat(2001), {texto:'wrong type'}])await assert.rejects(f.chat.send('a',ac.id,text),{status:400});
 });
 test('public visibility predicates include owner, approved followers and database-verified admins',()=>{
- assert.deepEqual(visibleUserWhere(undefined),{OR:[{perfilPrivado:false}]});assert.equal(visibleUserWhere('a').OR.length,3);assert.deepEqual(visibleUserWhere('a',true),{});
+ assert.deepEqual(visibleUserWhere(undefined),{OR:[{perfilPrivado:false}]});assert.equal(visibleUserWhere('a').OR.length,3);assert.deepEqual(visibleUserWhere('a',true),unblockedUserWhere('a'));assert.equal(visibleUserWhere('a',true).OR,undefined);
 });
 
 test('two private profiles need both approvals before unlimited messages',async()=>{
@@ -92,5 +93,5 @@ test('conversation list aggregates each sender quota without mixing conversation
 
 test('private visibility never trusts a role string without a verified admin relation',()=>{
  assert.equal(visibleProblemWhere({userId:'a',userRole:'admin',isAdmin:false}).usuario.is.OR.length,3);
- assert.deepEqual(visibleProblemWhere({userId:'a',isAdmin:true}),{usuario:{is:{}}});
+ assert.deepEqual(visibleProblemWhere({userId:'a',isAdmin:true}),{usuario:{is:unblockedUserWhere('a')}});
 });

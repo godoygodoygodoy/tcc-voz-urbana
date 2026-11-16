@@ -29,7 +29,8 @@
     "diagnose:production": "node scripts/diagnose-production.js --read-only",
     "check:deployment": "node scripts/check-deployment.js --read-only",
     "test:profile-routes": "node --experimental-vm-modules --test tests/profile-routes.node.js tests/profile-connections.node.js tests/profile-features.node.js tests/participation.node.js tests/notifications.node.js",
-    "test:story-ecosystem": "node --experimental-vm-modules --test tests/story-composition.node.js tests/story-viewers.node.js"
+    "test:story-ecosystem": "node --experimental-vm-modules --test tests/story-composition.node.js tests/story-viewers.node.js",
+    "test:praca": "node --experimental-vm-modules --test tests/social-safety.node.js tests/radar.node.js tests/social-publishing.node.js tests/group-conversations.node.js tests/close-friends.node.js"
   },
   "prisma": {
     "seed": "node prisma/seed.js"

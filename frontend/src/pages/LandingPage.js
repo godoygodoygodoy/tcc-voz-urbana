@@ -205,7 +205,7 @@ export default function LandingPage() {
       >
         <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
           <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.32em] text-white/40">Feed</p>
+            <p className="text-xs font-semibold uppercase tracking-[0.32em] text-white/40">{t('pracaTitle')}</p>
             <h3 className="mt-3 text-4xl font-black text-white sm:text-5xl">{t('recentIdentifications')}</h3>
             <p className="mt-4 max-w-2xl text-white/65">{t('feedDescription')}</p>
           </div>

@@ -6,7 +6,7 @@ import { profilePath } from '../utils/profileLinks';
 import { getLanguage, translateSystemText, useI18n } from '../i18n';
 import {formatRelativeTime} from '../utils/relativeTime';
 
-const actorTypes=new Set(['NOVO_SEGUIDOR','SEGUIR_SOLICITACAO','SEGUIR_ACEITA','AMIZADE_SOLICITACAO','AMIZADE_ACEITA','VOTO','COMENTARIO','RESPOSTA','MENCAO','MENSAGEM','STORY','ACOMPANHAMENTO','STATUS','CONFIRMACAO']);
+const actorTypes=new Set(['REPOST','NOVO_SEGUIDOR','SEGUIR_SOLICITACAO','SEGUIR_ACEITA','AMIZADE_SOLICITACAO','AMIZADE_ACEITA','VOTO','COMENTARIO','RESPOSTA','MENCAO','MENSAGEM','STORY','ACOMPANHAMENTO','STATUS','CONFIRMACAO']);
 export default function NotificationItem({item,onOpen,onActorOpen,compact=false}) {
   const {t}=useI18n(),actor=item.actor;
   const actorLabel=actor?.nome||actor?.username||t(item.actorStatus==='restricted'?'notificationActorRestricted':'notificationActorUnavailable');

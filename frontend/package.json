@@ -55,7 +55,11 @@
     "test:tracking-profile:browser": "node --experimental-vm-modules tests/tracking-profile-browser.cjs",
     "test:profile-errors:browser": "node --experimental-vm-modules tests/profile-api-errors-browser.cjs",
     "test:story-ecosystem:browser": "node --experimental-vm-modules tests/story-ecosystem-browser.cjs",
-    "test:media-providers": "node --experimental-vm-modules --test tests/media-providers.node.cjs"
+    "test:media-providers": "node --experimental-vm-modules --test tests/media-providers.node.cjs",
+    "test:praca-identity:browser": "node --experimental-vm-modules tests/praca-identity-browser.cjs",
+    "test:praca-features:browser": "node --experimental-vm-modules tests/praca-features-browser.cjs",
+    "test:praca-conversations:browser": "node --experimental-vm-modules tests/praca-conversations-browser.cjs",
+    "test:own-stories:browser": "node --experimental-vm-modules tests/own-stories-browser.cjs"
   },
   "browserslist": {
     "production": [

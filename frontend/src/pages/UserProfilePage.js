@@ -1,3 +1,5 @@
+import {RepostsPanel} from '../components/SocialPublishing';
+import {SafetyActions} from '../components/LazySafety';
 const ProfileStats = React.lazy(() => import('../components/ProfileStats'));
 const AchievementsPanel = React.lazy(() => import('../components/AchievementsPanel'));
 const StoriesRail = React.lazy(() => import('../components/StoriesRail'));
@@ -180,7 +182,7 @@ const UserProfilePage = () => {
             {profile.canViewPosts !== false && <span><b>{profile.likes || 0}</b> {t('profileStatsSupportShort')}</span>}
           </div>
           {!isOwnProfile && (relationship?.mutual || relationship?.followedBy) && <p className="social-relationship-badge"><UserCheck size={14} />{t(relationship.mutual ? 'mutualFriends' : 'followsYou')}</p>}
-          <div className="profile-actions">
+          <div className="profile-actions"><SafetyActions targetId={profile.id}/>
             {isOwnProfile ? <><Link to="/profile" className="profile-action profile-action--primary"><Settings size={16} />{t('Editar perfil')}</Link><Link to="/profile" aria-label={t('Configurações')} className="profile-action"><Settings size={16} /></Link></>
               : <><button type="button" disabled={updatingFollow} onClick={updateFollow} title={t(relationship?.pending ? 'cancelFollowRequest' : relationship?.following ? 'unfollowButton' : 'followButton')} className={`profile-action ${relationship?.following ? '' : 'profile-action--primary'}`}>{relationship?.following ? <UserCheck size={16} /> : <UserPlus size={16} />}{t(followButtonKey(relationship))}</button><button type="button" disabled={openingConversation} aria-busy={openingConversation} onClick={startConversation} className="profile-action"><MessageCircle size={16} />{t('Mensagem')}</button></>}
             <button type="button" onClick={share} className="profile-action"><Share2 size={16} /><span>{t('Compartilhar')}</span></button>
@@ -204,6 +206,7 @@ const UserProfilePage = () => {
       </section>}
       {profile.canViewPosts !== false && <React.Suspense fallback={null}><ProfileStats ownerId={profile.id}/><AchievementsPanel ownerId={profile.id}/></React.Suspense>}
 
+      {profile.canViewPosts!==false&&<RepostsPanel ownerId={profile.id}/>}
       <section className="profile-content">
         <nav className="profile-tabs" aria-label={t('Conteúdo do perfil')}>{tabs.map(({ key, label, icon: Icon }) => <button key={key} type="button" className={tab === key ? 'is-active' : ''} onClick={() => setTab(key)}><Icon size={16} />{label}</button>)}</nav>
         {profile.canViewPosts !== false && ['saved','collections'].includes(tab) && <React.Suspense fallback={<p>{t('loading')}</p>}><CollectionsPanel ownerId={profile.id} savedPosts={isOwnProfile ? privatePosts.saved : undefined}/></React.Suspense>}

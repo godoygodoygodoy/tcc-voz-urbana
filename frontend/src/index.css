@@ -3594,9 +3594,9 @@ input:-webkit-autofill, input:-webkit-autofill:hover, input:-webkit-autofill:foc
 .social-network-dialog:has(.story-media) { width:min(100%,520px); }
 @media(max-width:640px) { .social-network-dialog:has(.story-composer) { max-height:100dvh; border-radius:0; padding-top:max(16px,env(safe-area-inset-top)); } .story-composer-stage { width:min(100%,300px); } }
 .stories-panel--compact .story-rail { overflow-x:auto; flex-wrap:nowrap; scrollbar-width:thin; padding:6px 2px; }
-.story-add > span:first-child { display:block; width:58px; height:58px; }
-.story-add .avatar { width:58px; height:58px; }
-.story-add svg { position:absolute; bottom:0; right:0; border-radius:50%; background:#7c3aed; color:white; }
+.story-own-avatar { position:relative; width:58px; height:58px; flex:0 0 auto; }
+.story-own-open { display:block; width:58px; height:58px; border-radius:50%; }
+.story-own-add { position:absolute; bottom:-3px; right:-3px; display:grid; place-items:center; width:26px; height:26px; border:2px solid var(--site-bg,#17111e); border-radius:50%; background:#7c3aed; color:white; }
 .profile-story-anchor { flex:0 0 auto; text-align:center; }
 .profile-story-button { position:relative; padding:5px; overflow:hidden; isolation:isolate; }
 .profile-story-button:disabled { cursor:default; }

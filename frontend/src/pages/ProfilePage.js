@@ -1,3 +1,5 @@
+const CloseFriendsPanel=React.lazy(()=>import('../components/CloseFriendsPanel'));
+import {SafetyCenter} from '../components/LazySafety';
 const ProfilePresentation = React.lazy(() => import('../components/ProfilePresentation'));
 const NotificationPreferences = React.lazy(() => import('../components/NotificationPreferences'));
 import { createVisibilityPoller, retainEqual } from '../utils/polling';
@@ -286,6 +288,7 @@ const ProfilePage = () => {
             <label className="mt-4 flex items-center gap-3 text-sm"><input type="checkbox" checked={effects} onChange={(event) => setChristmasEffects(event.target.checked)} />{t("Ativar neve e animações natalinas")}</label>
             <p className="site-muted mt-2 text-xs">{t("Preferências salvas neste navegador, mesmo após sair da conta.")}</p>
           </section>}
+          <SafetyCenter/><React.Suspense fallback={null}><CloseFriendsPanel/></React.Suspense>
           <section className="mt-10 border-t border-white/10 pt-6">
             <h2 className="mb-4 text-xl font-bold">{t('followRequestsTitle')}</h2>
             {requestsError&&<p role="status" className="text-sm text-white/65">{t('followRequestsUnavailable')}</p>}

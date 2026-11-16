@@ -15,6 +15,7 @@ export const createFeedListing=db=>async(req,query=req.query)=>{
   const limit=Math.min(15,Math.max(1,Number.parseInt(query.limit,10)||12));
   const page=Math.min(10000,Math.max(1,Number.parseInt(query.page,10)||1));
   const sort=query.sort==='votes'?'votes':'recent',base=problemFilters(req,query);
+  if(req.userId){base.AND=[...(base.AND||[]),{usuario:{is:{medidasDestino:{none:{origemId:req.userId,tipo:'SILENCIO'}}}}},{ocultacoes:{none:{usuarioId:req.userId}}}];}
   const scope=createHash('sha256').update(JSON.stringify([req.userId||null,req.isAdmin===true,base,sort])).digest('hex').slice(0,16);
   let boundary;
   if(query.cursor){

@@ -1,0 +1,46 @@
+const {chromium}=require('playwright'),assert=require('node:assert/strict');
+const base=process.env.PRACA_TEST_URL||'http://127.0.0.1:4173/tecti/2026/gpec03';
+(async()=>{
+ const{createSocialFixture}=await import('../../backend/tests/helpers/socialFixture.js');
+ const f=await createSocialFixture(),server=f.app.listen(0,'127.0.0.1');
+ await new Promise(resolve=>server.once('listening',resolve));
+ const browser=await chromium.launch({executablePath:'C:/Program Files/Google/Chrome/Application/chrome.exe',headless:true}),errors=[],checks=[];
+ try{
+  const page=await browser.newPage({viewport:{width:390,height:844},reducedMotion:'reduce'});
+  page.on('pageerror',error=>errors.push(error.message));
+  await page.addInitScript(()=>{localStorage.setItem('language','en');localStorage.setItem('token','test-c');localStorage.setItem('user',JSON.stringify({id:'c',name:'Person c',username:'person.c',role:'usuario'}));});
+  await page.route('**/*',route=>new URL(route.request().url()).origin===new URL(base).origin?route.continue():route.abort());
+  await page.route('**/api/**',async route=>{const u=new URL(route.request().url()),response=await route.fetch({url:'http://127.0.0.1:'+server.address().port+u.pathname+u.search,headers:{...route.request().headers(),authorization:'Bearer test-c'}});await route.fulfill({response});});
+  await page.goto(base+'/feed#conversations');
+  await page.getByRole('button',{name:'Create group or channel',exact:true}).click();
+  let dialog=page.getByRole('dialog');
+  await dialog.getByLabel('Conversation name',{exact:true}).fill('Isolated group');
+  await dialog.getByLabel('Find participants',{exact:true}).fill('person.a');
+  await dialog.getByRole('checkbox').check();
+  await dialog.getByRole('button',{name:'Create group or channel',exact:true}).click();
+  await page.waitForFunction(()=>!document.querySelector('[role=dialog]'));
+  const input=page.locator('.feed-dm-compose input');await input.waitFor();
+  await input.fill('First isolated message');await page.locator('.feed-dm-compose button').click();
+  const message=page.locator('.feed-message').first();await message.getByText('First isolated message',{exact:true}).waitFor();
+  assert.equal(f.state.messages.length,1);assert.equal(f.state.conversations[0].tipo,'GRUPO');checks.push('create group and send through existing message persistence');
+  await message.getByRole('button',{name:'React to message',exact:true}).click();
+  await page.waitForFunction(()=>document.querySelector('[aria-label="React to message"]')?.getAttribute('aria-pressed')==='true');
+  assert.equal(f.state.messageReactions.length,1);checks.push('persist reaction');
+  await message.getByRole('button',{name:'Reply to message',exact:true}).click();
+  await input.fill('Reply in same group');await page.locator('.feed-dm-compose button').click();
+  await page.locator('.feed-message blockquote').waitFor();assert.equal(f.state.messages[1].respostaId,f.state.messages[0].id);checks.push('reply retains original reference');
+  await input.fill('Third isolated message');await page.locator('.feed-dm-compose button').click();
+  await page.locator('.feed-dm-limit').waitFor();assert.equal(await page.locator('.feed-message').count(),3);assert.equal(await page.locator('.feed-dm-compose').count(),0);checks.push('individual quota replaces composer and preserves history');
+  await page.getByRole('button',{name:'Manage conversation',exact:true}).click();dialog=page.getByRole('dialog');await dialog.getByRole('heading',{name:'Isolated group',exact:true}).waitFor();
+  assert.equal(await dialog.getByText('Person a',{exact:false}).count()>0,true);checks.push('real member management');
+  await page.keyboard.press('Escape');
+  await page.goto(base+'/profile');
+  const panel=page.locator('section').filter({has:page.getByRole('heading',{name:'Close Friends',exact:true})});
+  await panel.getByRole('textbox').fill('person.a');await panel.getByRole('button',{name:'Add to close friends',exact:true}).click();
+  await panel.getByRole('button',{name:'Remove from close friends',exact:true}).waitFor();assert.equal(f.state.closeFriends.length,1);
+  await panel.getByRole('button',{name:'Remove from close friends',exact:true}).click();
+  await page.waitForFunction(()=>!Array.from(document.querySelectorAll('button')).some(button=>button.textContent==='Remove from close friends'));assert.equal(f.state.closeFriends.length,0);checks.push('own close friends add and remove');
+  assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true);assert.deepEqual(errors,[]);
+  console.log(JSON.stringify({checks,browserErrors:errors,scope:'isolated memory fixture; no production data written'}));
+ }finally{await browser.close();server.closeAllConnections();await new Promise(resolve=>server.close(resolve));await f.close();}
+})().catch(error=>{console.error(error);process.exitCode=1;});

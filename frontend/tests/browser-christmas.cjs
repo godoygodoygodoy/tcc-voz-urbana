@@ -5,7 +5,7 @@ const assert=require('node:assert/strict');
  const page=await browser.newPage({viewport:{width:1366,height:900}});
  await page.addInitScript(()=>{ window.__sounds=0; HTMLMediaElement.prototype.play=function(){window.__sounds++;return Promise.resolve();}; });
  await page.goto('http://127.0.0.1:5178/tecti/2026/gpec03/');
- const pigeon=page.getByRole('button',{name:'Interagir com o pombo'});
+ const pigeon=page.getByRole('button',{name:'Interagir com o Ligeirinho'});
  await pigeon.waitFor();
  for(let i=0;i<30;i++) await pigeon.click({force:true});
  await page.getByRole('status').filter({hasText:'Christmas Version desbloqueada'}).waitFor();

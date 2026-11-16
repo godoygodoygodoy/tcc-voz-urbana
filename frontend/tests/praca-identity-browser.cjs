@@ -1,0 +1,20 @@
+const {chromium}=require('playwright'),assert=require('node:assert/strict'),fs=require('node:fs');
+const base=process.env.PRACA_TEST_URL||'http://127.0.0.1:4173/tecti/2026/gpec03';
+const catalog=require('../src/locales/interface.json');
+(async()=>{const {createSocialFixture}=await import('../../backend/tests/helpers/socialFixture.js');const fixture=await createSocialFixture();const server=fixture.app.listen(0,'127.0.0.1');await new Promise(resolve=>server.once('listening',resolve));const browser=await chromium.launch({executablePath:'C:/Program Files/Google/Chrome/Application/chrome.exe',headless:true});const errors=[],checks=[];
+try{
+ for(const language of ['pt-BR','en','es']){
+  const page=await browser.newPage({viewport:{width:390,height:844},reducedMotion:'reduce'});page.on('pageerror',error=>errors.push(error.message));
+  await page.addInitScript(language=>{localStorage.setItem('language',language);window.__mascotSounds=0;HTMLMediaElement.prototype.play=function(){window.__mascotSounds++;return Promise.resolve();};},language);
+  await page.route('**/*',route=>new URL(route.request().url()).origin===new URL(base).origin?route.continue():route.abort());
+  await page.route('**/api/**',async route=>{const u=new URL(route.request().url());const response=await route.fetch({url:'http://127.0.0.1:'+server.address().port+u.pathname+u.search});await route.fulfill({response});});
+  await page.goto(base+'/feed');await page.getByRole('heading',{name:'Praça',exact:true}).waitFor();await page.getByRole('button',{name:catalog[language]['Interagir com o pombo'],exact:true}).waitFor();assert.equal(await page.locator('img.site-header-mascot').getAttribute('alt'),catalog[language].mascotAlt);assert.ok((await page.locator('img.site-header-mascot').getAttribute('src')).endsWith('branding/mascote-voz-urbana.webp'));checks.push(language+': brand and accessible mascot');
+  await page.locator('.site-menu-trigger').click();const menu=page.locator('.site-menu-links');const link=menu.getByRole('link',{name:/Praça/});assert.equal(await link.getAttribute('href'),'/tecti/2026/gpec03/feed');await link.click();await page.waitForURL('**/feed');checks.push(language+': legacy /feed navigation');
+  const mascot=page.getByRole('button',{name:catalog[language]['Interagir com o pombo'],exact:true});for(let i=0;i<30;i++)await mascot.click({force:true});const notice=page.locator('.christmas-unlock');await notice.waitFor();assert.ok((await notice.innerText()).includes('Ligeirinho'));assert.equal(await page.evaluate(()=>window.__mascotSounds),3);assert.equal(await page.evaluate(()=>localStorage.getItem('voz-urbana-pigeon-sounds')),'3');assert.equal(await page.locator('html').getAttribute('data-site-theme'),'christmas');checks.push(language+': unchanged three-sound unlock and named notice');
+  await page.reload();await page.getByRole('heading',{name:'Praça',exact:true}).waitFor();assert.equal(await page.locator('html').getAttribute('data-site-theme'),'christmas');assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true);assert.equal(await page.locator('.christmas-snow').count(),1);checks.push(language+': persisted Christmas theme and mobile layout');
+  await page.setViewportSize({width:1440,height:1000});assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true);checks.push(language+': desktop layout');
+  if(language==='pt-BR'){fs.mkdirSync('performance-artifacts',{recursive:true});await page.screenshot({path:'performance-artifacts/praca-identity-desktop.png'});await page.setViewportSize({width:390,height:844});await page.screenshot({path:'performance-artifacts/praca-identity-mobile.png'});}
+  await page.close();
+ }
+ assert.deepEqual(errors,[]);console.log(JSON.stringify({checks,browserErrors:errors,scope:'isolated API fixture; audio playback mocked solely to test the existing unlock event; no production writes'}));
+}finally{await browser.close();server.closeAllConnections();await new Promise(resolve=>server.close(resolve));await fixture.close();}})().catch(error=>{console.error(error);process.exitCode=1;});

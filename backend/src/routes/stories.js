@@ -40,7 +40,7 @@ router.get('/:id/media',optionalAuthMiddleware,asyncHandler(async(req,res)=>{
  file.stream.on('error',()=>res.destroy());file.stream.pipe(res);
 }));
 router.use(authMiddleware);
-router.get('/',asyncHandler(async(req,res)=>{const result=await stories.list(req.userId,req.query);res.json({...result,data:result.data.map(row=>urls(row,req.userId))});}));
+router.get('/',asyncHandler(async(req,res)=>{const result=await stories.list(req.userId,req.query);res.json({...result,data:result.data.map(row=>urls(row,req.userId)),...(result.ownStories?{ownStories:result.ownStories.map(row=>urls(row,req.userId))}:{})});}));
 router.post('/',uploadLimit,capacity,upload.fields([{name:'file',maxCount:1},{name:'original',maxCount:1}]),asyncHandler(async(req,res)=>{
  req.storyProcessing=true;
  try {

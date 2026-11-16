@@ -1,3 +1,8 @@
+import * as conversationReads from '../../src/services/conversationReads.js';
+import * as groupsService from '../../src/services/groupConversations.js';
+import * as socialPublishing from '../../src/services/socialPublishing.js';
+import * as radarService from '../../src/services/radar.js';
+import * as socialSafety from '../../src/services/socialSafety.js';
 import * as storyComposition from '../../src/services/storyComposition.js';
 import * as mediaProviders from '../../src/services/mediaProviders.js';
 import * as crypto from 'node:crypto';
@@ -63,7 +68,7 @@ export async function createSocialFixture({ streaming = false } = {}) {
   };
   const announceNotification=async notification=>{if(notification)activityEvents.publishActivity(notification.usuarioId,notification.tipo);};
   const notify=async data=>{const row=await notificationService.writeNotification(db,data);await announceNotification(row);return row;};
-  const search=()=>async(req,res)=>{const term=String(req.query.q||'').toLowerCase();const rows=state.users.filter(u=>[u.nome,u.username].some(v=>v.toLowerCase().includes(term)));res.json({data:rows.map(({id,nome,username,fotoPerfil})=>({id,nome,username,fotoPerfil})),total:rows.length,page:1,limit:12});};
+  const search=()=>async(req,res)=>{const term=String(req.query.q||'').toLowerCase();const rows=state.users.filter(u=>[u.nome,u.username].some(v=>v.toLowerCase().includes(term))&&!state.safetyRelations.some(r=>r.tipo==='BLOQUEIO'&&((r.origemId===req.userId&&r.destinoId===u.id)||(r.destinoId===req.userId&&r.origemId===u.id))));res.json({data:rows.map(({id,nome,username,fotoPerfil})=>({id,nome,username,fotoPerfil})),total:rows.length,page:1,limit:12});};
   const storedStoryMedia = new Map();
   const storage={readStoredPublication:async()=>({buffer:png,contentType:'image/png'}),storeFile:async()=>{throw Error('test upload not enabled');},removeStoredFile:async()=>{},removeOwnedStoredFile:async()=>false,storeFiles:async()=>[],removeStoredFiles:async()=>{}};
   storage.storeStoryFile = async (file,ownerId) => { const url='/uploads/posts/'+ownerId+'/story-'+storedStoryMedia.size;storedStoryMedia.set(url,file);return{url,path:url}; };
@@ -74,6 +79,11 @@ export async function createSocialFixture({ streaming = false } = {}) {
   const achievementChecks=[];
   const achievements={achievementService:createAchievements(db),queueAchievementCheck:id=>achievementChecks.push(id)};
   const dependencies={
+    '../services/conversationReads.js':conversationReads,
+    '../services/groupConversations.js':groupsService,
+    '../services/socialPublishing.js':socialPublishing,
+    '../services/radar.js':radarService,
+    '../services/socialSafety.js':socialSafety,
     'node:crypto':crypto,'../services/storyComposition.js':storyComposition,'../services/mediaProviders.js':mediaProviders,
     '../services/feedListing.js':feedListing,
     '../services/mediaVariants.js':mediaVariants,
@@ -101,6 +111,9 @@ export async function createSocialFixture({ streaming = false } = {}) {
   const social=await load('routes/social.js');
   app.use('/api/social',social.publicSocialRouter);
   app.use('/api/social',authenticate(true),social.default);
+  app.use('/api/social-safety',(await load('routes/socialSafety.js')).default);
+  app.use('/api/radar',(await load('routes/radar.js')).default);
+  app.use('/api/publishing',(await load('routes/socialPublishing.js')).default);
   app.use('/api/conversations',authenticate(true),(await load('routes/conversations.js')).default);
   app.use('/api/users',authenticate(true),(await load('routes/users.js')).default);
   app.use('/api/admin',authenticate(true),(req,res,next)=>req.isAdmin?next():res.status(403).json({error:'admin'}),(await load('routes/admin.js')).default);

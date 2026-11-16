@@ -1,3 +1,4 @@
+import {ModerationQueue} from '../components/LazySafety';
 const WorkflowSettings = React.lazy(() => import('../components/WorkflowSettings'));
 import { ConfirmDialog } from '../components/SiteDialog';
 import { translateCategory, translateSystemText, getLanguage, useI18n } from '../i18n';
@@ -107,6 +108,7 @@ const AdminDashboard = () => {
     ['problems', t("Publicações"), FileText],
     ['urban', t("Problemas urbanos"), MapPin],
     ['analytics', t("Estatísticas"), Activity],
+    ['moderation',t('socialModeration'),ShieldCheck],
     ['logs', t("Auditoria"), ShieldCheck],
     ['system', t("Monitoramento"), Gauge],
   ];
@@ -182,6 +184,7 @@ const AdminDashboard = () => {
               {!users.length && !problems.length && <p className="text-center text-sm text-white/45">{t("Nenhum registro encontrado.")}</p>}
             </section>}
 
+            {tab === 'moderation'&&<ModerationQueue/>}
             {tab === 'logs' && <section className="site-panel rounded-3xl p-6"><h2 className="mb-5 text-xl font-black">{t("Histórico administrativo")}</h2><div className="space-y-3">{logs.map((item) => <div key={item.id} className="rounded-xl border border-white/10 bg-white/5 p-4"><div className="flex justify-between gap-3"><strong>{translateSystemText(item.acao)}</strong><span className="text-xs text-white/40">{new Date(item.data).toLocaleString(getLanguage())}</span></div><p className="mt-1 text-xs text-white/50">{item.usuario?.nome} · {item.usuario?.email}</p></div>)}{!logs.length && <p className="text-sm text-white/45">{t("Nenhuma ação administrativa registrada.")}</p>}</div></section>}
 
             {tab === 'system' && <section className="grid gap-6 lg:grid-cols-3"><div className="site-panel rounded-3xl p-6"><Database className="mb-4 text-emerald-300" /><h2 className="text-xl font-black">{t("Banco de dados")}</h2><p className="mt-2 text-sm text-emerald-200">{(system?.database && translateSystemText(system.database)) || t("Verificando...")}</p><p className="mt-2 text-xs text-white/45">{system?.databaseResponseMs ? `${system.databaseResponseMs} ms` : t("Métrica indisponível")}</p></div><div className="site-panel rounded-3xl p-6"><Gauge className="mb-4 text-violet-300" /><h2 className="text-xl font-black">{t("Backend")}</h2><p className="mt-2 text-sm text-violet-200">{(system?.backend && translateSystemText(system.backend)) || t("Verificando...")}</p></div><div className="site-panel rounded-3xl p-6"><XCircle className="mb-4 text-amber-300" /><h2 className="text-xl font-black">{t("Erros")}</h2><p className="mt-2 text-sm text-white/55">{(system?.metrics && translateSystemText(system.metrics)) || t("Não disponível sem coletor de erros.")}</p></div></section>}

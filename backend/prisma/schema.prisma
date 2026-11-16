@@ -50,6 +50,19 @@ model Usuario {
   conversasRecebidas     Conversa[]             @relation("conversaDestinatario")
   mensagensEnviadas      Mensagem[]
   confirmacoesProblemas ConfirmacaoProblema[]
+  medidasOrigem RelacaoSeguranca[] @relation("medidaOrigem")
+  medidasDestino RelacaoSeguranca[] @relation("medidaDestino")
+  ocultacoes OcultacaoPublicacao[]
+  denunciasEnviadas DenunciaSocial[] @relation("denunciaAutor")
+  denunciasAnalisadas DenunciaSocial[] @relation("denunciaModerador")
+  preferenciaSocial PreferenciaSocial?
+  notas Nota[]
+  reposts Repost[]
+  gruposCriados Conversa[] @relation("grupoCriador")
+  participacoesConversas ParticipanteConversa[]
+  reacoesMensagens ReacaoMensagem[]
+  proximos AmigoProximo[] @relation("proximoDono")
+  listasProximos AmigoProximo[] @relation("proximoConvidado")
 
   @@map("usuarios")
 }
@@ -95,6 +108,8 @@ model Problema {
   etapaCodigo    String? @map("etapa_codigo") @db.VarChar(40)
   etapa          EtapaProblema? @relation(fields:[etapaCodigo],references:[codigo],onDelete:SetNull,onUpdate:Restrict,map:"problemas_etapa_fk")
   confirmacoes   ConfirmacaoProblema[]
+  ocultacoes OcultacaoPublicacao[]
+  reposts Repost[]
 
   @@index([latitude, longitude])
   @@index([status])
@@ -108,6 +123,94 @@ model Problema {
   @@index([usuarioId,fixadaEm,dataCriacao],map:"problemas_usuario_destaques_idx")
   @@index([etapaCodigo],map:"problemas_etapa_codigo_idx")
   @@map("problemas")
+}
+
+model Nota {
+ id String @id @default(uuid()) @db.Char(36)
+ usuarioId String @map("usuario_id") @db.Char(36)
+ texto String @db.VarChar(140)
+ audiencia String @default("SEGUIDORES") @db.VarChar(20)
+ criadaEm DateTime @default(now()) @map("criada_em")
+ expiraEm DateTime @map("expira_em")
+ excluidoEm DateTime? @map("excluido_em")
+ usuario Usuario @relation(fields:[usuarioId],references:[id],onDelete:Cascade)
+ @@index([usuarioId,expiraEm])
+ @@index([expiraEm,criadaEm])
+ @@map("notas")
+}
+model AmigoProximo {
+ donoId String @map("dono_id") @db.Char(36)
+ convidadoId String @map("convidado_id") @db.Char(36)
+ dono Usuario @relation("proximoDono",fields:[donoId],references:[id],onDelete:Cascade)
+ convidado Usuario @relation("proximoConvidado",fields:[convidadoId],references:[id],onDelete:Cascade)
+ @@id([donoId,convidadoId])
+ @@index([convidadoId])
+ @@map("amigos_proximos")
+}
+model Repost {
+ id String @id @default(uuid()) @db.Char(36)
+ usuarioId String @map("usuario_id") @db.Char(36)
+ originalId String @map("original_id") @db.Char(36)
+ problemaId String? @map("problema_id") @db.Char(36)
+ comentario String @default("") @db.VarChar(500)
+ criadaEm DateTime @default(now()) @map("criada_em")
+ usuario Usuario @relation(fields:[usuarioId],references:[id],onDelete:Cascade)
+ problema Problema? @relation(fields:[problemaId],references:[id],onDelete:SetNull)
+ @@unique([usuarioId,originalId])
+ @@index([problemaId])
+ @@index([criadaEm,id])
+ @@map("reposts")
+}
+model RelacaoSeguranca {
+ id String @id @default(uuid()) @db.Char(36)
+ origemId String @map("origem_id") @db.Char(36)
+ destinoId String @map("destino_id") @db.Char(36)
+ tipo String @db.VarChar(16)
+ criadaEm DateTime @default(now()) @map("criada_em")
+ origem Usuario @relation("medidaOrigem",fields:[origemId],references:[id],onDelete:Cascade)
+ destino Usuario @relation("medidaDestino",fields:[destinoId],references:[id],onDelete:Cascade)
+ @@unique([origemId,destinoId,tipo])
+ @@index([destinoId,tipo,origemId])
+ @@map("relacoes_seguranca")
+}
+model OcultacaoPublicacao {
+ id String @id @default(uuid()) @db.Char(36)
+ usuarioId String @map("usuario_id") @db.Char(36)
+ problemaId String @map("problema_id") @db.Char(36)
+ criadaEm DateTime @default(now()) @map("criada_em")
+ usuario Usuario @relation(fields:[usuarioId],references:[id],onDelete:Cascade)
+ problema Problema @relation(fields:[problemaId],references:[id],onDelete:Cascade)
+ @@unique([usuarioId,problemaId])
+ @@index([problemaId])
+ @@map("ocultacoes_publicacoes")
+}
+model PreferenciaSocial {
+ usuarioId String @id @map("usuario_id") @db.Char(36)
+ mensagens String @default("TODOS") @db.VarChar(16)
+ mencoes String @default("TODOS") @db.VarChar(16)
+ usuario Usuario @relation(fields:[usuarioId],references:[id],onDelete:Cascade)
+ @@map("preferencias_sociais")
+}
+model DenunciaSocial {
+ id String @id @default(uuid()) @db.Char(36)
+ autorId String @map("autor_id") @db.Char(36)
+ tipoAlvo String @map("tipo_alvo") @db.VarChar(16)
+ // Polymorphic target retained after removal; validated against actual content
+ // at submission. Never store a copy of private content in the report.
+ alvoId String @map("alvo_id") @db.Char(36)
+ categoria String @db.VarChar(24)
+ motivo String @db.VarChar(1000)
+ estado String @default("ABERTA") @db.VarChar(16)
+ decisao String? @db.VarChar(1000)
+ moderadorId String? @map("moderador_id") @db.Char(36)
+ criadaEm DateTime @default(now()) @map("criada_em")
+ atualizadaEm DateTime @updatedAt @map("atualizada_em")
+ autor Usuario @relation("denunciaAutor",fields:[autorId],references:[id],onDelete:Cascade)
+ moderador Usuario? @relation("denunciaModerador",fields:[moderadorId],references:[id],onDelete:SetNull)
+ @@unique([autorId,tipoAlvo,alvoId,categoria])
+ @@index([estado,criadaEm,id])
+ @@index([moderadorId])
+ @@map("denuncias_sociais")
 }
 
 model PublicacaoSalva {
@@ -262,17 +365,25 @@ model Seguimento {
 
 model Conversa {
   id              String    @id @default(uuid()) @db.Char(36)
-  usuarioAId      String    @map("usuario_a_id") @db.Char(36)
-  usuarioBId      String    @map("usuario_b_id") @db.Char(36)
+  usuarioAId      String?    @map("usuario_a_id") @db.Char(36)
+  usuarioBId      String?    @map("usuario_b_id") @db.Char(36)
+  tipo String @default("DIRETA") @db.VarChar(16)
+  nome String? @db.VarChar(100)
+  descricao String? @db.VarChar(1000)
+  criadorId String? @map("criador_id") @db.Char(36)
+  criador Usuario? @relation("grupoCriador",fields:[criadorId],references:[id],onDelete:SetNull)
+  participantes ParticipanteConversa[]
   criadaEm        DateTime  @default(now()) @map("criada_em")
   atualizadaEm    DateTime  @updatedAt @map("atualizada_em")
-  usuarioA        Usuario   @relation("conversaRemetente", fields: [usuarioAId], references: [id], onDelete: Cascade)
-  usuarioB        Usuario   @relation("conversaDestinatario", fields: [usuarioBId], references: [id], onDelete: Cascade)
+  usuarioA        Usuario?   @relation("conversaRemetente", fields: [usuarioAId], references: [id], onDelete: Cascade)
+  usuarioB        Usuario?   @relation("conversaDestinatario", fields: [usuarioBId], references: [id], onDelete: Cascade)
   mensagens       Mensagem[]
 
   @@unique([usuarioAId, usuarioBId])
   @@index([usuarioAId, atualizadaEm])
   @@index([usuarioBId, atualizadaEm])
+  @@index([criadorId])
+  @@index([tipo,atualizadaEm,id])
   @@map("conversas")
 }
 
@@ -284,11 +395,38 @@ model Mensagem {
   remetenteId String   @map("remetente_id") @db.Char(36)
   conversa    Conversa @relation(fields: [conversaId], references: [id], onDelete: Cascade)
   remetente   Usuario  @relation(fields: [remetenteId], references: [id], onDelete: Cascade)
+  respostaId String? @map("resposta_id") @db.Char(36)
+  resposta Mensagem? @relation("respostaMensagem",fields:[respostaId],references:[id],onDelete:SetNull)
+  respostas Mensagem[] @relation("respostaMensagem")
+  reacoes ReacaoMensagem[]
+  @@index([respostaId])
 
   @@index([conversaId, criadaEm])
   @@index([conversaId, remetenteId])
   @@index([remetenteId, criadaEm])
   @@map("mensagens")
+}
+model ParticipanteConversa {
+ conversaId String @map("conversa_id") @db.Char(36)
+ usuarioId String @map("usuario_id") @db.Char(36)
+ papel String @default("MEMBRO") @db.VarChar(16)
+ estado String @default("ATIVO") @db.VarChar(16)
+ lidaAte DateTime? @map("lida_ate")
+ conversa Conversa @relation(fields:[conversaId],references:[id],onDelete:Cascade)
+ usuario Usuario @relation(fields:[usuarioId],references:[id],onDelete:Cascade)
+ @@id([conversaId,usuarioId])
+ @@index([usuarioId,estado])
+ @@map("participantes_conversas")
+}
+model ReacaoMensagem {
+ mensagemId String @map("mensagem_id") @db.Char(36)
+ usuarioId String @map("usuario_id") @db.Char(36)
+ emoji String @db.VarChar(16)
+ mensagem Mensagem @relation(fields:[mensagemId],references:[id],onDelete:Cascade)
+ usuario Usuario @relation(fields:[usuarioId],references:[id],onDelete:Cascade)
+ @@id([mensagemId,usuarioId])
+ @@index([usuarioId])
+ @@map("reacoes_mensagens")
 }
 
 enum StatusAmizade {

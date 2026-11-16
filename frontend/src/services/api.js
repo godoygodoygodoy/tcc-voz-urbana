@@ -104,6 +104,20 @@ export const mediaLibraryAPI={
  music:(params,options)=>api.get('/media-library/music/search',{...options,params}),
  musicToken:()=>api.get('/media-library/music/token'),
 };
+export const safetyAPI={
+ closeFriends:params=>api.get('/social-safety/close-friends',{params}),
+ setCloseFriend:(id,enabled)=>api.put('/social-safety/close-friends/'+id,{enabled}),
+ hidden:params=>api.get('/social-safety/hidden',{params}),
+ state:id=>api.get('/social-safety/users/'+id),
+ relation:(id,kind,enabled)=>api.put('/social-safety/users/'+id+'/'+kind,{enabled}),
+ list:params=>api.get('/social-safety/relationships',{params}),
+ preferences:()=>api.get('/social-safety/preferences'),
+ updatePreferences:body=>api.put('/social-safety/preferences',body),
+ hide:(id,enabled)=>api.put('/social-safety/hidden/'+id,{enabled}),
+ report:body=>api.post('/social-safety/reports',body),
+ reports:params=>api.get('/social-safety/reports',{params}),
+ review:(id,body)=>api.patch('/social-safety/reports/'+id,body),
+};
 export const collectionsAPI = {
   list: (params, options) => api.get('/collections', { params, ...options }),
   publicList: (ownerId, params, options) => api.get('/collections/public/'+ownerId, { params, ...options }),
@@ -177,6 +191,11 @@ export const socialAPI = {
 };
 
 export const conversationsAPI = {
+ createGroup:body=>api.post('/conversations/groups',body),
+ details:id=>api.get('/conversations/'+id+'/details'),
+ member:(id,userId,action)=>api.put('/conversations/'+id+'/members/'+userId,{action}),
+ read:id=>api.put('/conversations/'+id+'/read'),
+ react:(id,messageId,emoji)=>api.put('/conversations/'+id+'/messages/'+messageId+'/reaction',{emoji}),
   list: () => api.get('/conversations'),
   create: (userId) => api.post(`/conversations/${userId}`),
   messages: (id, params) => api.get(`/conversations/${id}/messages`, { params }),
@@ -230,3 +249,7 @@ export const profileFeaturesAPI = {
   presentation: data => api.put('/profile-features/me/presentation',data),
 };
 export const sharingAPI={publication:(id,language,config)=>api.get('/shares/'+id,{...config,params:{lang:language}})};
+
+export const radarAPI={list:(params,options)=>api.get('/radar',{...options,params})};
+
+export const publishingAPI={notes:params=>api.get('/publishing/notes',{params}),saveNote:body=>api.put('/publishing/notes/me',body),removeNote:id=>api.delete('/publishing/notes/'+id),reposts:params=>api.get('/publishing/reposts',{params}),repost:(id,comment)=>api.put('/publishing/reposts/'+id,{comment}),removeRepost:id=>api.delete('/publishing/reposts/'+id)};

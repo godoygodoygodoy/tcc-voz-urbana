@@ -1,3 +1,4 @@
+import {isBlocked, unblockedUserWhere} from '../services/socialGraph.js';
 import { coverUrl } from '../services/profileFeatures.js';
 import { publicationImages } from '../services/publicationMedia.js';
 import express from 'express';
@@ -22,7 +23,7 @@ const serializeProblem = (problem, req) => ({
 });
 const getProfile = async (req, res, where) => {
   const user = await prisma.usuario.findUnique({ where, select: { ...publicUser, bio: true, apresentacao:true,capaUrl:true, dataCriacao: true, _count: { select: { problemas: true } } } });
-  if (!user) return res.status(404).json({ error: 'profileNotFound' });
+  if (!user||await isBlocked(prisma,req.userId,user.id)) return res.status(404).json({ error: 'profileNotFound' });
   const canViewPosts = await canViewProfile(prisma, user, req.userId, req.isAdmin === true);
   const [followers, following, likes, publications, relation] = await Promise.all([
     prisma.seguimento.count({ where: { followingId: user.id, status: 'ACEITA' } }),
@@ -43,6 +44,7 @@ for (const direction of ['followers', 'following']) publicSocialRouter.get(`/use
   const limit = 30;
   const where = { [direction === 'followers' ? 'followingId' : 'followerId']: owner.id, status: 'ACEITA' };
   const side = direction === 'followers' ? 'follower' : 'following';
+  where[side] = { is: unblockedUserWhere(req.userId) };
   const [total, rows] = await Promise.all([
     prisma.seguimento.count({ where }),
     prisma.seguimento.findMany({ where, include: { [side]: { select: publicUser } }, orderBy: [{ criadaEm: 'desc' }, { id: 'asc' }], skip: (page - 1) * limit, take: limit }),
