@@ -6,6 +6,7 @@
   "type": "module",
   "scripts": {
     "start": "node src/server.js",
+    "start:production": "node scripts/start-production.js",
     "dev": "nodemon src/server.js",
     "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js --watchAll=false",
     "test:watch": "node --experimental-vm-modules node_modules/jest/bin/jest.js --watch",
@@ -40,8 +41,8 @@
   "author": "",
   "license": "MIT",
   "dependencies": {
-    "@prisma/adapter-mariadb": "^7.8.0",
-    "@prisma/client": "^7.8.0",
+    "@prisma/adapter-mariadb": "7.10.0",
+    "@prisma/client": "7.10.0",
     "@supabase/supabase-js": "^2.119.0",
     "bcryptjs": "^2.4.3",
     "cors": "^2.8.5",
@@ -60,7 +61,7 @@
   "devDependencies": {
     "jest": "^29.5.0",
     "nodemon": "^2.0.20",
-    "prisma": "^7.8.0",
+    "prisma": "7.10.0",
     "supertest": "^6.3.3"
   },
   "engines": {

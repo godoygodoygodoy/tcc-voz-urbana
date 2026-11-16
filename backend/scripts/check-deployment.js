@@ -18,7 +18,7 @@ try {
     const sql = await readFile(new URL(`../prisma/migrations/${folder.name}/migration.sql`, import.meta.url), 'utf8');
     pending.push({ migration: folder.name, manualReviewRequired: migrationNeedsReview(sql) });
   }
-  console.log(JSON.stringify({ release: releaseInfo(), startCommand: 'npm start', schema, pending,
+  console.log(JSON.stringify({ release: releaseInfo(), startCommand: 'npm run start:production', schema, pending,
     failedMigrations: history.filter(row => !row.finished_at && !row.rolled_back_at).map(row => row.migration_name),
     backupVerificationConfigured: Boolean(process.env.BACKUP_VERIFY_DATABASE_URL), changesMade: false }, null, 2));
   if (!schema.compatible || pending.length || history.some(row => !row.finished_at && !row.rolled_back_at)) process.exitCode = 1;

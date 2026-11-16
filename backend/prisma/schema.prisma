@@ -24,6 +24,9 @@ model Usuario {
   emailVerificado        Boolean               @default(false) @map("email_verificado")
   tokenVerificacao       String?               @unique @map("token_verificacao") @db.VarChar(100)
   tokenVerificacaoExpira DateTime?             @map("token_verificacao_expira")
+  // Preserve legacy reset columns without exposing token hashes through ORM results.
+  senhaResetTokenHash String? @unique @map("senha_reset_token_hash") @db.Char(64) @ignore
+  senhaResetExpira DateTime? @map("senha_reset_expira") @ignore
   admin                  Admin?
   atualizacoes           AtualizacaoProblema[]
   comentarios            Comentario[]
@@ -94,7 +97,8 @@ model Problema {
   @@index([latitude, longitude])
   @@index([status])
   @@index([categoriaId])
-  @@index([usuarioId], map: "problemas_usuario_id_fkey")
+  // usuarioId is the leading column of the composite indexes below, which also
+  // support the FK. MariaDB discards its redundant implicit single-column index.
   @@index([estado, cidade])
   @@index([estado,cidade,bairro,dataCriacao], map:"problemas_regiao_data_idx")
   @@index([dataCriacao], map: "problemas_data_idx")
@@ -215,7 +219,7 @@ model EntregaAtualizacao {
   historicoId String @id @map("historico_id") @db.Char(36)
   cursorUsuarioId String? @map("cursor_usuario_id") @db.Char(36)
   criadaEm DateTime @default(now()) @map("criada_em")
-  historico AtualizacaoProblema @relation(fields:[historicoId], references:[id], onDelete:Cascade, onUpdate:Restrict)
+  historico AtualizacaoProblema @relation(fields:[historicoId], references:[id], onDelete:Cascade, onUpdate:Restrict,map:"entregas_atualizacao_historico_fk")
 
   @@index([criadaEm,historicoId], map:"entregas_atualizacao_data_idx")
   @@map("entregas_atualizacao")
@@ -298,7 +302,7 @@ model Admin {
 }
 
 model Log {
-  id        String   @id @default(uuid())
+  id        String   @id @default(uuid()) @db.Char(36)
   acao      String   @db.VarChar(200)
   data      DateTime @default(now())
   usuarioId String   @map("usuario_id") @db.Char(36)
@@ -319,7 +323,8 @@ model Visita {
   @@index([criadaEm])
   @@index([visitanteId, criadaEm])
   @@index([caminho, criadaEm])
-  @@index([usuarioId, criadaEm])
+  @@index([usuarioId], map: "visitas_usuario_id_criada_em_idx")
+  @@index([usuarioId, criadaEm], map: "visitas_usuario_data_idx")
   @@map("visitas")
 }
 

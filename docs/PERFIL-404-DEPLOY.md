@@ -1,5 +1,7 @@
 # Perfil: diagnóstico de HTTP 404 e deploy
 
+> Registro histórico da investigação. A atualização posterior do banco de produção, as migrações aplicadas e o novo Start Command estão em [MIGRACAO-PRODUCAO-2026-11-15.md](MIGRACAO-PRODUCAO-2026-11-15.md).
+
 Investigação de 15/11/2026. Não foram aplicadas migrações, executados seeds, criados cadastros nem modificados dados de produção.
 
 ## Causa confirmada

@@ -68,6 +68,12 @@ export async function dumpInventory(file) {
   }
   return tables;
 }
+export async function objectInventory(url) {
+  const counts=(await query(url,"SELECT (SELECT COUNT(*) FROM information_schema.routines WHERE routine_schema=DATABASE()), (SELECT COUNT(*) FROM information_schema.events WHERE event_schema=DATABASE()), (SELECT COUNT(*) FROM information_schema.triggers WHERE trigger_schema=DATABASE())")).trim().split('\t').map(Number);
+  if(counts.length!==3||counts.some(value=>!Number.isInteger(value)||value<0))throw new Error('Could not inspect database object inventory.');
+  return {routines:counts[0],events:counts[1],triggers:counts[2]};
+}
+export const routineDumpArgs = objects => objects.routines > 0 ? ['--routines'] : [];
 export async function createBackup() {
   const url = process.env.DATABASE_URL;
   if (!url) throw new Error('DATABASE_URL is required; no fallback database is allowed for backups.');
@@ -76,15 +82,19 @@ export async function createBackup() {
   const engines = await query(url, "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema=DATABASE() AND table_type='BASE TABLE' AND engine <> 'InnoDB'");
   if (Number(engines.trim()) !== 0) throw new Error('Non-InnoDB tables need a DBA-managed consistent backup.');
   const {args, database, env} = clientOptions(url);
+  const objects=await objectInventory(url);
   const file = path.join(directory, 'voz-urbana-' + new Date().toISOString().replace(/[:.]/g, '-') + '.sql');
   const compatibility = process.env.MYSQL_CLIENT_FLAVOR === 'mariadb' ? [] : ['--column-statistics=0', '--set-gtid-purged=OFF'];
-  await runClient(process.env.MYSQLDUMP_BIN || 'mysqldump', [...args, '--single-transaction', '--quick', '--routines', '--events', '--triggers', '--hex-blob', '--skip-extended-insert', '--skip-add-drop-table', '--skip-add-locks', '--no-tablespaces', ...compatibility, database], {env, output: file + '.partial'});
+  // MySQL 9's --routines queries information_schema.LIBRARIES, absent on MariaDB.
+  // Omit the flag only when metadata confirms there are no routines to lose.
+  // Databases with routines still require a client that can dump them successfully.
+  await runClient(process.env.MYSQLDUMP_BIN || 'mysqldump', [...args, '--single-transaction', '--quick', ...routineDumpArgs(objects), '--events', '--triggers', '--hex-blob', '--skip-extended-insert', '--skip-add-drop-table', '--skip-add-locks', '--no-tablespaces', ...compatibility, database], {env, output: file + '.partial'});
   const info = await stat(file + '.partial');
   if (info.size < 100) throw new Error('Empty or incomplete backup.');
   await rename(file + '.partial', file);
   const tables = await dumpInventory(file);
   if (!Object.keys(tables).length) throw new Error('Backup contains no application tables.');
-  const manifest = { version: 1, createdAt: new Date().toISOString(), source: fingerprint(url), bytes: info.size, sha256: await digest(file), tables, verified: false };
+  const manifest = { version: 1, createdAt: new Date().toISOString(), source: fingerprint(url), bytes: info.size, sha256: await digest(file), tables, objects, verified: false };
   await writeFile(file + '.json', JSON.stringify(manifest, null, 2), { mode: 0o600, flag: 'wx' });
   return file;
 }
@@ -111,6 +121,7 @@ export async function verifyBackup(file) {
     const restored = Number((await query(target, 'SELECT COUNT(*) FROM `' + table + '`')).trim());
     if (restored !== rows) throw new Error('Restore row-count verification failed.');
   }
+  if(manifest.objects){const restored=await objectInventory(target);if(Object.keys(manifest.objects).some(key=>manifest.objects[key]!==restored[key]))throw new Error('Restore object-count verification failed.');}
   manifest.verified = true;
   manifest.verifiedAt = new Date().toISOString();
   manifest.verificationTarget = fingerprint(target);

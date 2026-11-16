@@ -4,9 +4,9 @@ services:
     runtime: node
     rootDir: backend
     buildCommand: npm ci --include=dev && npm run prisma:generate
-    # The Dashboard's Start Command must match this value. prisma:deploy is
-    # a separate maintenance command with an explicit approval/backup gate.
-    startCommand: npm start
+    # Serializes migration checks. Pending changes require a rehearsed review,
+    # a fresh private backup and an empty isolated restore target.
+    startCommand: npm run start:production
     healthCheckPath: /health
     disk:
       name: uploads

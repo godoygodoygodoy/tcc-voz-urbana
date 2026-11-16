@@ -66,7 +66,7 @@ Nunca coloque senhas, JWT_SECRET ou tokens privados em VITE_*. Geolocalização 
 
 ### Backend / Render
 
-Instalação local: em `backend/`, execute `npm install`, copie `.env.example` para `.env`, preencha os valores e execute `npm run prisma:generate`. Desenvolvimento: `npm run dev`. Produção: `npm start`, que executa `node src/server.js` sem nodemon.
+Instalação local: em `backend/`, execute `npm install`, copie `.env.example` para `.env`, preencha os valores e execute `npm run prisma:generate`. Desenvolvimento: `npm run dev`. Produção: `npm run start:production`, que verifica/aplica migrações pelo fluxo protegido antes de iniciar `src/server.js`, sem nodemon.
 
 Crie um Web Service Node vinculado ao repositório GitHub:
 
@@ -74,7 +74,7 @@ Crie um Web Service Node vinculado ao repositório GitHub:
 | --- | --- |
 | Root Directory | `backend` |
 | Build Command | `npm ci --include=dev && npm run prisma:generate` |
-| Start Command | `npm start` |
+| Start Command | `npm run start:production` |
 | Health Check Path | `/health` |
 | Node | `24.11.1` |
 
@@ -131,10 +131,10 @@ Antes da primeira inicialização, faça backup e execute em ambiente confiável
 cd backend
 npm ci --include=dev
 npm run prisma:generate
-npm run prisma:deploy
+npm run check:deployment
 ```
 
-O último comando agora bloqueia alterações por padrão. Após revisão, `npm run prisma:deploy -- --apply` exige backup novo e restauração validada em banco isolado antes de chamar Prisma. Não foi executada nenhuma migration nesta correção. Para bancos existentes criados fora das migrations, revise o baseline com um DBA; não use reset nem db push. Não execute migrations automaticamente no startup. Consulte o procedimento atualizado acima. O build apenas gera o cliente Prisma.
+O último comando é somente diagnóstico. `npm run prisma:deploy -- --apply` e `npm run start:production` usam o mesmo bloqueio de concorrência. Se houver migrações pendentes, exigem `MIGRATION_REVIEW_FILE` vinculado ao banco/checksums após ensaio, backup novo em `BACKUP_DIR` privado e restauração validada em `BACKUP_VERIFY_DATABASE_URL` isolado e vazio. Sem pendências, conferem o histórico e executam `prisma migrate deploy` sem alterar o banco. O servidor mantém `SCHEMA_NOT_READY`. Não use reset nem db push; provisionamento/baseline inicial exige revisão separada. O build apenas gera o cliente Prisma. Consulte [o relatório de migração e requisitos operacionais](docs/MIGRACAO-PRODUCAO-2026-11-15.md).
 
 Seed opcional: `npm run prisma:seed`. Ele atualiza categorias e promove ADMIN_EMAIL a SUPER_ADMIN. Execute somente intencionalmente, com ADMIN_EMAIL explícito e ADMIN_PASSWORD se for criar a conta; remova essas variáveis depois. Não há mais seed automático no build.
 
