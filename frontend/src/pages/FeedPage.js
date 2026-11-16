@@ -170,6 +170,9 @@ const FeedPage = () => {
   const [peoplePage, setPeoplePage] = useState(1);
   const [loadingUsers, setLoadingUsers] = useState(false);
   const [relationships, setRelationships] = useState({});
+  const [followBusy, setFollowBusy] = useState({});
+  const followInFlight = useRef(new Set());
+  const relationshipRequest = useRef(0);
   const [messages, setMessages] = useState([]);
   const messageCursor = useRef(null);
   const [hasOlderMessages, setHasOlderMessages] = useState(false);
@@ -693,26 +696,30 @@ const FeedPage = () => {
     if(!item.lida){const sequence=++notificationRequest.current;try{const {data}=await notificationsAPI.markRead(item.id);setNotifications(current=>current.map(row=>row.id===item.id?{...row,lida:true}:row));if(sequence===notificationRequest.current)setNotificationMeta(current=>({...current,unread:data.unread??0}));}catch(error){toast.error(error.response?.data?.error||t('notificationReadError'));}}
     if(item.link?.startsWith('/')&&!item.link.startsWith('//'))navigate(item.link);
   };
-  const loadRelationship = async (userId) => {
-    if (!user) return;
-    try { const { data } = await socialAPI.relationship(userId); setRelationships(current => ({ ...current, [userId]: data })); }
-    catch { /* An unavailable relationship must not prevent browsing profiles. */ }
-  };
   const changeFollow = async (person) => {
     if (!user) { openAuthModal('login'); return; }
     const relation = relationships[person.id];
+    if (!relation || person.id === user.id || followInFlight.current.has(person.id)) return;
+    followInFlight.current.add(person.id);
+    setFollowBusy(current => ({ ...current, [person.id]: true }));
+    ++relationshipRequest.current;
     try {
       const { data } = await (relation?.following || relation?.pending ? socialAPI.unfollow(person.id) : socialAPI.follow(person.id));
       setRelationships(current => ({ ...current, [person.id]: data }));
       notifySocialChange();
     } catch (error) { toast.error(error.response?.data?.error || t('followError')); }
+    finally {
+      followInFlight.current.delete(person.id);
+      setFollowBusy(current => ({ ...current, [person.id]: false }));
+    }
   };
   useEffect(() => {
     if (!user || !userResults.length) return undefined;
     let active = true;
     const refresh = async () => {
+      const sequence = ++relationshipRequest.current;
       const results = await Promise.allSettled(userResults.filter(person => person.id !== user.id).map(async person => [person.id, (await socialAPI.relationship(person.id)).data]));
-      if (active) setRelationships(current => ({ ...current, ...Object.fromEntries(results.filter(result => result.status === 'fulfilled').map(result => result.value)) }));
+      if (active && sequence === relationshipRequest.current) setRelationships(current => ({ ...current, ...Object.fromEntries(results.filter(result => result.status === 'fulfilled' && !followInFlight.current.has(result.value[0])).map(result => result.value)) }));
     };
     refresh();
     const unsubscribe = subscribeSocialChanges(refresh);
@@ -782,15 +789,21 @@ const FeedPage = () => {
       <div className="feed-section-label"><Users size={15} /> {t("Pessoas")}</div>
       {search.trim().replace(/^@+/, '').length < 2 ? <p className="feed-search-empty">{t("Digite pelo menos 2 caracteres para buscar pessoas.")}</p> : peopleSearchError ? <p className="feed-search-empty" role="alert">{t("Não foi possível consultar as pessoas. Verifique sua conexão e tente novamente.")}</p> : loadingUsers ? <p className="feed-search-empty">{t("Buscando pessoas...")}</p> : userResults.length === 0 ? <p className="feed-search-empty">{t("Nenhuma pessoa encontrada.")}</p> : userResults.map((person) => {
         const relation = relationships[person.id];
-        const relationLabel = t(followButtonKey(relation));
+        const relationLabel = t(relation ? followButtonKey(relation) : 'loading');
         return <div key={person.id} className="feed-search-person">
-          <div className="feed-search-person-main">
-            <Link to={profilePath(person)} className="feed-search-person-main">
-              <Avatar user={person} />
-              <span><strong>{person.nome}</strong><small>{person.username ? `@${person.username}` : t('noUsername')}</small></span>
-            </Link>
-          </div>
-          {user && person.id !== user.id && <div className="feed-person-actions"><span className="social-relationship-badge">{relation?.mutual ? t('mutualFriends') : relation?.followedBy ? t('followsYou') : ''}</span><button type="button" onClick={() => changeFollow(person)} onMouseEnter={() => loadRelationship(person.id)} title={t(relation?.following ? 'unfollowButton' : relation?.pending ? 'cancelFollowRequest' : 'followButton')}>{relationLabel}</button><button type="button" aria-label={t('Enviar mensagem')} onClick={() => openConversation(person)}><MessageCircle size={16} /></button></div>}
+          <Link to={profilePath(person)} className="feed-search-person-main">
+            <Avatar user={person} width="44" height="44" />
+            <span className="feed-search-person-info">
+              <strong title={person.nome}>{person.nome}</strong>
+              <small title={person.username ? `@${person.username.replace(/^@+/, '')}` : undefined}>{person.username ? `@${person.username.replace(/^@+/, '')}` : t('noUsername')}</small>
+              {person.apresentacao && <span className="feed-search-person-description" title={person.apresentacao}>{person.apresentacao}</span>}
+            </span>
+          </Link>
+          {user && person.id !== user.id && <div className="feed-person-actions">
+            {(relation?.mutual || relation?.followedBy) && <span className="social-relationship-badge">{t(relation.mutual ? 'mutualFriends' : 'followsYou')}</span>}
+            <button className="feed-secondary-button feed-search-follow" type="button" disabled={!relation || followBusy[person.id]} aria-busy={Boolean(followBusy[person.id])} onClick={() => changeFollow(person)} title={t(relation?.following ? 'unfollowButton' : relation?.pending ? 'cancelFollowRequest' : 'followButton')}>{relationLabel}</button>
+            <button className="feed-secondary-button feed-search-message" type="button" aria-label={t('Enviar mensagem')} onClick={() => openConversation(person)}><MessageCircle size={16} /></button>
+          </div>}
         </div>;
       })}
       {peopleTotal > 12 && <nav className="flex items-center justify-between gap-3" aria-label={t("Páginas de pessoas")}><button type="button" disabled={loadingUsers || peoplePage === 1} onClick={() => setPeoplePage(current => current - 1)}>{t("Anterior")}</button><span>{t("Página")} {peoplePage} {t("de")} {Math.ceil(peopleTotal / 12)}</span><button type="button" disabled={loadingUsers || peoplePage * 12 >= peopleTotal} onClick={() => setPeoplePage(current => current + 1)}>{t("Próxima")}</button></nav>}

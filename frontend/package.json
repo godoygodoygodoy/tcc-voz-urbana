@@ -27,6 +27,7 @@
     "zustand": "^4.3.7"
   },
   "scripts": {
+    "test:people-search:browser": "node --experimental-vm-modules tests/people-search-browser.cjs",
     "dev": "vite",
     "start": "vite",
     "build": "vite build",

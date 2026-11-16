@@ -17,7 +17,9 @@ export const createPeopleSearch = (database) => async (req, res) => {
   )`;
   const [counts, users] = await Promise.all([
     database.$queryRaw(Prisma.sql`SELECT COUNT(*) AS total FROM usuarios ${where}`),
-    database.$queryRaw(Prisma.sql`SELECT id, nome, username, foto_perfil AS fotoPerfil FROM usuarios ${where} ORDER BY nome ASC, id ASC LIMIT ${limit} OFFSET ${(page - 1) * limit}`),
+    database.$queryRaw(Prisma.sql`SELECT id, nome, username, foto_perfil AS fotoPerfil,
+      CASE WHEN perfil_privado = false THEN apresentacao ELSE NULL END AS apresentacao
+      FROM usuarios ${where} ORDER BY nome ASC, id ASC LIMIT ${limit} OFFSET ${(page - 1) * limit}`),
   ]);
   res.json({ data: users, page, limit, total: Number(counts[0].total) });
 };

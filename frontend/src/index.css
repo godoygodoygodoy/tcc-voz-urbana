@@ -3455,7 +3455,20 @@ input:-webkit-autofill, input:-webkit-autofill:hover, input:-webkit-autofill:foc
 .social-network-dialog li small { color: rgba(255, 255, 255, .5); font-size: 12px; }
 .social-network-dialog footer { margin-top: 12px; font-size: 12px; }
 .social-network-dialog button:disabled { opacity: .4; }
-.feed-person-actions { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 8px; }
+.feed-search-person { display:grid; grid-template-columns:minmax(0,1fr) auto; align-items:center; gap:16px; min-width:0; padding:16px; border:1px solid rgba(255,255,255,.09); border-radius:15px; background:#0e1115; }
+.feed-search-person-main { display:flex; align-items:center; gap:12px; min-width:0; border-radius:8px; }
+.feed-search-person-main > .avatar { width:44px; height:44px; flex:0 0 44px; font-size:18px; object-fit:cover; }
+.feed-search-person-info { display:block; min-width:0; }
+.feed-search-person-info strong, .feed-search-person-info small, .feed-search-person-description { display:block; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.feed-search-person-info strong { color:#fff; font-size:14px; font-weight:800; line-height:1.5; }
+.feed-search-person-info small { color:rgba(255,255,255,.5); font-size:12px; line-height:1.6; }
+.feed-search-person-description { margin-top:4px; color:rgba(255,255,255,.65); font-size:12px; line-height:1.5; }
+.feed-search-person-main:focus-visible, .feed-person-actions button:focus-visible { outline:2px solid #c4b5fd; outline-offset:4px; }
+.feed-person-actions { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 8px; max-width:230px; }
+.feed-person-actions .feed-secondary-button { min-height:44px; justify-content:center; transition:background 180ms ease,border-color 180ms ease,color 180ms ease; }
+.feed-person-actions .feed-search-follow { white-space:normal; overflow-wrap:anywhere; max-width:170px; line-height:1.4; }
+.feed-person-actions .feed-search-message { width:44px; padding:0; flex:0 0 44px; }
+.feed-person-actions button:disabled { cursor:wait; opacity:.55; }
 .feed-person-actions .social-relationship-badge { font-size: 10px; flex-basis: 100%; justify-content: flex-end; }
 .feed-dm-limit { display: flex; align-items: flex-start; gap: 10px; border-top: 1px solid rgba(167,139,250,.2); padding: 16px; color: #ddd6fe; background: rgba(109,40,217,.12); font-size: 12px; line-height: 1.6; }
 .feed-dm-limit svg { flex-shrink: 0; margin-top: 2px; }
@@ -3466,9 +3479,16 @@ input:-webkit-autofill, input:-webkit-autofill:hover, input:-webkit-autofill:foc
 @media (max-width: 640px) {
   .social-network-backdrop { padding: 12px; }
   .social-network-dialog { padding: 16px; }
-  .feed-search-person { gap: 10px; }
-  .feed-person-actions { max-width: 155px; }
+  .feed-search-person { gap:12px; padding:12px; }
+  .feed-person-actions { max-width:155px; }
+  .feed-person-actions .feed-search-follow { max-width:103px; }
   .feed-dm-thread-head small { line-height: 1.5; }
+}
+@media (max-width:420px) {
+  .feed-search-person { grid-template-columns:minmax(0,1fr); }
+  .feed-search-person .feed-person-actions { max-width:none; width:100%; }
+  .feed-search-person .feed-search-follow { max-width:none; flex:1; }
+  .feed-search-person .social-relationship-badge { justify-content:flex-start; }
 }
 .feed-dm-contact > .avatar, .feed-dm-thread-head > .avatar { width: 32px; height: 32px; flex: 0 0 32px; font-size: 13px; }
 @media (max-width: 640px) {
