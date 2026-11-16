@@ -27,6 +27,7 @@
     "zustand": "^4.3.7"
   },
   "scripts": {
+    "test:story-composer:browser": "node --experimental-vm-modules tests/story-composer-browser.cjs",
     "test:feed-pagination:browser": "node --experimental-vm-modules tests/feed-pagination-browser.cjs",
     "measure:feed:real": "node tests/feed-real-performance.cjs",
     "test:notification-actors:browser": "node --experimental-vm-modules tests/notification-actors-browser.cjs",
@@ -52,7 +53,9 @@
     "test:map": "node --test tests/map-color.test.cjs",
     "test:api-config": "node --experimental-vm-modules --test tests/api-config.test.cjs",
     "test:tracking-profile:browser": "node --experimental-vm-modules tests/tracking-profile-browser.cjs",
-    "test:profile-errors:browser": "node --experimental-vm-modules tests/profile-api-errors-browser.cjs"
+    "test:profile-errors:browser": "node --experimental-vm-modules tests/profile-api-errors-browser.cjs",
+    "test:story-ecosystem:browser": "node --experimental-vm-modules tests/story-ecosystem-browser.cjs",
+    "test:media-providers": "node --experimental-vm-modules --test tests/media-providers.node.cjs"
   },
   "browserslist": {
     "production": [

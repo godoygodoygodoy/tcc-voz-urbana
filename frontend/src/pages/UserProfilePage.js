@@ -170,7 +170,7 @@ const UserProfilePage = () => {
     <main className="profile-shell mx-auto max-w-5xl px-4">
       {profile.cover && <img src={mediaUrl(profile.cover)} alt={t('profileCover')} width="1200" height="400" className="mb-4 h-44 w-full rounded-3xl object-cover sm:h-64"/>}
       <section className="profile-hero site-panel">
-        <div className="profile-avatar">{profile.avatar ? <img src={mediaUrl(profile.avatar)} alt={profile.name} /> : <span>{profile.name?.charAt(0).toUpperCase()}</span>}</div>
+        <React.Suspense fallback={<div className="profile-avatar">{profile.avatar ? <img src={mediaUrl(profile.avatar)} alt={profile.name} /> : <span>{profile.name?.charAt(0).toUpperCase()}</span>}</div>}><StoriesRail ownerId={profile.id} profileUser={profile}/></React.Suspense>
         <div className="profile-summary">{profile.presentation && <p className="mb-2 break-words text-violet-200">{profile.presentation}</p>}
           <div className="profile-name-row"><h1>{profile.name}</h1><span>{profile.username ? `@${profile.username}` : t('noUsername')}{profile.isPrivate && <Lock size={14} aria-label={t('privateProfile')} />}</span></div>
           <div className="profile-stats">
@@ -203,7 +203,7 @@ const UserProfilePage = () => {
         })}</div>}
       </section>}
       {profile.canViewPosts !== false && <React.Suspense fallback={null}><ProfileStats ownerId={profile.id}/><AchievementsPanel ownerId={profile.id}/></React.Suspense>}
-      <React.Suspense fallback={null}><StoriesRail ownerId={profile.id}/></React.Suspense>
+
       <section className="profile-content">
         <nav className="profile-tabs" aria-label={t('Conteúdo do perfil')}>{tabs.map(({ key, label, icon: Icon }) => <button key={key} type="button" className={tab === key ? 'is-active' : ''} onClick={() => setTab(key)}><Icon size={16} />{label}</button>)}</nav>
         {profile.canViewPosts !== false && ['saved','collections'].includes(tab) && <React.Suspense fallback={<p>{t('loading')}</p>}><CollectionsPanel ownerId={profile.id} savedPosts={isOwnProfile ? privatePosts.saved : undefined}/></React.Suspense>}

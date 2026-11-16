@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 
 // Deterministic isolated database double. Mutations assert the row-lock protocol.
 export function createSocialMemory() {
-  const state = { users: ['a','b','c'].map(id => ({ id, nome: `Person ${id}`, username: `person.${id}`, perfilPrivado: false, nivel: 'USUARIO', dataCriacao: new Date('2026-01-01'), apresentacao:null,capaUrl:null,bio: '', fotoPerfil: null, admin: null })), follows: [], conversations: [], messages: [], notifications: [], problems: [], saved: [], votes: [], comments: [], images: [], collections: [], collectionItems: [], stories: [], storyViews: [], polls: [], pollOptions: [], pollVotes: [], notificationPreferences: [], achievements: [], statusHistory: [], statusDeliveries: [], logs: [], stages: [], confirmations: [], visits: [], categories: [] };
+  const state = { users: ['a','b','c'].map(id => ({ id, nome: `Person ${id}`, username: `person.${id}`, perfilPrivado: false, nivel: 'USUARIO', dataCriacao: new Date('2026-01-01'), apresentacao:null,capaUrl:null,bio: '', fotoPerfil: null, admin: null })), follows: [], conversations: [], messages: [], notifications: [], problems: [], saved: [], votes: [], comments: [], images: [], collections: [], collectionItems: [], stories: [], storyViews: [], storyAnswers: [], polls: [], pollOptions: [], pollVotes: [], notificationPreferences: [], achievements: [], statusHistory: [], statusDeliveries: [], logs: [], stages: [], confirmations: [], visits: [], categories: [] };
   let counter = 0, queue = Promise.resolve(), locks = null;
   const queries = [];
   const user = id => state.users.find(row => row.id === id);
@@ -21,6 +21,7 @@ export function createSocialMemory() {
       if (key === 'usuarioId_codigo') return matches(row,value,kind);
       if (key === 'usuarioId_tipo') return matches(row,value,kind);
       if (key === 'usuarioId_enqueteId') return matches(row,value,kind);
+      if (key === 'storyId_elementoId_usuarioId') return matches(row,value,kind);
       if (key === 'storyId_usuarioId' || key === 'usuarioId_problemaId' || key === 'colecaoId_salvoId') return matches(row,value,kind);
       if (key === 'usuario') return matches(user(row.usuarioId),value.is || value,'user');
       if (key === 'seguindo') return state.follows.some(item => item.followerId === row.id && matches(item,value.some,'follow'));
@@ -59,6 +60,8 @@ export function createSocialMemory() {
     if(kind==='problem'&&args.select?.salvos)result.salvos=state.saved.filter(saved=>saved.problemaId===row.id&&matches(saved,args.select.salvos.where));
     if (kind === 'conversation' && args.include) result = { ...result, usuarioA:user(row.usuarioAId),usuarioB:user(row.usuarioBId),mensagens:sort(state.messages.filter(m=>m.conversaId===row.id),args.include.mensagens?.orderBy).slice(0,args.include.mensagens?.take) };
     if (kind === 'message') result.remetente = user(row.remetenteId);
+    if (kind === 'storyAnswer') result.usuario=user(row.usuarioId);
+    if (kind === 'storyView') result.usuario=user(row.usuarioId);
     if (kind === 'comment') result = {...result,usuario:user(row.usuarioId),_count:{respostas:state.comments.filter(comment=>comment.parentId===row.id).length}};
     if (kind === 'image') result.problema = decorate(state.problems.find(p=>p.id===row.problemaId),'problem');
     if (kind === 'follow' && args.include) result = { ...result, follower:user(row.followerId), following:user(row.followingId) };
@@ -101,7 +104,7 @@ export function createSocialMemory() {
     },
   });
   const db = {
-    visita:model('visits','visit'),categoria:model('categories','category'),etapaProblema:model('stages','stage'),confirmacaoProblema:model('confirmations','confirmation'),atualizacaoProblema:model('statusHistory','statusHistory'),entregaAtualizacao:model('statusDeliveries','statusDelivery'),log:model('logs','log'),conquistaUsuario:model('achievements','achievement'),notificacao:model('notifications','notification'),preferenciaNotificacao:model('notificationPreferences','notificationPreference'),enquete:model('polls','poll'),enqueteOpcao:model('pollOptions','pollOption'),votoEnquete:model('pollVotes','pollVote'),story:model('stories','story'),storyVisualizacao:model('storyViews','storyView'),colecao:model('collections','collection'),itemColecao:model('collectionItems','collectionItem'),usuario:model('users','user'),seguimento:model('follows','follow'),conversa:model('conversations','conversation'),mensagem:model('messages','message'),problema:model('problems','problem'),publicacaoSalva:model('saved','saved'),voto:model('votes','vote'),comentario:model('comments','comment'),imagem:model('images','image'),
+    visita:model('visits','visit'),categoria:model('categories','category'),etapaProblema:model('stages','stage'),confirmacaoProblema:model('confirmations','confirmation'),atualizacaoProblema:model('statusHistory','statusHistory'),entregaAtualizacao:model('statusDeliveries','statusDelivery'),log:model('logs','log'),conquistaUsuario:model('achievements','achievement'),notificacao:model('notifications','notification'),preferenciaNotificacao:model('notificationPreferences','notificationPreference'),enquete:model('polls','poll'),enqueteOpcao:model('pollOptions','pollOption'),votoEnquete:model('pollVotes','pollVote'),story:model('stories','story'),storyResposta:model('storyAnswers','storyAnswer'),storyVisualizacao:model('storyViews','storyView'),colecao:model('collections','collection'),itemColecao:model('collectionItems','collectionItem'),usuario:model('users','user'),seguimento:model('follows','follow'),conversa:model('conversations','conversation'),mensagem:model('messages','message'),problema:model('problems','problem'),publicacaoSalva:model('saved','saved'),voto:model('votes','vote'),comentario:model('comments','comment'),imagem:model('images','image'),
     async $queryRaw(strings,...values) { const sql=strings.join('?');assert.match(sql,/FOR UPDATE/);assert.ok(locks);const table=sql.includes('FROM usuarios')?'usuarios':sql.includes('FROM problemas')?'problemas':sql.includes('FROM entregas_atualizacao')?'entregas_atualizacao':'conversas';locks.add(`${table}:${values[0]}`);queries.push({table,id:values[0]});return [{id:values[0]}]; },
     async $transaction(fn,options) {
       assert.equal(options.isolationLevel,'ReadCommitted');

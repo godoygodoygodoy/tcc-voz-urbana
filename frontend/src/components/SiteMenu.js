@@ -4,6 +4,7 @@ import { createPortal } from 'react-dom';
 import { FiCompass, FiFileText, FiHome, FiInfo, FiMail, FiMenu, FiMap, FiShield, FiX } from 'react-icons/fi';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../store';
+import {profilePath} from '../utils/profileLinks';
 import { subscribeAnimation, useMotionBudget } from '../utils/motion';
 
 const SiteMenu = () => {
@@ -156,6 +157,7 @@ const SiteMenu = () => {
           ))}
         </nav>
         <div className="site-menu-panel-foot">
+          {user&&<Link to={profilePath(user)} onClick={()=>setOpen(false)} className="profile-action">{t('viewOwnProfile')}</Link>}
           <span>{t("ROXO É A NOSSA FREQUÊNCIA")}</span>
           <span>{t("SCROLL / EXPLORE")}</span>
         </div>

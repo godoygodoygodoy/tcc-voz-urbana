@@ -1,3 +1,6 @@
+import * as storyComposition from '../../src/services/storyComposition.js';
+import * as mediaProviders from '../../src/services/mediaProviders.js';
+import * as crypto from 'node:crypto';
 import * as sharingService from '../../src/services/sharing.js';
 import * as feedListing from '../../src/services/feedListing.js';
 import * as mediaVariants from '../../src/services/mediaVariants.js';
@@ -71,6 +74,7 @@ export async function createSocialFixture({ streaming = false } = {}) {
   const achievementChecks=[];
   const achievements={achievementService:createAchievements(db),queueAchievementCheck:id=>achievementChecks.push(id)};
   const dependencies={
+    'node:crypto':crypto,'../services/storyComposition.js':storyComposition,'../services/mediaProviders.js':mediaProviders,
     '../services/feedListing.js':feedListing,
     '../services/mediaVariants.js':mediaVariants,
     '../services/sharing.js':sharingService,'../services/profileFeatures.js':profileFeatures,'../services/problemTracking.js':trackingService,'../services/workflow.js':workflowService,'../services/comparisons.js':comparisonService,'../services/geography.js':geographyService,express:{default:express},'node:path':{default:path},'../config/prisma.js':{prisma:db},'./prisma.js':{prisma:db},'../services/problemStatus.js':problemStatusService,
@@ -110,6 +114,7 @@ export async function createSocialFixture({ streaming = false } = {}) {
   app.use('/api/participation',(await load('routes/participation.js')).default);
   app.use('/api/polls',(await load('routes/polls.js')).default);
   app.use('/api/stories',(await load('routes/stories.js')).default);
+  app.use('/api/media-library',(await load('routes/mediaLibrary.js')).default);
   app.use('/api/collections',(await load('routes/collections.js')).default);
   app.use('/api/saved',(await load('routes/saved.js')).default);
   app.use('/api/media',(await load('routes/media.js')).default);

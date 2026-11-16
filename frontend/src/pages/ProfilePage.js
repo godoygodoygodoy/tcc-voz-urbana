@@ -156,6 +156,7 @@ const ProfilePage = () => {
       <div className="container mx-auto px-4">
         <div className="site-panel max-w-2xl mx-auto rounded-3xl shadow-xl p-8">
           <h1 className="text-3xl font-bold mb-8">{t('profile')}</h1>
+          <Link className="profile-action mb-5" to={profilePath(profile)}>{t('viewOwnProfile')}</Link>
 
           <form onSubmit={handleSubmit} className="space-y-6">
             <div>

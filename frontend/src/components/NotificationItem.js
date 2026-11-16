@@ -11,7 +11,7 @@ export default function NotificationItem({item,onOpen,onActorOpen,compact=false}
   const {t}=useI18n(),actor=item.actor;
   const actorLabel=actor?.nome||actor?.username||t(item.actorStatus==='restricted'?'notificationActorRestricted':'notificationActorUnavailable');
   const hasAction=actorTypes.has(item.tipo);
-  const description=actor&&hasAction?t('notificationAction'+item.tipo):translateSystemText(item.mensagem);
+  const description=actor&&hasAction?t(item.tipo==='MENCAO'&&item.mensagem==='storyMentionBody'?'storyMentionBody':'notificationAction'+item.tipo):translateSystemText(item.mensagem);
   const date=new Date(item.dataCriacao),validDate=Number.isFinite(+date);
   const elapsed=validDate?formatRelativeTime(date,getLanguage()):t('now');
   const openActor=event=>{event.stopPropagation();onActorOpen?.();};

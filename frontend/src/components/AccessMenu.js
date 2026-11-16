@@ -4,6 +4,7 @@ import { ChevronDown, Globe2, LogIn, UserPlus } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 import Avatar from './Avatar';
+import {profilePath} from '../utils/profileLinks';
 
 const AccessMenu = ({ authenticated = false, user, onLogout, onOpenAuth, compact = false }) => {
 
@@ -48,6 +49,7 @@ const AccessMenu = ({ authenticated = false, user, onLogout, onOpenAuth, compact
           {(user?.username || user?.email) && <small>{user?.username ? `@${user.username.replace(/^@/, '')}` : user.email}</small>}
         </div>}
         {authenticated ? <>
+          <Link to={profilePath(user)} onClick={() => setOpen(false)} className="flex items-center gap-3 rounded-xl px-3 py-3 text-sm hover:bg-white/10">{t('viewOwnProfile')}</Link>
           <Link to="/profile" onClick={() => setOpen(false)} className="flex items-center gap-3 rounded-xl px-3 py-3 text-sm hover:bg-white/10">{t('accountSettings')}</Link>
           <Link to="/register" onClick={() => setOpen(false)} className="flex items-center gap-3 rounded-xl px-3 py-3 text-sm hover:bg-white/10"><UserPlus className="h-4 w-4 text-violet-300" />{t('createProfile')}</Link>
         </> : <>

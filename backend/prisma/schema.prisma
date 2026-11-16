@@ -39,6 +39,7 @@ model Usuario {
   colecoes               Colecao[]
   stories                Story[]
   storiesVistos          StoryVisualizacao[]
+  respostasStories       StoryResposta[]
   votosEnquetes          VotoEnquete[]
   preferenciasNotificacao PreferenciaNotificacao[]
   conquistas ConquistaUsuario[]
@@ -384,15 +385,34 @@ model Story {
  url String @db.VarChar(500)
  posterUrl String? @map("poster_url") @db.VarChar(500)
  mime String @db.VarChar(50)
+ composicao Json?
+ originalUrl String? @map("original_url") @db.VarChar(500)
+ chavePublicacao String? @map("chave_publicacao") @db.VarChar(64)
+ hashPublicacao String? @map("hash_publicacao") @db.Char(64)
  audiencia String @default("SEGUIDORES") @db.VarChar(20)
  criadaEm DateTime @default(now()) @map("criada_em")
  expiraEm DateTime @map("expira_em")
  excluidoEm DateTime? @map("excluido_em")
  usuario Usuario @relation(fields:[usuarioId],references:[id],onDelete:Cascade)
  visualizacoes StoryVisualizacao[]
+ respostas StoryResposta[]
+ @@unique([usuarioId,chavePublicacao])
  @@index([expiraEm, excluidoEm])
  @@index([usuarioId, criadaEm])
  @@map("stories")
+}
+model StoryResposta {
+ id String @id @default(uuid()) @db.Char(36)
+ storyId String @map("story_id") @db.Char(36)
+ usuarioId String @map("usuario_id") @db.Char(36)
+ elementoId String @map("elemento_id") @db.VarChar(64)
+ valor Json
+ criadaEm DateTime @default(now()) @map("criada_em")
+ story Story @relation(fields:[storyId],references:[id],onDelete:Cascade)
+ usuario Usuario @relation(fields:[usuarioId],references:[id],onDelete:Cascade)
+ @@unique([storyId,elementoId,usuarioId])
+ @@index([usuarioId])
+ @@map("stories_respostas")
 }
 model StoryVisualizacao {
  id String @id @default(uuid()) @db.Char(36)

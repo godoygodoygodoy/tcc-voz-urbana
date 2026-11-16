@@ -89,12 +89,20 @@ export const pollsAPI = {
   vote:(id,optionId)=>api.put('/polls/'+id+'/vote',{optionId}),
 };
 export const storiesAPI = {
+  answer:(id,elementId,value)=>api.put('/stories/'+id+'/elements/'+elementId+'/answer',{value}),
+  answers:(id,elementId,params)=>api.get('/stories/'+id+'/elements/'+elementId+'/answers',{params}),
+  viewers:(id,params)=>api.get('/stories/'+id+'/viewers',{params}),
   list:(params,options)=>api.get('/stories',{params,...options}),
   get:(id,options)=>api.get('/stories/'+id,options),
   react:(id,enabled)=>enabled?api.put('/stories/'+id+'/reaction'):api.delete('/stories/'+id+'/reaction'),
   publish:data=>api.post('/stories',data),
   view:id=>api.post('/stories/'+id+'/view'),
   remove:id=>api.delete('/stories/'+id),
+};
+export const mediaLibraryAPI={
+ providers:options=>api.get('/media-library/providers',options),
+ music:(params,options)=>api.get('/media-library/music/search',{...options,params}),
+ musicToken:()=>api.get('/media-library/music/token'),
 };
 export const collectionsAPI = {
   list: (params, options) => api.get('/collections', { params, ...options }),
