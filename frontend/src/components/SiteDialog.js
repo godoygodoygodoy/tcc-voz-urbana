@@ -9,11 +9,11 @@ export default function SiteDialog({ title, children, onClose, busy = false }) {
   useEffect(() => {
     const previous = document.activeElement;
     if (openDialogs++ === 0) { previousOverflow = document.body.style.overflow; document.body.style.overflow = 'hidden'; }
-    element.current?.querySelector('button:not(:disabled),input:not(:disabled),[tabindex="0"]')?.focus();
-    return () => { if (--openDialogs === 0) document.body.style.overflow = previousOverflow; if (previous?.isConnected) previous.focus(); };
+    element.current?.querySelector('button:not(:disabled),input:not(:disabled),[tabindex="0"]')?.focus({preventScroll:true});
+    return () => { if (--openDialogs === 0) document.body.style.overflow = previousOverflow; if (previous?.isConnected) previous.focus({preventScroll:true}); };
   }, []);
-  return createPortal(<div className="context-modal social-network-backdrop" onClick={event => { if (event.target === event.currentTarget && !busy) close.current(); }}>
-    <section ref={element} role="dialog" aria-modal="true" aria-labelledby={label} className="site-panel social-network-dialog" onKeyDown={event => {
+  return createPortal(<div data-lenis-prevent className="context-modal social-network-backdrop" onClick={event => { if (event.target === event.currentTarget && !busy) close.current(); }}>
+    <section ref={element} role="dialog" aria-modal="true" aria-labelledby={label} className="site-panel social-network-dialog context-scroll" onKeyDown={event => {
       if (event.target.closest('.floating-portal') || event.key === 'Escape' && element.current?.querySelector('.floating-trigger[aria-expanded="true"]')) return;
       if (event.key === 'Escape' && !busy) { event.stopPropagation(); close.current(); }
       if (event.key !== 'Tab') return;

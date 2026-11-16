@@ -398,10 +398,10 @@ export default function StoryComposer({
   };
   const pointerDown = e => {
     if (locked) return;
-    e.currentTarget.setPointerCapture(e.pointerId);
-    remember();
     const [x, y] = point(e);
     if (tool === 'draw') {
+      e.currentTarget.setPointerCapture(e.pointerId);
+      remember();
       gesture.current = {
         kind: 'draw'
       };
@@ -414,6 +414,7 @@ export default function StoryComposer({
       }]);
     } else {
       const layer = [...layers].reverse().find(layer => Math.abs(x - layer.x) < layer.width * W / 2 && Math.abs(y - layer.y) < Math.max(layer.size * 2, 80));
+      if (layer) { e.currentTarget.setPointerCapture(e.pointerId); remember(); }
       setSelected(layer?.id || null);
       gesture.current = layer ? {
         kind: 'move',
@@ -516,7 +517,7 @@ export default function StoryComposer({
             }))} /></label><label><input type="checkbox" checked={audio} disabled={recording || locked} onChange={e => openCamera(facing, e.target.checked)} />{t('composerMicrophone')}</label></>}</div>}
    {cameraError && <p role="alert">{t('composerCameraUnavailable')}</p>}
    {(processing || countdown > 0) && <p role="status">{processing ? t('storyProcessing') : countdown}</p>}
-   <div className="story-composer-stage" ref={stage} onPointerMove={pointerMove} onPointerUp={() => gesture.current = null} onPointerCancel={() => gesture.current = null}>
+   <div className={'story-composer-stage'+(tool==='draw'&&!cameraOpen?' is-drawing':'')} ref={stage} onPointerMove={pointerMove} onPointerUp={() => gesture.current = null} onPointerCancel={() => gesture.current = null}>
     {cameraOpen ? <video ref={camera} autoPlay muted playsInline className="story-camera-preview" /> : isVideo ? <video ref={clip} className="story-camera-preview" controls playsInline preload="metadata" style={mediaEffect(effect, intensity)} src={media[0].url} /> : animated ? <img style={mediaEffect(effect, intensity)} className="story-camera-preview" src={media[0].url} alt={t('storyMediaAlt')} /> : <canvas style={mediaEffect(effect, intensity)} ref={canvas} width={W} height={H} aria-label={t('composerPreview')} onPointerDown={pointerDown} onPointerUp={() => gesture.current = null} onPointerCancel={() => gesture.current = null} />}
     {!cameraOpen && <StoryElements onKeyboard={(event, layer) => {
           const delta = event.shiftKey ? 50 : 10;

@@ -12,7 +12,15 @@ function AppShell() {
   const { hidden, reduced } = useMotionBudget();
   React.useEffect(() => {
     if (hidden || reduced) return undefined;
-    const lenis = new Lenis({ duration: 1.1, easing: t => Math.min(1, 1.001 - 2 ** (-10 * t)), smoothWheel: true, smoothTouch: false });
+    const lenis = new Lenis({
+      duration: 1.1,
+      easing: t => Math.min(1, 1.001 - 2 ** (-10 * t)),
+      smoothWheel: true,
+      smoothTouch: false,
+      // Internal scroll regions belong to the browser, even while a modal locks
+      // the page. Otherwise Lenis consumes their wheel events at the root.
+      prevent: node => node.matches('.context-modal, .context-scroll, .overflow-auto, .overflow-y-auto, .feed-dm-messages, .story-rail, .story-library'),
+    });
     let stop;
     const wake = () => {
       if (stop) return;

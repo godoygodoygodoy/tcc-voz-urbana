@@ -59,7 +59,8 @@
     "test:praca-identity:browser": "node --experimental-vm-modules tests/praca-identity-browser.cjs",
     "test:praca-features:browser": "node --experimental-vm-modules tests/praca-features-browser.cjs",
     "test:praca-conversations:browser": "node --experimental-vm-modules tests/praca-conversations-browser.cjs",
-    "test:own-stories:browser": "node --experimental-vm-modules tests/own-stories-browser.cjs"
+    "test:own-stories:browser": "node --experimental-vm-modules tests/own-stories-browser.cjs",
+    "test:recent-scroll:browser": "node --experimental-vm-modules tests/recent-scroll-browser.cjs"
   },
   "browserslist": {
     "production": [
